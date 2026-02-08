@@ -22,7 +22,7 @@
 - **Restart Limits:** Engines have a finite number of relights (TEA/TEB cartridges).
 **Practicality:** Teaches operation constraints. You can't just mash the throttle; you must plan burns.
 
-### 4. Component Reliability & Failure Modes
+### 4. Component Reliability & Failure Modes [DONE]
 **Current Status:** Random failure probability at high dynamic pressure.
 **Proposal:** Implement a **Mean Time Between Failures (MTBF)** system.
 - "Bathtub curve" reliability for engines.

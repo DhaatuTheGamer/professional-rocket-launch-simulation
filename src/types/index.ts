@@ -32,6 +32,19 @@ export type {
     EngineState
 };
 
+// Re-export reliability types for convenience
+import type {
+    FailureType,
+    FailureMode,
+    ReliabilityConfig
+} from '../physics/Reliability';
+
+export type {
+    FailureType,
+    FailureMode,
+    ReliabilityConfig
+};
+
 // ============================================================================
 // Vector Types
 // ============================================================================

@@ -54,6 +54,11 @@ import {
     commandShutdown,
     getIgnitionFailureMessage
 } from './Propulsion';
+import {
+    ReliabilitySystem,
+    ReliabilityConfig,
+    DEFAULT_RELIABILITY_CONFIG
+} from './Reliability';
 
 export class Vessel implements IVessel {
     // Position (pixels)
@@ -116,6 +121,10 @@ export class Vessel implements IVessel {
     public ignitersRemaining: number = 3;       // Remaining igniter cartridges
     public ullageSettled: boolean = true;       // Fuel settled for ignition
     public actualThrottle: number = 0;          // Lagged throttle output
+
+    // Reliability System
+    public reliability: ReliabilitySystem = new ReliabilitySystem();
+    public reliabilityConfig: ReliabilityConfig = DEFAULT_RELIABILITY_CONFIG;
 
     // Orbit prediction cache
     public orbitPath: OrbitalElements[] | null = null;
@@ -338,6 +347,9 @@ export class Vessel implements IVessel {
         // Update thermal state
         this.updateThermalState(v, Math.max(0, altitude), dt);
 
+        // Update reliability state
+        this.updateReliability(dt);
+
         // Aerodynamic stress damage
         this.checkAerodynamicStress(v, altitude);
 
@@ -524,6 +536,56 @@ export class Vessel implements IVessel {
                 this.y + this.h / 2,
                 'debris'
             ));
+        }
+    }
+
+    /**
+     * Update reliability system
+     */
+    private updateReliability(dt: number): void {
+        if (!this.active || this.crashed) return;
+
+        // Calculate stress factor
+        // Base stress is 1.0 when active
+        // High Q or high G adds stress
+        let stress = 0;
+
+        if (this.actualThrottle > 0) {
+            stress = 1.0;
+
+            // Add stress from dynamic pressure
+            if (this.q > 10000) stress += 0.5;
+
+            // Add stress from high angle of attack
+            if (Math.abs(this.aoa) > 0.1) stress += 0.5;
+        }
+
+        const failures = this.reliability.update(dt, stress);
+
+        // Handle new failures
+        for (const failure of failures) {
+            switch (failure) {
+                case 'ENGINE_FLAME_OUT':
+                    this.active = false;
+                    this.throttle = 0;
+                    this.actualThrottle = 0; // Immediate cut
+                    break;
+
+                case 'ENGINE_EXPLOSION':
+                    this.explode();
+                    break;
+
+                case 'STRUCTURAL_FATIGUE':
+                    // Immediate structural failure
+                    this.health = 0;
+                    this.explode();
+                    break;
+
+                case 'GIMBAL_LOCK':
+                    // Gimbal stuck - disable control
+                    // This is handled in control() by checking failures
+                    break;
+            }
         }
     }
 

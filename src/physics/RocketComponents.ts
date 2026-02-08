@@ -29,6 +29,7 @@ import {
     PAYLOAD_PROP_CONFIG,
     createInitialPropulsionState
 } from './Propulsion';
+import { ReliabilityConfig } from './Reliability';
 
 /**
  * Full Stack - Complete rocket before staging
@@ -42,6 +43,15 @@ export class FullStack extends Vessel {
         this.maxThrust = CONFIG.MAX_THRUST_BOOSTER;
         this.ispVac = CONFIG.ISP_VAC_BOOSTER;
         this.ispSL = CONFIG.ISP_SL_BOOSTER;
+
+        // Reliability: Brand new engines, generally reliable but infant mortality risk
+        this.reliabilityConfig = {
+            mtbfEngine: 1200,      // Good reliability
+            mtbfStructure: 10000,  // Sturdy
+            mtbfElectronics: 3000,
+            ignitionReliability: 0.98,
+            wearFactor: 1.0
+        };
 
         // Full stack has good stability with fins at the base
         this.aeroConfig = DEFAULT_AERO_CONFIG;
@@ -133,6 +143,15 @@ export class Booster extends Vessel {
         this.ispVac = CONFIG.ISP_VAC_BOOSTER;
         this.ispSL = CONFIG.ISP_SL_BOOSTER;
         this.active = true;
+
+        // Reliability: Reuse adds wear
+        this.reliabilityConfig = {
+            mtbfEngine: 800,       // Slightly degraded from reuse/stress
+            mtbfStructure: 8000,
+            mtbfElectronics: 2000,
+            ignitionReliability: 0.95, // Relight is harder
+            wearFactor: 1.5        // Wears out faster
+        };
 
         // PID controllers for landing
         // Negative Kp because positive angle needs negative correction
@@ -264,6 +283,15 @@ export class UpperStage extends Vessel {
         this.active = true;
         this.ispVac = CONFIG.ISP_VAC_UPPER;
         this.ispSL = CONFIG.ISP_SL_UPPER;
+
+        // Reliability: Vacuum engine
+        this.reliabilityConfig = {
+            mtbfEngine: 2000,      // Very reliable vacuum engine
+            mtbfStructure: 5000,   // Lighter structure, more fragile
+            mtbfElectronics: 3000,
+            ignitionReliability: 0.99,
+            wearFactor: 1.0
+        };
 
         // Upper stage less stable without booster mass below
         this.aeroConfig = UPPER_STAGE_AERO_CONFIG;

@@ -15,6 +15,7 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 - **Atmospheric Drag** - Transonic effects with Mach-dependent drag coefficient
 - **Inverse-Square Gravity** - Realistic orbital mechanics
 - **Pressure-Dependent Isp** - Engine efficiency varies with altitude
+- **Component Reliability** - Probabilistic failure modes (engine flameout, structural fatigue, sensor glitches)
 
 ### Rocket Stages
 | Stage | Description |
@@ -141,4 +142,9 @@ Re-entry and high-speed heating modeled via:
 - **Sutton-Graves Equation**: Stagnation point heating based on velocity and nose radius
 - **Stefan-Boltzmann Law**: Radiative cooling to environment/space
 - **Ablation**: Mass loss and heat absorption when shield temperature critical
+
+### Reliability & Failure Modes
+- **Bathtub Curve**: Engines have "infant mortality" and "wear-out" phases.
+- **Structural Fatigue**: High-G maneuvers accumulate stress, leading to potential structural failure.
+- **Sensor Glitches**: Random telemetry noise simulating real-world sensor imperfections.
 
