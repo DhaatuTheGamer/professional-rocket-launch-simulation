@@ -505,7 +505,11 @@ export class Vessel implements IVessel {
                 // Successful landing
                 this.vy = 0;
                 this.vx = 0;
-                this.throttle = 0;
+
+                // Only cut throttle if not trying to launch
+                if (this.engineState !== 'starting' && this.engineState !== 'running') {
+                    this.throttle = 0;
+                }
             }
         }
     }
