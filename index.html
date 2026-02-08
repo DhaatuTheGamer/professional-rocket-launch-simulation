@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeltaV Lab</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="vab-modal" style="display:none;">
+        <div class="content">
+            <h2>⚙️ Vehicle Assembly Building</h2>
+            <div class="control-group">
+                <label>Fuel Mass (tons): <span id="val-fuel">30</span></label>
+                <input type="range" id="rng-fuel" min="10" max="100" value="30">
+            </div>
+            <div class="control-group">
+                <label>Max Thrust (MN): <span id="val-thrust">2.0</span></label>
+                <input type="range" id="rng-thrust" min="1.0" max="5.0" step="0.1" value="2.0">
+            </div>
+            <div class="control-group">
+                <label>Aerodynamics (Cd): <span id="val-drag">0.5</span></label>
+                <input type="range" id="rng-drag" min="0.1" max="1.0" step="0.1" value="0.5">
+            </div>
+
+            <!-- IMPROVEMENT #3: VAB Stats Display -->
+            <div id="vab-stats">
+                <div class="vab-stat">
+                    <div class="vab-stat-label">Delta-V</div>
+                    <div class="vab-stat-value" id="vab-dv">3,200</div>
+                    <div class="vab-stat-label">m/s</div>
+                </div>
+                <div class="vab-stat">
+                    <div class="vab-stat-label">TWR</div>
+                    <div class="vab-stat-value" id="vab-twr">1.45</div>
+                    <div class="vab-stat-label">ratio</div>
+                </div>
+            </div>
+
+            <button id="vab-launch-btn" class="primary large">GO FOR LAUNCH</button>
+        </div>
+    </div>
+
+    <div id="splash-screen">
+        <div class="content">
+            <h1>DeltaV Lab <span
+                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v1.3</span>
+            </h1>
+            <p class="subtitle">Engineering-Grade Spaceflight Simulation</p>
+
+            <div class="mission-guide">
+                <h2>📋 Full Mission Profile Guide</h2>
+                <ol>
+                    <li><strong>LIFTOFF:</strong> Press <span class="key">SPACE</span>. Engines ignite at T-0.</li>
+                    <li><strong>GRAVITY TURN:</strong> At <strong>2.0 km</strong>, tap <span class="key">RIGHT
+                            ARROW</span> to tilt slightly (~10°).</li>
+                    <li><strong>MAX Q:</strong> Watch for camera shake and vapor cones around 300 m/s.</li>
+                    <li><strong>STAGING:</strong> When APOGEE > 100km (or fuel low), press <span class="key">S</span>.
+                    </li>
+                </ol>
+            </div>
+
+            <div class="splash-menu">
+                <div id="instruction-panel"
+                    style="background:rgba(0,0,0,0.5); padding:15px; border-radius:8px; margin-bottom:20px; text-align:left; max-width:400px; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2);">
+                    <h3 style="margin-top:0; color:#3498db; border-bottom:1px solid #3498db; padding-bottom:5px;">
+                        FLIGHT MANUAL</h3>
+                    <ul style="padding-left:20px; color:#ddd; line-height:1.6;">
+                        <li><strong>Launch:</strong> Press <span style="color:#f1c40f">[SPACE]</span> to
+                            ignite.</li>
+                        <li><strong>Throttle:</strong> <span style="color:#f1c40f">[SHIFT]</span> / <span
+                                style="color:#f1c40f">[CTRL]</span> or Touch Slider.</li>
+                        <li><strong>Steer:</strong> <span style="color:#f1c40f">[ARROWS]</span> or Virtual
+                            Joystick.</li>
+                        <li><strong>Staging:</strong> Press <span style="color:#f1c40f">[S]</span> when fuel
+                            empty.</li>
+                        <li><strong>Map:</strong> Press <span style="color:#f1c40f">[M]</span> to view
+                            Orbit.</li>
+                        <li><strong>SAS:</strong> Press <span style="color:#f1c40f">[T]</span> for Stability
+                            Assist.</li>
+                    </ul>
+                    <div style="margin-top:10px; font-size:0.8rem; color:#aaa; font-style:italic;">
+                        Tip: Use gravity turn at 5km altitude (tilt 45&deg; East).
+                    </div>
+                </div>
+
+                <button id="start-btn" class="menu-btn">ENTER MISSION CONTROL</button>
+                <button id="open-vab-btn" class="menu-btn secondary">VEHICLE ASSEMBLY (VAB)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <!-- New HUD Header -->
+        <div id="hud-top-bar">
+            <div class="hud-module">
+                <div class="hud-label">ALTITUDE</div>
+                <div class="hud-value-large"><span id="hud-alt">0.0</span> <span class="unit">km</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">APOGEE</div>
+                <div class="hud-value-large"><span id="hud-apogee">0.0</span> <span class="unit">km</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">VELOCITY</div>
+                <div class="hud-value-large"><span id="hud-vel">0</span> <span class="unit">m/s</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">AoA</div>
+                <div class="hud-value-large"><span id="hud-aoa" style="color: #2ecc71;">0.0°</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">STABILITY</div>
+                <div class="hud-value-large"><span id="hud-stability" style="color: #2ecc71;">30.0%</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">SKIN TEMP</div>
+                <div class="hud-value-large"><span id="hud-skin-temp" style="color: #2ecc71;">20°C</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">TPS</div>
+                <div class="hud-value-large"><span id="hud-tps-status" style="color: #95a5a6;">N/A</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">ENGINE</div>
+                <div class="hud-value-large"><span id="hud-engine-status" style="color: #95a5a6;">OFF</span></div>
+            </div>
+            <div class="hud-module">
+                <div class="hud-label">IGN</div>
+                <div class="hud-value-large"><span id="hud-igniters" style="color: #2ecc71;">3</span></div>
+            </div>
+        </div>
+
+        <div id="hud-gauges">
+            <div class="gauge-container">
+                <div class="gauge-bar-bg">
+                    <div id="gauge-fuel" class="gauge-bar-fill" style="height: 100%; background-color: #f1c40f;"></div>
+                </div>
+                <div class="gauge-label">FUEL</div>
+            </div>
+            <div class="gauge-container">
+                <div class="gauge-bar-bg">
+                    <div id="gauge-thrust" class="gauge-bar-fill" style="height: 0%; background-color: #e74c3c;"></div>
+                </div>
+                <div class="gauge-label">THRUST</div>
+            </div>
+        </div>
+
+        <div style="position: absolute; bottom: 160px; left: 20px; pointer-events: none;">
+            <canvas id="navball" width="140" height="140" style="background:transparent;"></canvas>
+        </div>
+        <div style="display:none">
+            <canvas id="graph-canvas"></canvas>
+        </div>
+
+        <!-- IMPROVEMENT #10: Camera Panel -->
+        <div id="camera-panel">
+            <button data-cam="1" class="active">👁 Follow</button>
+            <button data-cam="2">🔄 Orbit</button>
+            <button data-cam="3">🎬 Cinema</button>
+        </div>
+
+        <!-- SAS Controls - Enhanced -->
+        <div id="sas-controls">
+            <div class="sas-title">SAS CONTROL</div>
+            <div class="sas-group">
+                <button id="sas-off" class="sas-btn active">OFF</button>
+                <button id="sas-stability" class="sas-btn">⚡ STABILITY</button>
+            </div>
+            <div class="sas-group">
+                <button id="sas-prograde" class="sas-btn">⬆ PROGRADE</button>
+                <button id="sas-retrograde" class="sas-btn">⬇ RETROGRADE</button>
+            </div>
+            <div id="sas-mode-indicator">
+                <span class="icon">🎯</span>
+                <span id="sas-mode-text">OFF</span>
+            </div>
+        </div>
+
+        <!-- IMPROVEMENT #5: Collapsible Mission Log -->
+        <div id="mission-log">
+            <h3 onclick="document.getElementById('mission-log').classList.toggle('collapsed')">
+                MISSION LOG
+                <button id="log-toggle">−</button>
+            </h3>
+            <ul id="log-list">
+            </ul>
+        </div>
+    </div>
+
+    <div id="controls-help">
+        [SPACE] Launch | [S] Stage | [P] Payload | [ARROWS] Control | [1-3] Cam | [ / ] Time | [M] Map | [A]
+        Auto
+    </div>
+
+    <div id="status-msg">T-MINUS 3 SECONDS</div>
+
+    <!-- IMPROVEMENT #7: Onboarding Tooltip Overlay -->
+    <div id="tooltip-overlay" class="tooltip-overlay">
+        <div class="tooltip-box">
+            <h3>🚀 Welcome to Mission Control!</h3>
+            <p>Ready for your first launch? Press <span class="key-hint">SPACE</span> to ignite the engines!</p>
+            <p style="font-size: 0.8rem; color: #888;">Use arrow keys to steer, SHIFT/CTRL for throttle.</p>
+            <button id="tooltip-dismiss">GOT IT!</button>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button id="launch-btn" class="primary state-launch">🚀 INITIATE LAUNCH</button>
+        <button id="autopilot-btn">🤖 Auto-Land: OFF</button>
+        <button id="audio-btn" class="disabled">🔇 Enable Audio</button>
+        <button id="reset-btn" onclick="location.reload()">🔄 Reset</button>
+    </div>
+
+    <div id="mobile-controls">
+        <div id="joystick-zone">
+            <div id="joystick-knob"></div>
+        </div>
+        <div id="mobile-buttons">
+            <button id="btn-stage">STAGE</button>
+            <button id="btn-payload">PAYLOAD</button>
+            <button id="btn-cam">CAM</button>
+        </div>
+        <div id="throttle-zone">
+            <div id="throttle-handle"></div>
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- TypeScript Compiled Bundle -->
+    <script src="dist/bundle.js"></script>
+</body>
+
+</html>

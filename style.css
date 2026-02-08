@@ -1,0 +1,979 @@
+/* ========================================
+   DESIGN SYSTEM - CSS Custom Properties
+   ======================================== */
+:root {
+    /* Color Palette */
+    --color-primary: #3498db;
+    --color-primary-dark: #2980b9;
+    --color-success: #2ecc71;
+    --color-success-dark: #27ae60;
+    --color-warning: #f1c40f;
+    --color-warning-dark: #d4ac0d;
+    --color-danger: #e74c3c;
+    --color-danger-dark: #c0392b;
+    --color-text: #ffffff;
+    --color-text-muted: #aaaaaa;
+    --color-text-dim: #666666;
+
+    /* Glassmorphism */
+    --glass-bg: rgba(10, 15, 25, 0.85);
+    --glass-bg-light: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --glass-border-active: rgba(52, 152, 219, 0.6);
+    --glass-blur: blur(12px);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+    /* Spacing */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --spacing-xs: 5px;
+    --spacing-sm: 10px;
+    --spacing-md: 15px;
+    --spacing-lg: 20px;
+    --spacing-xl: 30px;
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* Glow Animation for Active States */
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px var(--color-primary), inset 0 0 4px rgba(52, 152, 219, 0.3);
+    }
+
+    50% {
+        box-shadow: 0 0 20px var(--color-primary), 0 0 40px rgba(52, 152, 219, 0.4), inset 0 0 8px rgba(52, 152, 219, 0.5);
+    }
+}
+
+@keyframes successPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px var(--color-success);
+    }
+
+    50% {
+        box-shadow: 0 0 20px var(--color-success), 0 0 30px rgba(46, 204, 113, 0.4);
+    }
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+canvas {
+    display: block;
+}
+
+/* Splash Screen */
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(15px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    transition: opacity 0.5s;
+}
+
+#splash-screen .content {
+    text-align: center;
+    max-width: 600px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+#splash-screen h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.subtitle {
+    color: #aaa;
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.mission-guide {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 30px;
+    border-left: 4px solid #3498db;
+}
+
+.mission-guide h2 {
+    font-size: 1.1rem;
+    margin-top: 0;
+    color: #3498db;
+    text-transform: uppercase;
+}
+
+.mission-guide ol {
+    padding-left: 20px;
+    line-height: 1.6;
+    color: #ddd;
+}
+
+.key {
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #ffdd57;
+    box-shadow: 0 2px 0 #111;
+}
+
+button.large {
+    font-size: 1.5rem;
+    padding: 15px 40px;
+    letter-spacing: 2px;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    color: white;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Old Telemetry styles removed/ignored */
+
+#controls-help {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: monospace;
+    font-size: 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#stats {
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+#controls {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    gap: 15px;
+}
+
+button {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 12px 30px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: white;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+button.primary {
+    background: #e74c3c;
+    border-color: #c0392b;
+    font-weight: bold;
+}
+
+button.primary:hover {
+    background: #ff5e4d;
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+}
+
+/* Message overlay */
+#status-msg {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 2rem;
+    font-weight: 300;
+    opacity: 0;
+    transition: opacity 0.5s;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* VAB */
+#vab-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 15, 0.95);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+#vab-modal .content {
+    background: rgba(30, 30, 40, 0.9);
+    padding: 40px;
+    border-radius: 8px;
+    border: 1px solid #3498db;
+    width: 400px;
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #aaa;
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #444;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #3498db;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    transition: transform 0.1s;
+}
+
+.control-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* Mission Log */
+#mission-log {
+    margin-top: 20px;
+    height: 150px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #eee;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 2px solid #3498db;
+    /* Hide scrollbar */
+    scrollbar-width: thin;
+}
+
+#log-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#log-list li {
+    margin-bottom: 4px;
+    opacity: 0.8;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#log-list li.warn {
+    color: #e74c3c;
+}
+
+#log-list li.info {
+    color: #3498db;
+}
+
+/* Mobile Controls */
+#mobile-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+    /* Hidden by default */
+}
+
+@media (max-width: 1024px) {
+    #mobile-controls {
+        display: block;
+    }
+}
+
+#joystick-zone {
+    position: absolute;
+    bottom: 50px;
+    left: 50px;
+    width: 120px;
+    height: 120px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    pointer-events: auto;
+}
+
+#joystick-knob {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    position: absolute;
+    top: 35px;
+    left: 35px;
+}
+
+#throttle-zone {
+    position: absolute;
+    bottom: 50px;
+    right: 50px;
+    width: 40px;
+    height: 200px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    /* Brighter border */
+    border-radius: 8px;
+    /* Less rounded */
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.5);
+    /* Darker bg */
+    backdrop-filter: blur(5px);
+}
+
+#throttle-handle {
+    width: 100%;
+    height: 30px;
+    background: linear-gradient(to bottom, #3498db, #2980b9);
+    border-radius: 2px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
+}
+
+#mobile-buttons {
+    position: absolute;
+    bottom: 50px;
+    right: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+#mobile-buttons button {
+    padding: 10px 15px;
+    font-size: 0.8rem;
+}
+
+/* SAS Buttons - Enhanced Visual Hierarchy */
+.sas-btn {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: var(--glass-bg-light);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sas-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--color-primary);
+    color: var(--color-text);
+}
+
+.sas-btn.active {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-text);
+    border-color: var(--color-primary);
+    animation: glowPulse 2s ease-in-out infinite;
+    font-weight: 600;
+}
+
+.sas-group {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+/* SAS Active Mode Indicator */
+#sas-mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--glass-bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    color: var(--color-primary);
+    border: 1px solid var(--glass-border-active);
+    margin-top: 8px;
+}
+
+#sas-mode-indicator .icon {
+    font-size: 1rem;
+}
+
+/* HUD Styles - Top Telemetry Bar */
+#hud-top-bar {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 15px 30px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    pointer-events: auto;
+    z-index: 15;
+}
+
+.hud-module {
+    text-align: center;
+}
+
+.hud-label {
+    font-size: 0.7rem;
+    color: #888;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+}
+
+.hud-value-large {
+    font-family: monospace;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.hud-value-large .unit {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+/* HUD Gauges - Bottom Left next to Navball */
+#hud-gauges {
+    position: absolute;
+    bottom: 160px;
+    left: 180px;
+    display: flex;
+    gap: 15px;
+    background: var(--glass-bg);
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    pointer-events: auto;
+}
+
+.gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.gauge-bar-bg {
+    width: 20px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    position: relative;
+}
+
+.gauge-bar-fill {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    transition: height 0.1s;
+    box-shadow: 0 0 10px currentColor;
+}
+
+.gauge-label {
+    font-size: 0.7rem;
+    color: #aaa;
+}
+
+/* SAS Controls Position Update - Enhanced */
+#sas-controls {
+    position: absolute;
+    bottom: 120px;
+    right: 20px;
+    background: var(--glass-bg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    pointer-events: auto;
+}
+
+#sas-controls .sas-title {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-align: right;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+/* ========================================
+   IMPROVEMENT #5: Collapsible Mission Log
+   ======================================== */
+#mission-log {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--glass-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    border-left: 3px solid var(--color-primary);
+    backdrop-filter: var(--glass-blur);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    width: 280px;
+    pointer-events: auto;
+    z-index: 15;
+}
+
+#mission-log h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(0, 0, 0, 0.3);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+#mission-log h3:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#log-toggle {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 2px 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: color var(--transition-fast);
+}
+
+#log-toggle:hover {
+    color: var(--color-text);
+}
+
+#mission-log.collapsed {
+    max-height: 38px;
+}
+
+#mission-log.collapsed #log-list {
+    display: none;
+}
+
+#log-list {
+    max-height: 120px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+#log-list li {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.8rem;
+}
+
+#log-list li.success {
+    color: var(--color-success);
+}
+
+#log-list li.warn {
+    color: var(--color-danger);
+}
+
+#log-list li.info {
+    color: var(--color-primary);
+}
+
+/* ========================================
+   IMPROVEMENT #2 & #9: Dynamic Buttons
+   ======================================== */
+#controls button {
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    transition: all var(--transition-normal);
+}
+
+/* Launch States */
+#launch-btn.state-launch {
+    background: linear-gradient(135deg, var(--color-danger), var(--color-danger-dark));
+    border-color: var(--color-danger-dark);
+}
+
+#launch-btn.state-abort {
+    background: linear-gradient(135deg, #ff6b6b, #c0392b);
+    border-color: #a93226;
+    animation: glowPulse 1s ease-in-out infinite;
+}
+
+#launch-btn.state-deploy {
+    background: linear-gradient(135deg, var(--color-warning), var(--color-warning-dark));
+    border-color: var(--color-warning-dark);
+    color: #000;
+}
+
+/* Color-Coded Toggle Buttons */
+#audio-btn.enabled {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+    border-color: var(--color-success-dark);
+}
+
+#audio-btn.disabled {
+    background: linear-gradient(135deg, #555, #333);
+    border-color: #444;
+    color: var(--color-text-muted);
+}
+
+#autopilot-btn.enabled {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+    border-color: var(--color-success-dark);
+    animation: successPulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   IMPROVEMENT #10: Camera Mode Panel
+   ======================================== */
+#camera-panel {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    display: flex;
+    gap: 5px;
+    background: var(--glass-bg);
+    padding: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    z-index: 15;
+}
+
+#camera-panel button {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    background: var(--glass-bg-light);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+#camera-panel button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--color-text);
+}
+
+#camera-panel button.active {
+    background: var(--color-primary);
+    color: var(--color-text);
+    border-color: var(--color-primary);
+}
+
+/* ========================================
+   IMPROVEMENT #3: VAB Stats Display
+   ======================================== */
+#vab-stats {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+}
+
+.vab-stat {
+    text-align: center;
+}
+
+.vab-stat-label {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.vab-stat-value {
+    font-size: 1.4rem;
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--color-primary);
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+}
+
+.vab-stat-value.good {
+    color: var(--color-success);
+}
+
+.vab-stat-value.warning {
+    color: var(--color-warning);
+}
+
+.vab-stat-value.bad {
+    color: var(--color-danger);
+}
+
+/* ========================================
+   IMPROVEMENT #1: Instrument Cluster
+   ======================================== */
+#instrument-cluster {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+    gap: var(--spacing-lg);
+    background: var(--glass-bg);
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+    z-index: 15;
+    pointer-events: auto;
+}
+
+#instrument-cluster .navball-container {
+    position: relative;
+}
+
+#instrument-cluster .telemetry-left,
+#instrument-cluster .telemetry-right {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+#instrument-cluster .gauge-mini {
+    width: 24px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    position: relative;
+    overflow: hidden;
+}
+
+#instrument-cluster .gauge-mini-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    transition: height 0.1s;
+}
+
+/* ========================================
+   IMPROVEMENT #7: Onboarding Tooltips
+   ======================================== */
+.tooltip-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 5000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.tooltip-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.tooltip-box {
+    background: var(--glass-bg);
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    max-width: 400px;
+    text-align: center;
+    backdrop-filter: var(--glass-blur);
+    box-shadow: 0 0 40px rgba(52, 152, 219, 0.4);
+    animation: tooltipBounce 0.5s ease;
+}
+
+@keyframes tooltipBounce {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    70% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.tooltip-box h3 {
+    color: var(--color-primary);
+    margin-top: 0;
+    font-size: 1.2rem;
+}
+
+.tooltip-box p {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.tooltip-box .key-hint {
+    display: inline-block;
+    background: var(--color-warning);
+    color: #000;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    font-weight: bold;
+    font-family: monospace;
+    margin: 0 4px;
+}
+
+.tooltip-box button {
+    margin-top: var(--spacing-md);
+    background: var(--color-primary);
+    border: none;
+    padding: 12px 30px;
+}
+
+/* ========================================
+   IMPROVEMENT #6: Orbital Trajectory
+   ======================================== */
+.orbit-marker {
+    position: absolute;
+    padding: 4px 8px;
+    background: var(--glass-bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+.orbit-marker.apoapsis {
+    color: var(--color-success);
+    border: 1px solid var(--color-success);
+}
+
+.orbit-marker.periapsis {
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger);
+}
+
+/* Enhanced Controls Help */
+#controls-help {
+    background: var(--glass-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    padding: 8px 15px;
+    font-size: 0.75rem;
+}

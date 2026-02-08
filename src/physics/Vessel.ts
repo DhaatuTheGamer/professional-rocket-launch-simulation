@@ -1,0 +1,645 @@
+/**
+ * Vessel Base Class
+ * 
+ * Abstract base for all rocket stages and debris.
+ * Implements RK4 integration for accurate orbital mechanics.
+ * 
+ * Physics model includes:
+ * - Thrust with pressure-dependent Isp
+ * - Atmospheric drag with transonic effects
+ * - Inverse-square gravity
+ * - Centrifugal acceleration for orbital motion
+ */
+
+import { IVessel, PhysicsState, Derivatives, OrbitalElements } from '../types';
+import {
+    CONFIG,
+    PIXELS_PER_METER,
+    RHO_SL,
+    SCALE_HEIGHT,
+    R_EARTH,
+    SPEED_OF_SOUND,
+    getAtmosphericDensity,
+    getGravity,
+    getTransonicDragMultiplier,
+    getMachNumber
+} from '../constants';
+import { state, addParticle } from '../state';
+import { Particle } from './Particle';
+import {
+    AerodynamicsConfig,
+    AerodynamicState,
+    AerodynamicForces,
+    DEFAULT_AERO_CONFIG,
+    calculateAerodynamicState,
+    calculateAerodynamicForces,
+    calculateAerodynamicDamageRate
+} from './Aerodynamics';
+import {
+    TPSConfig,
+    ThermalState,
+    DEFAULT_TPS_CONFIG,
+    updateThermalState,
+    getThermalDamageRate,
+    createInitialThermalState
+} from './ThermalProtection';
+import {
+    PropulsionConfig,
+    PropulsionState,
+    EngineState,
+    FULLSTACK_PROP_CONFIG,
+    createInitialPropulsionState,
+    updatePropulsionState,
+    attemptIgnition,
+    commandShutdown,
+    getIgnitionFailureMessage
+} from './Propulsion';
+
+export class Vessel implements IVessel {
+    // Position (pixels)
+    public x: number;
+    public y: number;
+
+    // Velocity (m/s)
+    public vx: number = 0;
+    public vy: number = 0;
+
+    // Orientation (radians)
+    public angle: number = 0;
+    public gimbalAngle: number = 0;
+
+    // Physical properties
+    public mass: number = 1000;
+    public w: number = 40;        // Width (pixels)
+    public h: number = 100;       // Height (pixels)
+
+    // Engine state
+    public throttle: number = 0;
+    public fuel: number = 1.0;    // 0-1 normalized
+    public active: boolean = true;
+    public maxThrust: number = 100000;
+
+    // Aerodynamics (legacy)
+    public cd: number = CONFIG.DRAG_COEFF;
+    public q: number = 0;         // Dynamic pressure
+
+    // Advanced Aerodynamics
+    public aeroConfig: AerodynamicsConfig = DEFAULT_AERO_CONFIG;
+    public aeroState: AerodynamicState | null = null;
+    public aoa: number = 0;                    // Angle of Attack (radians)
+    public stabilityMargin: number = 0;        // (CP - CoM) / length
+    public isAeroStable: boolean = true;       // CP behind CoM
+    public liftForce: number = 0;              // Current lift force (N)
+    public dragForce: number = 0;              // Current drag force (N)
+
+    // Propulsion
+    public ispVac: number = 300;
+    public ispSL: number = 280;
+
+    // State
+    public crashed: boolean = false;
+    public health: number = 100;
+    public apogee: number = 0;
+
+    // Thermal Protection System
+    public tpsConfig: TPSConfig = DEFAULT_TPS_CONFIG;
+    public thermalState: ThermalState = createInitialThermalState();
+    public skinTemp: number = 293;              // Skin temperature (K)
+    public heatShieldRemaining: number = 1.0;   // Heat shield fraction (0-1)
+    public isAblating: boolean = false;         // Currently ablating
+    public isThermalCritical: boolean = false;  // Temperature critical
+
+    // Propulsion State Machine
+    public propConfig: PropulsionConfig = FULLSTACK_PROP_CONFIG;
+    public propState: PropulsionState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    public engineState: EngineState = 'off';    // Current engine state
+    public ignitersRemaining: number = 3;       // Remaining igniter cartridges
+    public ullageSettled: boolean = true;       // Fuel settled for ignition
+    public actualThrottle: number = 0;          // Lagged throttle output
+
+    // Orbit prediction cache
+    public orbitPath: OrbitalElements[] | null = null;
+    public lastOrbitUpdate: number = 0;
+
+    /**
+     * Create a new vessel
+     * 
+     * @param x - Initial X position (pixels)
+     * @param y - Initial Y position (pixels)
+     */
+    constructor(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    /**
+     * Calculate physics derivatives for RK4 integration
+     * 
+     * @param s - Current state
+     * @param t - Current time (unused, for interface)
+     * @param dt - Time step
+     * @returns Derivatives for integration
+     */
+    protected getDerivatives(s: PhysicsState, t: number, dt: number): Derivatives {
+        const altitude = (state.groundY - s.y * PIXELS_PER_METER - this.h) / PIXELS_PER_METER;
+        const safeAlt = Math.max(0, altitude);
+
+        // Atmospheric density
+        const rho = getAtmosphericDensity(safeAlt);
+
+        // Velocity magnitude
+        const vSq = s.vx * s.vx + s.vy * s.vy;
+        const v = Math.sqrt(vSq);
+        const q = 0.5 * rho * vSq;
+        const mach = getMachNumber(v);
+
+        // Calculate aerodynamic state (AoA, CP, CoM, stability)
+        const vehicleLengthM = this.h / PIXELS_PER_METER;
+        const fuelFraction = this.fuel;  // 0-1 normalized fuel level
+
+        const aeroState = calculateAerodynamicState(
+            this.aeroConfig,
+            s.vx,
+            s.vy,
+            this.angle,
+            fuelFraction,
+            vehicleLengthM,
+            mach
+        );
+
+        // Calculate aerodynamic forces (lift and drag)
+        const aeroForces = calculateAerodynamicForces(
+            this.aeroConfig,
+            aeroState,
+            safeAlt,
+            v,
+            s.vx,
+            s.vy
+        );
+
+        // Apply transonic drag multiplier to base drag
+        const machMult = getTransonicDragMultiplier(mach);
+        const adjustedDragX = aeroForces.forceX * machMult;
+        const adjustedDragY = aeroForces.forceY * machMult;
+
+        // Gravity (inverse square law)
+        const realRad = safeAlt + R_EARTH;
+        const g = getGravity(safeAlt);
+
+        // Initialize forces
+        let fx = 0;
+        let fy = s.mass * g;  // Weight (positive = downward in our coordinate system)
+
+        // Centrifugal acceleration (for orbital motion)
+        const f_cent = (s.mass * s.vx * s.vx) / realRad;
+        fy -= f_cent;
+
+        // Add aerodynamic forces (lift and drag combined)
+        fx += adjustedDragX;
+        fy += adjustedDragY;
+
+        // Thrust (uses propulsion state machine for realistic spool-up)
+        let flowRate = 0;
+        if (this.active && this.actualThrottle > 0 && this.fuel > 0) {
+            // Pressure-dependent Isp
+            const pRatio = rho / RHO_SL;
+            const isp = this.ispVac + (this.ispSL - this.ispVac) * pRatio;
+            const thrust = this.actualThrottle * this.maxThrust * (isp / this.ispVac);
+
+            // Thrust direction based on vessel angle
+            fx += Math.sin(this.angle) * thrust;
+            fy -= Math.cos(this.angle) * thrust;
+
+            // Fuel consumption rate (kg/s)
+            flowRate = (this.actualThrottle * this.maxThrust) / (9.8 * this.ispVac);
+        }
+
+        // Store aerodynamic state for telemetry (will be updated after integration)
+        this.aoa = aeroState.aoa;
+        this.stabilityMargin = aeroState.stabilityMargin;
+        this.isAeroStable = aeroState.isStable;
+        this.liftForce = aeroForces.lift;
+        this.dragForce = aeroForces.drag;
+        this.aeroState = aeroState;
+
+        return {
+            dx: s.vx,
+            dy: s.vy,
+            dvx: fx / s.mass,
+            dvy: fy / s.mass,
+            dmass: -flowRate
+        };
+    }
+
+    /**
+     * Apply physics update using RK4 integration
+     * 
+     * @param dt - Time step (seconds)
+     * @param keys - Input keys (legacy compatibility)
+     */
+    applyPhysics(dt: number, keys: Record<string, boolean>): void {
+        if (this.crashed) return;
+
+        // Apply control input
+        const isBooster = this.constructor.name === 'Booster';
+        this.control(dt, keys, isBooster);
+
+        // Run physics integration
+        this.updatePhysics(dt);
+    }
+
+    /**
+     * Control input handling (can be overridden by subclasses)
+     */
+    protected control(dt: number, keys: Record<string, boolean>, isBooster: boolean): void {
+        if (state.autopilotEnabled && isBooster) {
+            this.runAutopilot(dt);
+        } else {
+            let targetGimbal = 0;
+            if (keys['ArrowLeft']) targetGimbal = 0.2;
+            else if (keys['ArrowRight']) targetGimbal = -0.2;
+
+            this.gimbalAngle += (targetGimbal - this.gimbalAngle) * 10 * dt;
+
+            if (Math.abs(this.gimbalAngle) > 0.001) {
+                this.angle -= this.gimbalAngle * 2.0 * dt;
+            }
+        }
+    }
+
+    /**
+     * Autopilot (can be overridden by subclasses like Booster)
+     */
+    protected runAutopilot(dt: number): void {
+        // Default: no autopilot
+    }
+
+    /**
+     * RK4 integration step
+     */
+    protected updatePhysics(dt: number): void {
+        if (this.crashed) return;
+
+        // Convert to meters for physics
+        const stateDict: PhysicsState = {
+            x: this.x / PIXELS_PER_METER,
+            y: this.y / PIXELS_PER_METER,
+            vx: this.vx,
+            vy: this.vy,
+            mass: this.mass
+        };
+
+        // RK4 evaluation helper
+        const evaluate = (s: PhysicsState, t: number, dt: number, d: Derivatives | null): Derivatives => {
+            const tempState: PhysicsState = {
+                x: s.x + (d ? d.dx * dt : 0),
+                y: s.y + (d ? d.dy * dt : 0),
+                vx: s.vx + (d ? d.dvx * dt : 0),
+                vy: s.vy + (d ? d.dvy * dt : 0),
+                mass: s.mass
+            };
+            return this.getDerivatives(tempState, t, dt);
+        };
+
+        // RK4 integration
+        const k1 = evaluate(stateDict, 0, 0, null);
+        const k2 = evaluate(stateDict, 0, dt * 0.5, k1);
+        const k3 = evaluate(stateDict, 0, dt * 0.5, k2);
+        const k4 = evaluate(stateDict, 0, dt, k3);
+
+        // Weighted average
+        const dxdt = (k1.dx + 2 * k2.dx + 2 * k3.dx + k4.dx) / 6;
+        const dydt = (k1.dy + 2 * k2.dy + 2 * k3.dy + k4.dy) / 6;
+        const dvxdt = (k1.dvx + 2 * k2.dvx + 2 * k3.dvx + k4.dvx) / 6;
+        const dvydt = (k1.dvy + 2 * k2.dvy + 2 * k3.dvy + k4.dvy) / 6;
+
+        // Apply integration result
+        this.vx += dvxdt * dt;
+        this.vy += dvydt * dt;
+        this.x += dxdt * dt * PIXELS_PER_METER;
+        this.y += dydt * dt * PIXELS_PER_METER;
+
+        // Fuel consumption (uses actual throttle, not commanded)
+        if (this.actualThrottle > 0 && this.fuel > 0) {
+            const flowRate = (this.actualThrottle * this.maxThrust) / (9.8 * this.ispVac);
+            this.fuel -= (flowRate / CONFIG.FUEL_MASS) * dt;
+            this.mass -= flowRate * dt;
+        }
+
+        // Update dynamic pressure
+        const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
+        const rho = getAtmosphericDensity(altitude);
+        const v = Math.sqrt(this.vx ** 2 + this.vy ** 2);
+        this.q = 0.5 * rho * v * v;
+
+        // Update propulsion state (spool-up/down, ullage, igniters)
+        this.updatePropulsionState(v, altitude, dt);
+
+        // Update thermal state
+        this.updateThermalState(v, Math.max(0, altitude), dt);
+
+        // Aerodynamic stress damage
+        this.checkAerodynamicStress(v, altitude);
+
+        // Ground collision
+        this.checkGroundCollision();
+    }
+
+    /**
+     * Update thermal protection system state
+     */
+    private updateThermalState(velocity: number, altitude: number, dt: number): void {
+        // Update thermal state using TPS module
+        this.thermalState = updateThermalState(
+            this.tpsConfig,
+            this.thermalState,
+            velocity,
+            altitude,
+            this.aoa,
+            dt
+        );
+
+        // Update public properties for HUD display
+        this.skinTemp = this.thermalState.skinTemp;
+        this.heatShieldRemaining = this.thermalState.heatShieldRemaining;
+        this.isAblating = this.thermalState.isAblating;
+        this.isThermalCritical = this.thermalState.isCritical;
+
+        // Apply thermal damage to health
+        const thermalDamageRate = getThermalDamageRate(this.thermalState, this.tpsConfig);
+        if (thermalDamageRate > 0) {
+            this.health -= thermalDamageRate * dt;
+
+            // Spawn debris when taking thermal damage
+            if (Math.random() > 0.9) {
+                addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+            }
+
+            // Log thermal warning
+            if (this.isThermalCritical && state.missionLog) {
+                state.missionLog.log(
+                    `THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`,
+                    "warn"
+                );
+            }
+        }
+
+        // Structural failure from thermal overload
+        if (this.health <= 0 && this.thermalState.thermalDamage > 50) {
+            if (state.missionLog) {
+                state.missionLog.log("STRUCTURAL FAILURE: THERMAL OVERLOAD", "warn");
+            }
+            this.explode();
+        }
+    }
+
+    /**
+     * Update propulsion state machine
+     * Handles engine spool-up/down, ullage, and igniter management
+     */
+    private updatePropulsionState(velocity: number, altitude: number, dt: number): void {
+        // Calculate current acceleration for ullage check
+        const g = getGravity(Math.max(0, altitude));
+        const currentAccel = this.actualThrottle > 0
+            ? (this.actualThrottle * this.maxThrust / this.mass) - g
+            : g;  // On ground, gravity settles fuel
+
+        // Update propulsion state
+        this.propState = updatePropulsionState(
+            this.propState,
+            this.propConfig,
+            this.throttle,  // commanded throttle
+            this.fuel > 0,
+            Math.abs(currentAccel),
+            dt
+        );
+
+        // Copy state to public properties for HUD display
+        this.engineState = this.propState.engineState;
+        this.ignitersRemaining = this.propState.ignitersRemaining;
+        this.ullageSettled = this.propState.ullageSettled;
+        this.actualThrottle = this.propState.actualThrottle;
+
+        // Log ignition failures
+        const failureMsg = getIgnitionFailureMessage(this.propState);
+        if (failureMsg && state.missionLog) {
+            state.missionLog.log(failureMsg, "warn");
+            // Reset the failure message after logging
+            this.propState.lastIgnitionResult = 'none';
+        }
+    }
+
+    /**
+     * Check for aerodynamic overstress using advanced stability analysis
+     */
+    private checkAerodynamicStress(velocity: number, altitude: number): void {
+        // Use the aerodynamic state if available for advanced damage calculation
+        if (this.aeroState) {
+            const damageRate = calculateAerodynamicDamageRate(this.aeroState, this.q);
+
+            if (damageRate > 0) {
+                // Apply damage based on rate (per second, scaled to frame time)
+                this.health -= damageRate * (1 / 60); // Assuming 60 FPS
+
+                // Spawn debris particles when taking damage
+                if (Math.random() > 0.8) {
+                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                }
+
+                // Log instability warning once when stability margin goes negative
+                if (!this.isAeroStable && this.q > 5000 && state.missionLog) {
+                    state.missionLog.log(
+                        `STABILITY WARNING: AoA=${(Math.abs(this.aoa) * 180 / Math.PI).toFixed(1)}° Margin=${(this.stabilityMargin * 100).toFixed(1)}%`,
+                        "warn"
+                    );
+                }
+            }
+        } else {
+            // Fallback to legacy damage calculation
+            let alpha = 0;
+            if (velocity > 10) {
+                const velAngle = Math.atan2(this.vx, -this.vy);
+                alpha = Math.abs(this.angle - velAngle);
+                if (alpha > Math.PI) alpha = Math.PI * 2 - alpha;
+            }
+
+            if (this.q > 5000 && alpha > 0.2) {
+                this.health -= 100 * (1 / 60);
+                if (Math.random() > 0.8) {
+                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                }
+            }
+        }
+
+        if (this.health <= 0) {
+            if (state.missionLog) {
+                state.missionLog.log("STRUCTURAL FAILURE DUE TO AERO FORCES", "warn");
+            }
+            this.explode();
+        }
+    }
+
+    /**
+     * Check for ground collision
+     */
+    private checkGroundCollision(): void {
+        if (this.y + this.h > state.groundY) {
+            this.y = state.groundY - this.h;
+
+            // Check landing velocity and angle
+            if (this.vy > 15 || Math.abs(this.angle) > 0.3) {
+                this.explode();
+            } else {
+                // Successful landing
+                this.vy = 0;
+                this.vx = 0;
+                this.throttle = 0;
+            }
+        }
+    }
+
+    /**
+     * Explode the vessel
+     */
+    explode(): void {
+        if (this.crashed) return;
+
+        this.crashed = true;
+        this.active = false;
+        this.throttle = 0;
+
+        if (state.audio) {
+            state.audio.playExplosion();
+        }
+
+        // Spawn explosion particles
+        for (let i = 0; i < 30; i++) {
+            addParticle(new Particle(
+                this.x + Math.random() * 20 - 10,
+                this.y + this.h - Math.random() * 20,
+                'fire'
+            ));
+            addParticle(new Particle(
+                this.x,
+                this.y + this.h / 2,
+                'debris'
+            ));
+        }
+    }
+
+    /**
+     * Spawn exhaust particles
+     * 
+     * @param timeScale - Time warp multiplier
+     */
+    spawnExhaust(timeScale: number): void {
+        if (this.throttle <= 0 || this.fuel <= 0 || this.crashed) return;
+
+        const count = Math.ceil(this.throttle * 5 * timeScale);
+        const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
+        const vacuumFactor = Math.min(Math.max(0, altitude) / 30000, 1.0);
+
+        // Exhaust spreads more in vacuum
+        const spreadBase = 0.1 + (vacuumFactor * 1.5);
+
+        // Exhaust position (engine nozzle)
+        const exX = this.x - Math.sin(this.angle) * this.h;
+        const exY = this.y + Math.cos(this.angle) * this.h;
+        const ejectionSpeed = 30 + (this.throttle * 20);
+
+        for (let i = 0; i < count; i++) {
+            const particleAngle = this.angle + Math.PI + (Math.random() - 0.5) * spreadBase;
+            const ejectVx = Math.sin(particleAngle) * ejectionSpeed;
+            const ejectVy = -Math.cos(particleAngle) * ejectionSpeed;
+
+            const p = new Particle(exX, exY, 'fire', this.vx + ejectVx, this.vy + ejectVy);
+            if (vacuumFactor > 0.8) {
+                p.decay *= 0.5; // Particles last longer in vacuum
+            }
+            addParticle(p);
+
+            // Add smoke at lower altitudes
+            if (Math.random() > 0.5 && vacuumFactor < 0.5) {
+                addParticle(new Particle(exX, exY, 'smoke', this.vx + ejectVx, this.vy + ejectVy));
+            }
+        }
+    }
+
+    /**
+     * Draw plasma heating effects based on skin temperature
+     */
+    protected drawPlasma(ctx: CanvasRenderingContext2D): void {
+        // Start showing plasma effects above 500K (227°C)
+        const plasmaThreshold = 500;
+
+        if (this.skinTemp > plasmaThreshold) {
+            // Intensity based on temperature (500K to 2000K range)
+            const tempRange = this.skinTemp - plasmaThreshold;
+            const intensity = Math.min(tempRange / 1500, 0.9);
+
+            ctx.save();
+            ctx.globalCompositeOperation = 'screen';
+
+            // Color shifts from orange to white with temperature
+            const r = 255;
+            const g = Math.floor(100 + intensity * 155); // 100 -> 255
+            const b = Math.floor(50 + intensity * 200);  // 50 -> 250
+
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${intensity})`;
+            ctx.beginPath();
+            ctx.arc(0, this.h, 20 + Math.random() * 10 * intensity, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Nose cone glow
+            if (intensity > 0.3) {
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${intensity * 0.6})`;
+                ctx.beginPath();
+                ctx.arc(0, -10, 15 + Math.random() * 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Body streamers at high temps
+            if (intensity > 0.2) {
+                ctx.fillStyle = `rgba(255, 200, 100, ${intensity * 0.4})`;
+                ctx.fillRect(-this.w / 2 - 5, 20, this.w + 10, this.h - 20);
+            }
+
+            // Ablation particles when shield is active
+            if (this.isAblating && Math.random() > 0.7) {
+                ctx.fillStyle = `rgba(255, 255, 200, 0.8)`;
+                const sparkX = (Math.random() - 0.5) * this.w;
+                const sparkY = Math.random() * this.h;
+                ctx.beginPath();
+                ctx.arc(sparkX, sparkY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+    }
+
+    /**
+     * Draw shockwave effects
+     */
+    protected drawShockwave(ctx: CanvasRenderingContext2D): void {
+        if (this.q > 5000 && this.vy < -50) {
+            const intensity = Math.min((this.q - 5000) / 10000, 0.5);
+            ctx.save();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${intensity})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-50, 40);
+            ctx.quadraticCurveTo(0, -80, 50, 40);
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    /**
+     * Draw the vessel (to be overridden by subclasses)
+     */
+    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+        // Base implementation does nothing
+        // Subclasses implement specific rendering
+    }
+}
