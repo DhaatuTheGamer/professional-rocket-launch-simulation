@@ -5,7 +5,7 @@
  * Shows altitude and velocity graphs.
  */
 
-import { TelemetryDataPoint } from '../types';
+import type { TelemetryDataPoint } from '../types/index.ts';
 
 export class TelemetrySystem {
     /** Canvas element */
@@ -66,8 +66,13 @@ export class TelemetrySystem {
         if (this.data.length < 2) return;
 
         // Find max values for scaling
-        const maxAlt = Math.max(...this.data.map(d => d.alt), 100);
-        const maxVel = Math.max(...this.data.map(d => d.vel), 100);
+        let maxAlt = 100;
+        let maxVel = 100;
+
+        for (const d of this.data) {
+            if (d.alt > maxAlt) maxAlt = d.alt;
+            if (d.vel > maxVel) maxVel = d.vel;
+        }
 
         // Draw altitude line (green)
         this.ctx.lineWidth = 2;
