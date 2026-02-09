@@ -12,6 +12,8 @@ import { SASModes } from './utils/SAS';
 import { FullStack } from './physics/RocketComponents';
 import { ScriptEditor } from './ui/ScriptEditor';
 import { exportFlightData } from './telemetry/TelemetryExporter';
+import { VABEditor } from './ui/VABEditor';
+import { VehicleBlueprint, calculateStats } from './vab/VehicleBlueprint';
 
 // Create and initialize game
 const game = new Game();
@@ -19,6 +21,21 @@ game.init();
 
 // Create Script Editor UI for Flight Computer
 const scriptEditor = new ScriptEditor(game.flightComputer);
+
+// Create VAB Editor with launch callback
+const vabEditor = new VABEditor('vab-modal', (blueprint: VehicleBlueprint) => {
+    // Apply blueprint stats to CONFIG for now (future: ModularVessel)
+    const stats = calculateStats(blueprint);
+    CONFIG.FUEL_MASS = stats.fuelMass;
+
+    // Hide splash and reset
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) splashScreen.style.display = 'none';
+
+    game.reset();
+    game.missionLog.log(`${blueprint.name} configured - ΔV: ${stats.totalDeltaV.toFixed(0)} m/s`, "info");
+    showOnboarding();
+});
 
 // ========================================
 // UI/UX IMPROVEMENTS - Event Listeners
@@ -49,75 +66,7 @@ document.getElementById('start-btn')?.addEventListener('click', () => {
 });
 
 document.getElementById('open-vab-btn')?.addEventListener('click', () => {
-    const vab = document.getElementById('vab-modal');
-    if (vab) vab.style.display = 'flex';
-    updateVABStats();
-});
-
-// --- IMPROVEMENT #3: VAB Stats Calculation ---
-function updateVABStats(): void {
-    const fuelInput = document.getElementById('rng-fuel') as HTMLInputElement | null;
-    const thrustInput = document.getElementById('rng-thrust') as HTMLInputElement | null;
-
-    if (!fuelInput || !thrustInput) return;
-
-    const fuelMass = parseFloat(fuelInput.value) * 1000; // kg
-    const dryMass = 5000; // kg (fixed dry mass)
-    const thrust = parseFloat(thrustInput.value) * 1000000; // N
-    const isp = 300; // seconds (specific impulse)
-    const g = 9.81;
-
-    // Delta-V = Isp * g * ln(m0 / mf)
-    const m0 = fuelMass + dryMass;
-    const mf = dryMass;
-    const deltaV = isp * g * Math.log(m0 / mf);
-
-    // TWR = Thrust / (Weight) = Thrust / (m0 * g)
-    const twr = thrust / (m0 * g);
-
-    // Update display
-    const dvElement = document.getElementById('vab-dv');
-    const twrElement = document.getElementById('vab-twr');
-
-    if (dvElement) {
-        dvElement.textContent = Math.round(deltaV).toLocaleString();
-        dvElement.className = 'vab-stat-value ' + (deltaV > 3000 ? 'good' : deltaV > 2000 ? 'warning' : 'bad');
-    }
-    if (twrElement) {
-        twrElement.textContent = twr.toFixed(2);
-        twrElement.className = 'vab-stat-value ' + (twr > 1.2 ? 'good' : twr > 1.0 ? 'warning' : 'bad');
-    }
-}
-
-// VAB Slider Updates with Stats Recalculation
-['rng-fuel', 'rng-thrust', 'rng-drag'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement;
-        const valId = 'val-' + id.replace('rng-', '');
-        const valElement = document.getElementById(valId);
-        if (valElement) valElement.textContent = target.value;
-        updateVABStats();
-    });
-});
-
-// VAB Launch Button
-document.getElementById('vab-launch-btn')?.addEventListener('click', () => {
-    const fuelInput = document.getElementById('rng-fuel') as HTMLInputElement | null;
-    const thrustInput = document.getElementById('rng-thrust') as HTMLInputElement | null;
-    const dragInput = document.getElementById('rng-drag') as HTMLInputElement | null;
-
-    if (fuelInput) CONFIG.FUEL_MASS = parseFloat(fuelInput.value) * 1000;
-    if (thrustInput) CONFIG.MAX_THRUST_BOOSTER = parseFloat(thrustInput.value) * 1000000;
-    if (dragInput) CONFIG.DRAG_COEFF = parseFloat(dragInput.value);
-
-    const vabModal = document.getElementById('vab-modal');
-    const splashScreen = document.getElementById('splash-screen');
-    if (vabModal) vabModal.style.display = 'none';
-    if (splashScreen) splashScreen.style.display = 'none';
-
-    game.reset();
-    game.missionLog.log("Custom Vehicle Configured", "info");
-    showOnboarding();
+    vabEditor.show();
 });
 
 // --- IMPROVEMENT #2: Dynamic Action Buttons ---

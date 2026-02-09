@@ -43,7 +43,7 @@
 **Proposal:** Record all flight variables (Alt, Vel, Accel, Q, Throttle, Gimbal, Mass) at 20Hz. Export to **CSV/JSON** after flight.
 **Practicality:** Essential for post-flight analysis. Engineers can plot actual performance against predicted models to refine drag coefficients and engine efficiency.
 
-### 7. Modular Vehicle Assembly (VAB)
+### 7. Modular Vehicle Assembly (VAB) [DONE]
 **Current Status:** Pre-defined "FullStack", "Booster", "UpperStage" classes.
 **Proposal:** Refactor to a **Component-Entity-System**. Allow users to stack tanks, engines, and avionics arbitrarily in the VAB.
 **Practicality:** Allows rapid prototyping of different configurations (e.g., adding SRBs, changing second stage engine) to find the optimal design for a specific payload.

@@ -1,6 +1,6 @@
-# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.6.0)
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.7.0)
 
-Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, autonomous guidance, telemetry recording, and Kerbal Space Program-inspired controls.
+Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
@@ -16,6 +16,25 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 - **Inverse-Square Gravity** - Realistic orbital mechanics
 - **Pressure-Dependent Isp** - Engine efficiency varies with altitude
 - **Component Reliability** - Probabilistic failure modes (engine flameout, structural fatigue, sensor glitches)
+
+### Modular Vehicle Assembly (v1.7.0)
+Build custom rockets from modular parts in the VAB:
+
+**Parts Catalog:**
+| Category | Parts |
+|----------|-------|
+| Engines | Merlin 1D, Merlin Vacuum, Raptor 2, RL-10 |
+| Tanks | Small (5t), Medium (15t), Large (30t), Jumbo (50t) |
+| Avionics | Basic (SAS), Advanced (SAS + RCS) |
+| Structure | Payload Fairings (S/L), Stage Decouplers |
+| Boosters | SRBs (Small, Large) |
+
+**Features:**
+- Drag-and-drop part stacking
+- Multi-stage configuration with decouplers
+- Real-time Delta-V and TWR calculation
+- Save/Load blueprints to localStorage
+- Preset rockets (Falcon 9, Simple Rocket)
 
 ### Rocket Stages
 | Stage | Description |
@@ -48,7 +67,7 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 - **Telemetry** - Real-time altitude/velocity graphs
 - **Advanced HUD** - Displays AoA, Stability Margin, Skin Temp, and TPS Status
 - **Mission Log** - Timestamped event logging
-- **VAB** - Configure rocket before launch (fuel, thrust, drag)
+- **Modular VAB** - Build custom rockets from 15+ parts with real-time stats
 
 ## Quick Start
 

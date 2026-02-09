@@ -10,44 +10,13 @@
 
 <body>
 
-    <div id="vab-modal" style="display:none;">
-        <div class="content">
-            <h2>⚙️ Vehicle Assembly Building</h2>
-            <div class="control-group">
-                <label>Fuel Mass (tons): <span id="val-fuel">30</span></label>
-                <input type="range" id="rng-fuel" min="10" max="100" value="30">
-            </div>
-            <div class="control-group">
-                <label>Max Thrust (MN): <span id="val-thrust">2.0</span></label>
-                <input type="range" id="rng-thrust" min="1.0" max="5.0" step="0.1" value="2.0">
-            </div>
-            <div class="control-group">
-                <label>Aerodynamics (Cd): <span id="val-drag">0.5</span></label>
-                <input type="range" id="rng-drag" min="0.1" max="1.0" step="0.1" value="0.5">
-            </div>
-
-            <!-- IMPROVEMENT #3: VAB Stats Display -->
-            <div id="vab-stats">
-                <div class="vab-stat">
-                    <div class="vab-stat-label">Delta-V</div>
-                    <div class="vab-stat-value" id="vab-dv">3,200</div>
-                    <div class="vab-stat-label">m/s</div>
-                </div>
-                <div class="vab-stat">
-                    <div class="vab-stat-label">TWR</div>
-                    <div class="vab-stat-value" id="vab-twr">1.45</div>
-                    <div class="vab-stat-label">ratio</div>
-                </div>
-            </div>
-
-            <button id="vab-launch-btn" class="primary large">GO FOR LAUNCH</button>
-        </div>
-    </div>
+    <!-- VAB Modal - Content rendered by VABEditor.ts -->
+    <div id="vab-modal"></div>
 
     <div id="splash-screen">
         <div class="content">
             <h1>DeltaV Lab <span
-                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v1.6.0</span>
+                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v1.7.0</span>
             </h1>
             <p class="subtitle">Engineering-Grade Spaceflight Simulation</p>
 
