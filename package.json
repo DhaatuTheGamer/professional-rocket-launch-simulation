@@ -7,7 +7,8 @@
         "build": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife",
         "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --watch",
         "serve": "npx http-server . -p 8080 -c-1",
-        "dev": "npm run serve"
+        "dev": "npm run serve",
+        "test": "node --experimental-strip-types tests/PIDController.test.ts"
     },
     "devDependencies": {
         "typescript": "^5.3.3",
