@@ -90,6 +90,24 @@ export class Game {
     private bloomCanvas: HTMLCanvasElement;
     private bloomCtx: CanvasRenderingContext2D;
 
+    // HUD element cache
+    private hudWindSpeed: HTMLElement | null = null;
+    private hudWindDir: HTMLElement | null = null;
+    private hudTimeOfDay: HTMLElement | null = null;
+    private hudLaunchStatus: HTMLElement | null = null;
+    private hudMaxQ: HTMLElement | null = null;
+    private hudAlt: HTMLElement | null = null;
+    private hudVel: HTMLElement | null = null;
+    private hudApogee: HTMLElement | null = null;
+    private gaugeFuel: HTMLElement | null = null;
+    private gaugeThrust: HTMLElement | null = null;
+    private hudAoa: HTMLElement | null = null;
+    private hudStability: HTMLElement | null = null;
+    private hudSkinTemp: HTMLElement | null = null;
+    private hudTpsStatus: HTMLElement | null = null;
+    private hudEngineStatus: HTMLElement | null = null;
+    private hudIgniters: HTMLElement | null = null;
+
     constructor() {
         // Get canvas
         const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -142,6 +160,30 @@ export class Game {
         (window as any).navball = this.navball;
         (window as any).missionLog = this.missionLog;
         (window as any).audio = this.audio;
+
+        this.initHUDCache();
+    }
+
+    /**
+     * Initialize HUD element cache
+     */
+    private initHUDCache(): void {
+        this.hudWindSpeed = document.getElementById('hud-wind-speed');
+        this.hudWindDir = document.getElementById('hud-wind-dir');
+        this.hudTimeOfDay = document.getElementById('hud-time-of-day');
+        this.hudLaunchStatus = document.getElementById('hud-launch-status');
+        this.hudMaxQ = document.getElementById('hud-maxq-warning');
+        this.hudAlt = document.getElementById('hud-alt');
+        this.hudVel = document.getElementById('hud-vel');
+        this.hudApogee = document.getElementById('hud-apogee');
+        this.gaugeFuel = document.getElementById('gauge-fuel');
+        this.gaugeThrust = document.getElementById('gauge-thrust');
+        this.hudAoa = document.getElementById('hud-aoa');
+        this.hudStability = document.getElementById('hud-stability');
+        this.hudSkinTemp = document.getElementById('hud-skin-temp');
+        this.hudTpsStatus = document.getElementById('hud-tps-status');
+        this.hudEngineStatus = document.getElementById('hud-engine-status');
+        this.hudIgniters = document.getElementById('hud-igniters');
     }
 
     /**
@@ -362,10 +404,10 @@ export class Game {
      * Update environment HUD elements
      */
     private updateEnvironmentHUD(envState: import('../physics/Environment').EnvironmentState): void {
-        const hudWindSpeed = document.getElementById('hud-wind-speed');
-        const hudWindDir = document.getElementById('hud-wind-dir');
-        const hudTimeOfDay = document.getElementById('hud-time-of-day');
-        const hudLaunchStatus = document.getElementById('hud-launch-status');
+        const hudWindSpeed = this.hudWindSpeed;
+        const hudWindDir = this.hudWindDir;
+        const hudTimeOfDay = this.hudTimeOfDay;
+        const hudLaunchStatus = this.hudLaunchStatus;
 
         if (hudWindSpeed) {
             const speed = Math.round(envState.surfaceWindSpeed);
@@ -402,7 +444,7 @@ export class Game {
 
             // Add Max-Q warning
             if (envState.maxQWindWarning) {
-                const hudMaxQ = document.getElementById('hud-maxq-warning');
+                const hudMaxQ = this.hudMaxQ;
                 if (hudMaxQ) {
                     hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
                     hudMaxQ.style.display = 'block';
@@ -615,13 +657,13 @@ export class Game {
             : 0);
 
         // Update DOM HUD
-        const hudAlt = document.getElementById('hud-alt');
-        const hudVel = document.getElementById('hud-vel');
-        const hudApogee = document.getElementById('hud-apogee');
-        const gaugeFuel = document.getElementById('gauge-fuel');
-        const gaugeThrust = document.getElementById('gauge-thrust');
-        const hudAoa = document.getElementById('hud-aoa');
-        const hudStability = document.getElementById('hud-stability');
+        const hudAlt = this.hudAlt;
+        const hudVel = this.hudVel;
+        const hudApogee = this.hudApogee;
+        const gaugeFuel = this.gaugeFuel;
+        const gaugeThrust = this.gaugeThrust;
+        const hudAoa = this.hudAoa;
+        const hudStability = this.hudStability;
 
         if (hudAlt) hudAlt.textContent = (alt / 1000).toFixed(1);
         if (hudVel) hudVel.textContent = Math.floor(vel).toString();
@@ -656,8 +698,8 @@ export class Game {
         }
 
         // Thermal protection system display
-        const hudSkinTemp = document.getElementById('hud-skin-temp');
-        const hudTpsStatus = document.getElementById('hud-tps-status');
+        const hudSkinTemp = this.hudSkinTemp;
+        const hudTpsStatus = this.hudTpsStatus;
 
         if (hudSkinTemp) {
             // Convert from Kelvin to Celsius
@@ -694,8 +736,8 @@ export class Game {
         }
 
         // Propulsion system display
-        const hudEngineStatus = document.getElementById('hud-engine-status');
-        const hudIgniters = document.getElementById('hud-igniters');
+        const hudEngineStatus = this.hudEngineStatus;
+        const hudIgniters = this.hudIgniters;
 
         if (hudEngineStatus) {
             const state = this.trackedEntity.engineState;
