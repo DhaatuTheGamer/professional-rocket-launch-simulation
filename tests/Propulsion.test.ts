@@ -137,6 +137,28 @@ function runTests() {
     assert(result.lastIgnitionResult === 'success', "Should report success");
 
 
+    // E. Igniter Depletion Edge Cases
+    console.log("  - Testing Igniter Depletion Edge Cases");
+
+    // Case 1: Exactly 0 igniters
+    let depletionState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    depletionState.ignitersRemaining = 0;
+    // Ensure other conditions are met
+    depletionState.ullageSettled = true;
+
+    let depletionResult = attemptIgnition(depletionState, FULLSTACK_PROP_CONFIG, true);
+    assert(depletionResult.engineState === 'off', "Should not ignite with 0 igniters");
+    assert(depletionResult.lastIgnitionResult === 'no_igniters', "Should report no_igniters");
+    assert(depletionResult.ignitersRemaining === 0, "Igniter count should remain 0 (not become negative)");
+
+    // Case 2: Negative igniters (should not happen in normal operation but good for robustness)
+    depletionState.ignitersRemaining = -1;
+    depletionResult = attemptIgnition(depletionState, FULLSTACK_PROP_CONFIG, true);
+    assert(depletionResult.engineState === 'off', "Should not ignite with negative igniters");
+    assert(depletionResult.lastIgnitionResult === 'no_igniters', "Should report no_igniters for negative count");
+    assert(depletionResult.ignitersRemaining === -1, "Igniter count should remain unchanged (-1)");
+
+
     // 4. State Transitions (Full Cycle)
     console.log("  - Testing State Transitions (Off -> Start -> Run -> Shutdown -> Off)");
 
