@@ -1,0 +1,119 @@
+
+import { performance } from 'perf_hooks';
+
+// Mock HTMLElement
+class MockHTMLElement {
+    textContent: string = '';
+    style: { color: string; display: string; className: string } = { color: '', display: '', className: '' };
+    className: string = '';
+}
+
+// Mock document
+const mockDocument = {
+    elements: new Map<string, MockHTMLElement>(),
+    getElementById: (id: string) => {
+        if (!mockDocument.elements.has(id)) {
+            mockDocument.elements.set(id, new MockHTMLElement());
+        }
+        return mockDocument.elements.get(id);
+    }
+};
+
+// Global override (simulated for the test scope)
+(global as any).document = mockDocument;
+
+// Mock Game class subset
+class HUDUpdater {
+    // Cache
+    hudWindSpeed: MockHTMLElement | null = null;
+    hudWindDir: MockHTMLElement | null = null;
+    hudTimeOfDay: MockHTMLElement | null = null;
+    hudLaunchStatus: MockHTMLElement | null = null;
+    hudMaxQ: MockHTMLElement | null = null;
+
+    lastHUDState = {
+        windSpeed: -1,
+        windDir: '',
+        timeOfDay: '',
+        launchStatus: '',
+        maxQWarning: false
+    };
+
+    constructor() {
+        this.initHUDCache();
+    }
+
+    initHUDCache() {
+        this.hudWindSpeed = document.getElementById('hud-wind-speed');
+        this.hudWindDir = document.getElementById('hud-wind-dir');
+        this.hudTimeOfDay = document.getElementById('hud-time-of-day');
+        this.hudLaunchStatus = document.getElementById('hud-launch-status');
+        this.hudMaxQ = document.getElementById('hud-maxq-warning');
+    }
+
+    // Inefficient method (Current implementation)
+    updateInefficient(envState: any) {
+        const hudWindSpeed = document.getElementById('hud-wind-speed');
+        const hudWindDir = document.getElementById('hud-wind-dir');
+        const hudTimeOfDay = document.getElementById('hud-time-of-day');
+        const hudLaunchStatus = document.getElementById('hud-launch-status');
+        const last = this.lastHUDState;
+
+        if (hudWindSpeed) {
+            const speed = Math.round(envState.surfaceWindSpeed);
+            if (last.windSpeed !== speed) {
+                last.windSpeed = speed;
+                hudWindSpeed.textContent = speed + ' m/s';
+            }
+        }
+        // ... (simplified logic for benchmark)
+    }
+
+    // Optimized method (Proposed implementation)
+    updateOptimized(envState: any) {
+        const hudWindSpeed = this.hudWindSpeed;
+        const hudWindDir = this.hudWindDir;
+        const hudTimeOfDay = this.hudTimeOfDay;
+        const hudLaunchStatus = this.hudLaunchStatus;
+        const last = this.lastHUDState;
+
+        if (hudWindSpeed) {
+            const speed = Math.round(envState.surfaceWindSpeed);
+            if (last.windSpeed !== speed) {
+                last.windSpeed = speed;
+                hudWindSpeed.textContent = speed + ' m/s';
+            }
+        }
+    }
+}
+
+// Benchmark
+const iterations = 1000000;
+const updater = new HUDUpdater();
+const envState = { surfaceWindSpeed: 10, surfaceWindDirection: 0, timeOfDay: 0, isLaunchSafe: true, maxQWindWarning: false };
+
+console.log(`Running benchmark with ${iterations} iterations...`);
+
+// Test Inefficient
+const startInefficient = performance.now();
+for (let i = 0; i < iterations; i++) {
+    // Toggle value to force update
+    envState.surfaceWindSpeed = i % 20;
+    updater.updateInefficient(envState);
+}
+const endInefficient = performance.now();
+const timeInefficient = endInefficient - startInefficient;
+
+// Test Optimized
+const startOptimized = performance.now();
+for (let i = 0; i < iterations; i++) {
+    // Toggle value to force update
+    envState.surfaceWindSpeed = i % 20;
+    updater.updateOptimized(envState);
+}
+const endOptimized = performance.now();
+const timeOptimized = endOptimized - startOptimized;
+
+console.log(`Inefficient: ${timeInefficient.toFixed(2)}ms`);
+console.log(`Optimized:   ${timeOptimized.toFixed(2)}ms`);
+console.log(`Improvement: ${(timeInefficient / timeOptimized).toFixed(2)}x faster`);
