@@ -186,17 +186,36 @@ function updateFCStatus(): void {
     const fcStatus = document.getElementById('fc-status');
     if (!fcStatus) return;
 
-    if (game.flightComputer.isActive()) {
+    const isActive = game.flightComputer.isActive();
+    const isStandby = game.flightComputer.state.mode !== 'OFF';
+
+    if (isActive || isStandby) {
         fcStatus.classList.add('active');
-        fcStatus.innerHTML = `
-            <div class="fc-mode">${game.flightComputer.getStatusString()}</div>
-            <div class="fc-command">${game.flightComputer.getActiveCommandText()}</div>
-        `;
-    } else if (game.flightComputer.state.mode !== 'OFF') {
-        fcStatus.classList.add('active');
-        fcStatus.innerHTML = `<div class="fc-mode">${game.flightComputer.getStatusString()}</div>`;
+
+        let modeDiv = fcStatus.querySelector('.fc-mode');
+        if (!modeDiv) {
+            modeDiv = document.createElement('div');
+            modeDiv.className = 'fc-mode';
+            fcStatus.appendChild(modeDiv);
+        }
+        modeDiv.textContent = game.flightComputer.getStatusString();
+
+        let commandDiv = fcStatus.querySelector('.fc-command');
+        if (isActive) {
+            if (!commandDiv) {
+                commandDiv = document.createElement('div');
+                commandDiv.className = 'fc-command';
+                fcStatus.appendChild(commandDiv);
+            }
+            commandDiv.textContent = game.flightComputer.getActiveCommandText();
+        } else {
+            if (commandDiv) {
+                commandDiv.remove();
+            }
+        }
     } else {
         fcStatus.classList.remove('active');
+        fcStatus.textContent = '';
     }
 }
 
