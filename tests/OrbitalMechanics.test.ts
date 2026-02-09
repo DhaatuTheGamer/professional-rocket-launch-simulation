@@ -80,6 +80,23 @@ function runTests() {
         assertClose(elements.eccentricity, 1, 1e-5, "Eccentricity should be 1 for escape velocity");
         // Energy should be 0
         assertClose(elements.specificEnergy, 0, 1e-4, "Specific energy should be 0");
+
+        // Edge Case: Parabolic Orbit (E ~ 0)
+        // Verify that the code specifically handles near-zero energy by setting a = Infinity
+        assert(elements.semiMajorAxis === Infinity, "Semi-major axis should be Infinity for parabolic orbit (E < 1e-10)");
+
+        // Verify that slightly non-zero energy results in finite semi-major axis
+        // Test slightly hyperbolic
+        const vHyper = vMag * (1 + 1e-8);
+        const elementsHyper = calculateOrbitalElements(r, vec2(0, vHyper));
+        assert(elementsHyper.semiMajorAxis !== Infinity, "Semi-major axis should not be Infinity for slightly hyperbolic orbit");
+        assert(elementsHyper.semiMajorAxis < 0, "Semi-major axis should be negative for hyperbolic");
+
+        // Test slightly elliptical
+        const vEllip = vMag * (1 - 1e-8);
+        const elementsEllip = calculateOrbitalElements(r, vec2(0, vEllip));
+        assert(elementsEllip.semiMajorAxis !== Infinity, "Semi-major axis should not be Infinity for slightly elliptical orbit");
+        assert(elementsEllip.semiMajorAxis > 0, "Semi-major axis should be positive for elliptical");
     }
 
     // 4. Hyperbolic Orbit Test
