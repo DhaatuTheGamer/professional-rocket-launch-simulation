@@ -439,6 +439,7 @@ export class Game {
      * Update environment HUD elements
      */
     private updateEnvironmentHUD(envState: import('../physics/Environment').EnvironmentState): void {
+        // Optimized: Use cached DOM elements to avoid expensive getElementById calls
         const hudWindSpeed = this.hudWindSpeed;
         const hudWindDir = this.hudWindDir;
         const hudTimeOfDay = this.hudTimeOfDay;
