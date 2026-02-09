@@ -265,7 +265,7 @@ export function updatePropulsionState(
             newState.spoolProgress = 0;
 
             // Auto-attempt ignition when throttle commanded
-            if (commandedThrottle > 0 && hasFuel) {
+            if (commandedThrottle > 0) {
                 newState = attemptIgnition(newState, config, hasFuel);
             }
             break;
