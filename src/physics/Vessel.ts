@@ -22,7 +22,8 @@ import {
     getAtmosphericDensity,
     getGravity,
     getTransonicDragMultiplier,
-    getMachNumber
+    getMachNumber,
+    DT
 } from '../constants';
 import { state, addParticle } from '../state';
 import { Particle } from './Particle';
@@ -618,7 +619,11 @@ export class Vessel implements IVessel {
             const ejectVx = Math.sin(particleAngle) * ejectionSpeed;
             const ejectVy = -Math.cos(particleAngle) * ejectionSpeed;
 
-            const p = new Particle(exX, exY, 'fire', this.vx + ejectVx, this.vy + ejectVy);
+            // Convert rocket velocity from m/s to pixels/frame
+            const rocketVxPx = this.vx * PIXELS_PER_METER * DT;
+            const rocketVyPx = this.vy * PIXELS_PER_METER * DT;
+
+            const p = new Particle(exX, exY, 'fire', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
             if (vacuumFactor > 0.8) {
                 p.decay *= 0.5; // Particles last longer in vacuum
             }
@@ -626,7 +631,7 @@ export class Vessel implements IVessel {
 
             // Add smoke at lower altitudes
             if (Math.random() > 0.5 && vacuumFactor < 0.5) {
-                addParticle(new Particle(exX, exY, 'smoke', this.vx + ejectVx, this.vy + ejectVy));
+                addParticle(new Particle(exX, exY, 'smoke', rocketVxPx + ejectVx, rocketVyPx + ejectVy));
             }
         }
     }

@@ -112,6 +112,18 @@ export class Particle implements IParticle {
      */
     update(groundLevel: number, timeScale: number): void {
         this.life -= this.decay * timeScale;
+
+        // Simple aerodynamic drag
+        // Smoke/debris slows down relative to "air" (static frame)
+        // Fire maintains velocity more (simulating high pressure jet)
+        const drag = 1.0 - (this.type === 'smoke' ? 0.05 : 0.01);
+
+        // Apply drag only if not in vacuum (simplified, assuming scale height effect)
+        // Since we don't pass altitude here, we'll just apply generic drag
+        // A better approach would be to pass density, but this visual approximation works
+        this.vx *= Math.pow(drag, timeScale);
+        this.vy *= Math.pow(drag, timeScale);
+
         this.x += this.vx * timeScale;
         this.y += this.vy * timeScale;
 
