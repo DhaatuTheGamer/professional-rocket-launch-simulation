@@ -628,7 +628,7 @@ export class Game {
         this.ctx.fillRect(-50000, this.groundY, 100000, 500);
 
         // Particles
-        this.particles.forEach(p => p.draw(this.ctx));
+        Particle.drawParticles(this.ctx, this.particles);
 
         // Entities
         this.entities.forEach(e => e.draw(this.ctx, 0));

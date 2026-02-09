@@ -166,6 +166,104 @@ export class Particle implements IParticle {
         ctx.fill();
     }
 
+    // Reusable batches to reduce GC pressure
+    // Map<ParticleType, Array<Particle[]>>
+    private static batches: Map<string, Particle[][]> = new Map();
+    private static initialized = false;
+
+    /**
+     * Batch render multiple particles
+     * Optimizes performance by grouping particles with similar visual properties
+     */
+    static drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]): void {
+        if (particles.length === 0) return;
+
+        // Initialize batches once
+        if (!Particle.initialized) {
+            const types: ParticleType[] = ['smoke', 'fire', 'spark', 'debris'];
+            for (const type of types) {
+                // Create 20 buckets for life stages (0.05 steps)
+                const buckets = new Array(20);
+                for (let i = 0; i < 20; i++) buckets[i] = [];
+                Particle.batches.set(type, buckets);
+            }
+            Particle.initialized = true;
+        }
+
+        // Clear existing batches
+        for (const buckets of Particle.batches.values()) {
+            for (const bucket of buckets) {
+                bucket.length = 0;
+            }
+        }
+
+        // Group particles into batches
+        for (const p of particles) {
+            // Quantize life into 20 steps (0.05 increments)
+            // Clamp between 0 and 19 (for life 0.0 to 1.0)
+            const lifeIndex = Math.max(0, Math.min(19, Math.floor(p.life * 20)));
+
+            const buckets = Particle.batches.get(p.type);
+            if (buckets) {
+                buckets[lifeIndex].push(p);
+            } else {
+                // Fallback for unknown types (or if initialization failed)
+                p.draw(ctx);
+            }
+        }
+
+        // Render each batch
+        for (const [type, buckets] of Particle.batches) {
+            for (let i = 0; i < 20; i++) {
+                const group = buckets[i];
+                if (group.length === 0) continue;
+
+                // Use center of the quantization bucket for smoother visual transition
+                const life = (i + 0.5) / 20;
+
+                // Set style once per batch based on type and life
+                // We use the first particle to get type-specific properties if needed (like color for smoke)
+                // But for smoke, color is constant (200), so we can just use defaults or look at the first one.
+                const sample = group[0];
+
+                switch (type) {
+                    case 'smoke': {
+                        // Smoke color is constant 200, alpha is constant 0.5
+                        const c = Math.floor(sample.color);
+                        ctx.fillStyle = `rgba(${c},${c},${c},${sample.alpha * life})`;
+                        break;
+                    }
+                    case 'fire': {
+                        const g = Math.floor(255 * life);
+                        ctx.fillStyle = `rgba(255,${g},0,${life})`;
+                        break;
+                    }
+                    case 'spark': {
+                        ctx.fillStyle = `rgba(255, 200, 150, ${life})`;
+                        break;
+                    }
+                    case 'debris': {
+                        ctx.fillStyle = `rgba(100,100,100,${life})`;
+                        break;
+                    }
+                    default:
+                        // Should not happen as we only iterate known types in batches
+                        continue;
+                }
+
+                // Draw all particles in this batch in one path
+                ctx.beginPath();
+                for (const p of group) {
+                    const radius = Math.max(0, p.size);
+                    // Move to start of arc to avoid connecting lines
+                    ctx.moveTo(p.x + radius, p.y);
+                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                }
+                ctx.fill();
+            }
+        }
+    }
+
     /**
      * Check if particle should be removed
      */
