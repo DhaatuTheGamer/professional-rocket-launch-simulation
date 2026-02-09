@@ -10,7 +10,8 @@
  * - Go/No-Go Launch Conditions: Wind limit evaluation
  */
 
-import { Vector2D, vec2, Vec2 } from '../types';
+import { vec2, Vec2 } from '../types/index.ts';
+import type { Vector2D } from '../types/index.ts';
 
 // ============================================================================
 // Interfaces
@@ -124,6 +125,12 @@ export class EnvironmentSystem {
 
     constructor(config: EnvironmentConfig = DEFAULT_ENVIRONMENT_CONFIG) {
         this.config = { ...config };
+        // Ensure layers are sorted for optimization
+        this.sortLayers();
+    }
+
+    private sortLayers(): void {
+        this.config.windLayers = [...this.config.windLayers].sort((a, b) => a.altitudeMin - b.altitudeMin);
     }
 
     /**
@@ -171,23 +178,25 @@ export class EnvironmentSystem {
      */
     getWindAtAltitude(altitude: number): Vector2D {
         const safeAlt = Math.max(0, altitude);
+        const layers = this.config.windLayers;
 
         // Find the appropriate wind layer
-        for (const layer of this.config.windLayers) {
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
             if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
                 // Interpolate within the layer for smooth transitions
                 const layerProgress = (safeAlt - layer.altitudeMin) /
                     (layer.altitudeMax - layer.altitudeMin);
 
                 // Find next layer for interpolation
-                const nextLayer = this.config.windLayers.find(
-                    l => l.altitudeMin === layer.altitudeMax
-                );
+                // Since layers are sorted, the next layer is simply at index i + 1
+                const nextLayer = layers[i + 1];
 
                 let speed = layer.windSpeed;
                 let direction = layer.windDirection;
 
-                if (nextLayer) {
+                // Only interpolate if the next layer is contiguous
+                if (nextLayer && nextLayer.altitudeMin === layer.altitudeMax) {
                     // Smooth interpolation between layers
                     speed = layer.windSpeed + (nextLayer.windSpeed - layer.windSpeed) * layerProgress;
                     direction = this.interpolateAngle(
@@ -320,6 +329,7 @@ export class EnvironmentSystem {
      */
     setWindLayers(layers: WindLayer[]): void {
         this.config.windLayers = [...layers];
+        this.sortLayers();
     }
 
     /**

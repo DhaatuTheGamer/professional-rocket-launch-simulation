@@ -10,20 +10,20 @@ export type {
     AerodynamicsConfig,
     AerodynamicState,
     AerodynamicForces
-} from '../physics/Aerodynamics';
+} from '../physics/Aerodynamics.ts';
 
 // Re-export TPS types for convenience
 export type {
     TPSConfig,
     ThermalState
-} from '../physics/ThermalProtection';
+} from '../physics/ThermalProtection.ts';
 
 // Re-export propulsion types for convenience
 import type {
     PropulsionConfig,
     PropulsionState,
     EngineState
-} from '../physics/Propulsion';
+} from '../physics/Propulsion.ts';
 
 // Re-export propulsion types for convenience
 export type {
@@ -37,7 +37,7 @@ import type {
     FailureType,
     FailureMode,
     ReliabilityConfig
-} from '../physics/Reliability';
+} from '../physics/Reliability.ts';
 
 export type {
     FailureType,
@@ -50,7 +50,7 @@ export type {
     WindLayer,
     EnvironmentConfig,
     EnvironmentState
-} from '../physics/Environment';
+} from '../physics/Environment.ts';
 
 // ============================================================================
 // Vector Types
