@@ -113,6 +113,59 @@ function runTests() {
     outEdge = pidEps.update(5, Number.EPSILON);
     assert(isFinite(outEdge), `Output should be finite for dt=EPSILON, got ${outEdge}`);
 
+    // 8. Integral Clamping
+    console.log("  - Testing Integral Clamping");
+    const pidClamp = new PIDController(0, 1, 0, 0); // Only Integral term active
+
+    // Increase integral to 10
+    // setpoint=0, measurement=-100 -> error=100
+    // dt=0.1 -> integral += 100 * 0.1 = 10
+    pidClamp.update(-100, 0.1);
+
+    // Clamp to [0, 5]
+    pidClamp.clampIntegral(0, 5);
+
+    // Check next update (with 0 error to avoid changing integral)
+    // output = 1 * integral
+    output = pidClamp.update(0, 0.1);
+    assert(Math.abs(output - 5) < 0.0001, `Expected clamped integral 5, got ${output}`);
+
+    // Clamp to [-2, 2]
+    pidClamp.clampIntegral(-2, 2);
+    output = pidClamp.update(0, 0.1);
+    assert(Math.abs(output - 2) < 0.0001, `Expected clamped integral 2, got ${output}`);
+
+    // 9. Dynamic Reconfiguration
+    console.log("  - Testing Dynamic Reconfiguration");
+    const pidConfig = new PIDController(1, 0, 0, 10); // Proportional only
+
+    // error = 10 - 0 = 10. Output = 10.
+    output = pidConfig.update(0, 0.1);
+    assert(output === 10, "Initial proportional output correct");
+
+    // Change Kp
+    pidConfig.kp = 2;
+    // error = 10 - 0 = 10. Output = 20.
+    output = pidConfig.update(0, 0.1);
+    assert(output === 20, "Output updated after Kp change");
+
+    // Change setpoint
+    pidConfig.setpoint = 20;
+    // error = 20 - 0 = 20. Output = 40.
+    output = pidConfig.update(0, 0.1);
+    assert(output === 40, "Output updated after setpoint change");
+
+    // 10. Infinity handling
+    console.log("  - Testing Infinity handling");
+    const pidInf = new PIDController(1, 1, 1, 10);
+    // dt = Infinity
+    // error = 10 - 0 = 10
+    // integral += 10 * Infinity = Infinity
+    // derivative = (10 - 0) / Infinity = 0
+    // output = 10 + Infinity + 0 = Infinity
+    output = pidInf.update(0, Infinity);
+    assert(output === Infinity, "Output should be Infinity when dt=Infinity");
+
     console.log("✅ All PIDController tests passed!");
 }
 
