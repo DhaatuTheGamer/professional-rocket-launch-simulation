@@ -13,7 +13,7 @@
  */
 
 import { IVessel, SASMode } from '../types';
-import { PIXELS_PER_METER, getAtmosphericDensity } from '../constants';
+import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../constants';
 import { SAS } from '../utils/SAS';
 import {
     MissionScript,
@@ -314,7 +314,7 @@ export class FlightComputer {
 
         // Dynamic pressure
         const rho = getAtmosphericDensity(alt);
-        const q = 0.5 * rho * speed * speed / 1000; // kPa
+        const q = getDynamicPressure(rho, speed) / 1000; // kPa
 
         return {
             'ALTITUDE': alt,
