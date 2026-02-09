@@ -12,7 +12,7 @@
  * - Stability Margin = (CoM - CP) / Length (positive = stable)
  */
 
-import { getAtmosphericDensity } from '../constants';
+import { getAtmosphericDensity, getDynamicPressure } from '../constants';
 
 // ============================================================================
 // Interfaces
@@ -343,7 +343,7 @@ export function calculateAerodynamicForces(
     const rho = getAtmosphericDensity(altitude);
     
     // Dynamic pressure: q = 0.5 * ρ * V²
-    const dynamicPressure = 0.5 * rho * velocity * velocity;
+    const dynamicPressure = getDynamicPressure(rho, velocity);
     
     // Calculate coefficients
     const cl = calculateLiftCoefficient(aeroState.aoa, config.cnAlpha);
