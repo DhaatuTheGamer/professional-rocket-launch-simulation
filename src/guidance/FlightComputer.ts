@@ -12,21 +12,21 @@
  *   fc.update(vessel, dt);
  */
 
-import { IVessel, SASMode } from '../types';
-import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../constants';
-import { SAS } from '../utils/SAS';
+import { type IVessel, SASMode } from '../types/index.ts';
+import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../constants.ts';
+import { SAS } from '../utils/SAS.ts';
 import {
-    MissionScript,
-    ScriptCommand,
-    ScriptCondition,
-    ScriptAction,
-    ConditionClause,
-    ComparisonOperator,
-    ConditionVariable,
+    type MissionScript,
+    type ScriptCommand,
+    type ScriptCondition,
+    type ScriptAction,
+    type ConditionClause,
+    type ComparisonOperator,
+    type ConditionVariable,
     parseMissionScript,
     resetScript,
-    SASModeValue
-} from './FlightScript';
+    type SASModeValue
+} from './FlightScript.ts';
 
 // ============================================================================
 // Flight Computer Modes
