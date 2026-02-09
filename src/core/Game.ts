@@ -81,6 +81,9 @@ export class Game {
         maxq: false
     };
 
+    // Staging
+    public lastStageTime: number = 0;
+
     // Timing
     private lastTime: number = 0;
     private accumulator: number = 0;
@@ -187,14 +190,6 @@ export class Game {
         setMissionLog(this.missionLog);
         setAssetLoader(this.assets);
 
-        // Expose to window for legacy compatibility
-        (window as any).state = state;
-        (window as any).PIXELS_PER_METER = PIXELS_PER_METER;
-        (window as any).R_EARTH = R_EARTH;
-        (window as any).navball = this.navball;
-        (window as any).missionLog = this.missionLog;
-        (window as any).audio = this.audio;
-
         this.initHUDCache();
     }
 
@@ -272,11 +267,6 @@ export class Game {
         state.entities = this.entities as any;
         state.particles = [];
 
-        // Legacy globals
-        (window as any).mainStack = this.mainStack;
-        (window as any).trackedEntity = this.trackedEntity;
-        (window as any).booster = null;
-        (window as any).upperStage = null;
     }
 
     /**
@@ -430,9 +420,6 @@ export class Game {
             }
         }
 
-        // Sync globals
-        (window as any).trackedEntity = this.trackedEntity;
-        (window as any).mainStack = this.mainStack;
     }
 
     /**
@@ -963,9 +950,8 @@ export class Game {
 
 // Export staging function for use by main.ts
 export function performStaging(game: Game): void {
-    const lastStageTime = (window as any).lastStageTime ?? 0;
-    if (Date.now() - lastStageTime < 1000) return;
-    (window as any).lastStageTime = Date.now();
+    if (Date.now() - game.lastStageTime < 1000) return;
+    game.lastStageTime = Date.now();
 
     if (!game.trackedEntity) return;
 
@@ -1014,11 +1000,6 @@ export function performStaging(game: Game): void {
         game.mainStack = game.upperStage;
         game.trackedEntity = game.upperStage;
 
-        // Sync globals
-        (window as any).mainStack = game.mainStack;
-        (window as any).trackedEntity = game.trackedEntity;
-        (window as any).booster = game.booster;
-
     } else if (game.trackedEntity instanceof UpperStage) {
         if (!(game.trackedEntity as UpperStage).fairingsDeployed) {
             // Fairing separation
@@ -1064,7 +1045,6 @@ export function performStaging(game: Game): void {
 
             game.trackedEntity = payload;
             game.mainStack = payload;
-            (window as any).trackedEntity = payload;
         }
     }
 
