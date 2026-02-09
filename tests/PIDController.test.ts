@@ -90,6 +90,29 @@ function runTests() {
     output = pid.update(0, 0.1);
     assert(output === 111, `Expected 111 after reset, got ${output}`);
 
+    // 7. Additional Edge Cases (NaN, Epsilon)
+    console.log("  - Testing additional edge cases");
+    const pidEdge = new PIDController(1, 1, 1, 10);
+    pidEdge.update(0, 0.1); // int=1, lastErr=10
+
+    // NaN
+    let outEdge = pidEdge.update(5, NaN);
+    assert(outEdge === 6, `Expected output 6 for dt=NaN, got ${outEdge}`);
+    assert(!isNaN(outEdge), "Output should not be NaN");
+
+    // Recovery from NaN
+    outEdge = pidEdge.update(8, 0.1);
+    // int=1 + 2*0.1 = 1.2
+    // deriv=(2-5)/0.1 = -30
+    // out = 1*2 + 1*1.2 - 30 = -26.8
+    assert(Math.abs(outEdge - (-26.8)) < 0.000001, `Recovery from NaN failed. Expected -26.8, got ${outEdge}`);
+
+    // Epsilon
+    const pidEps = new PIDController(1, 1, 1, 10);
+    pidEps.update(0, 0.1); // int=1, lastErr=10
+    outEdge = pidEps.update(5, Number.EPSILON);
+    assert(isFinite(outEdge), `Output should be finite for dt=EPSILON, got ${outEdge}`);
+
     console.log("✅ All PIDController tests passed!");
 }
 
