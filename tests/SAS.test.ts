@@ -68,172 +68,100 @@ function runTests() {
     console.log("  - Testing Initialization");
     assert(sas.mode === SASModes.OFF, "Default mode should be OFF");
     assert(sas.update(createMockVessel(), 0.1) === 0, "Update should return 0 when OFF");
+    assert(!sas.isActive(), "Should not be active initially");
 
     // 2. Stability Mode (Basic)
     console.log("  - Testing Stability Mode (Basic)");
     const vesselBasic = createMockVessel(1.0);
     sas.setMode(SASModes.STABILITY, vesselBasic.angle);
+    assert(sas.mode === SASModes.STABILITY, "Mode should be STABILITY");
+    assert(sas.isActive(), "Should be active in STABILITY mode");
+    assert(sas.getModeName() === 'STABILITY', "Mode name should be STABILITY");
 
     // Check maintenance of angle
     let output = sas.update(vesselBasic, 0.1);
-    // Since we are exactly on target, error is 0, output should be 0 (or close due to float precision)
     assert(Math.abs(output) < 0.0001, `Expected near 0 output on target, got ${output}`);
 
     // Check correction
     vesselBasic.angle = 1.1; // Drifted +0.1
     output = sas.update(vesselBasic, 0.1);
-    // Error = 1.0 - 1.1 = -0.1. PID should output negative value to correct positive drift?
-    // Wait: setpoint=1.0. measurement=1.1. error = -0.1.
-    // PID update(-error) -> update(0.1).
-    // Kp * 0.1 = positive output?
-    // If output is positive gimbal, does it correct positive angle drift?
-    // Usually positive gimbal -> creates torque to reduce angle? It depends on sign convention.
-    // Let's assume standard control logic:
-    // If angle is too high (1.1 > 1.0), we want to reduce it.
-    // So we need negative torque.
-    // Let's see SAS implementation:
-    // pid.update(-error). Error is -0.1. -error is 0.1.
-    // PID output is positive.
-    // So positive gimbal -> negative torque?
-    // I won't assert sign here without knowing physics engine sign convention,
-    // but I will assert it's non-zero.
     assert(Math.abs(output) > 0.1, "Should produce output when off target");
 
 
-    // 3. Angle Wrapping (The Core Test)
+    // 3. Angle Wrapping
     console.log("  - Testing Angle Wrapping (0/2π Boundary)");
-
-    // Case A: Crossing 0 from below (negative angle) vs from above (positive large angle)
-    // Target = 0.
     vesselBasic.angle = 0;
     sas.setMode(SASModes.STABILITY, 0);
 
-    // Vessel at 355 degrees (approx 6.2 rad). Target is 0 (approx 6.28 rad).
-    // Shortest path is +5 degrees.
-    // Raw error: 0 - 6.2 = -6.2.
-    // Wrapped error: -6.2 + 2PI ≈ +0.08.
-    // Correct behavior: Treat as small positive error -> Positive PID input -> Positive Output.
-    // Incorrect behavior: Treat as large negative error -> Negative Output.
-
     const vesselWrap = createMockVessel(6.2); // ~355 degrees
     output = sas.update(vesselWrap, 0.1);
-
-    console.log(`    Target: 0, Current: 6.2 (~355°). Output: ${output}`);
-
-    // If wrapping works, error is small positive (~0.08). PID output should be positive.
-    // If wrapping fails, error is large negative (~-6.2). PID output should be negative (saturated).
     assert(output > 0, "SAS should wrap angle across 0/2π boundary (Expected Positive Output)");
 
-
     console.log("  - Testing Angle Wrapping (π/-π Boundary)");
-    // Case B: Crossing +/- PI.
-    // Target = 3.0 (approx 172 deg).
-    // Vessel = -3.0 (approx -172 deg).
-    // Distance = 6.0.
-    // Shortest path: Go from -172 to +172 is 16 degrees? No wait.
-    // -172 to +172 is 344 degrees the long way.
-    // Shortest path is across +/- 180 line.
-    // 172 is 8 degrees from 180. -172 is 8 degrees from -180.
-    // Total distance = 16 degrees.
-    // Direction: To go from -3.0 to 3.0 via 180:
-    // -3.0 -> decrease (more negative) -> crosses -PI/PI boundary -> becomes positive -> 3.0.
-    // So we want 'negative' velocity?
-
-    // Let's calculate:
-    // Setpoint = 3.0.
-    // Vessel = -3.0.
-    // Raw Error = 3.0 - (-3.0) = 6.0.
-    // Wrapped: 6.0 is < PI (3.14)? No. 6.0 > PI.
-    // While (error > PI) error -= 2PI.
-    // 6.0 - 6.28 = -0.28.
-    // So wrapped error is negative.
-    // PID Update(-(-0.28)) = Update(0.28).
-    // Output should be positive.
-
-    // Wait. If error is negative (-0.28), it means "Target is behind you (negative direction)".
-    // So we should turn negative?
-    // Error = Setpoint - Process.
-    // If Error is negative, Process > Setpoint. We need to reduce Process.
-    // So we need negative control.
-
-    // SAS Implementation: `this.pid.update(-error, dt)`.
-    // Passes `-error` as measurement? No, `setpoint=0`.
-    // `pid.update(measurement, dt)`.
-    // internal_error = 0 - measurement = 0 - (-error) = error.
-    // So PID sees `error`.
-    // If error is negative (-0.28), PID output should be negative.
-
-    // Let's re-verify:
-    // Target 3.0. Current -3.0.
-    // If I turn positive (increase angle): -3.0 -> -2.0 -> ... -> 0 -> 3.0. Delta = 6.0. Long way.
-    // If I turn negative (decrease angle): -3.0 -> -3.1 -> (wrap) -> 3.1 -> 3.0. Delta = 0.28. Short way.
-    // So I should turn negative.
-    // So Output should be negative.
-
-    // Let's check my manual calculation:
-    // Raw Error = 6.0.
-    // Wrapped Error = -0.28.
-    // PID sees -0.28.
-    // PID Output should be negative.
-
-    // If wrapping failed:
-    // Error = 6.0.
-    // PID sees 6.0.
-    // PID Output positive.
-
-    // So checking output < 0 confirms wrapping.
-
-    const vesselPi = createMockVessel(-3.0);
-    sas.setMode(SASModes.STABILITY, 3.0); // Target 3.0
-    // Note: setMode sets target to current angle. We need to manually set target?
-    // SAS.ts: setMode(STABILITY) sets target = currentAngle.
-    // But we want to test specific target.
-    // We can't easily access targetAngle private property.
-    // Workaround:
-    // 1. Create vessel with angle 3.0.
-    // 2. setMode(STABILITY, 3.0). Target = 3.0.
-    // 3. Update vessel angle to -3.0.
-    // 4. Update SAS.
-
     const vesselTarget = createMockVessel(3.0);
     sas.setMode(SASModes.STABILITY, vesselTarget.angle); // Target = 3.0
-
-    // Now move vessel to -3.0
-    vesselTarget.angle = -3.0;
-
+    vesselTarget.angle = -3.0; // Current = -3.0
     output = sas.update(vesselTarget, 0.1);
-    console.log(`    Target: 3.0, Current: -3.0. Output: ${output}`);
-
     assert(output < 0, "SAS should wrap angle across π/-π boundary (Expected Negative Output)");
 
     // 4. Prograde Mode
     console.log("  - Testing Prograde Mode");
-    // Velocity vector (10, 0) -> Angle 0?
-    // Math.atan2(vx, -vy) -> atan2(10, 0) = PI/2 (90 deg)?
-    // Wait, coordinate system in SAS.ts:
-    // setpoint = Math.atan2(vessel.vx, -vessel.vy);
-    // Standard atan2(y, x). Here y=vx, x=-vy.
-    // This implies specific coordinate system where Up is -Y?
-    // Let's assume (vx=0, vy=-10) (Moving Up).
-    // atan2(0, -(-10)) = atan2(0, 10) = 0.
-    // So Up is 0.
-
-    // Test Case: Moving Up (vy=-10). Target should be 0.
-    // Vessel Angle = 0.1.
-    // Error = 0 - 0.1 = -0.1.
-    // Output should be negative? (To reduce angle back to 0).
-    // Let's check.
-
-    const vesselPrograde = createMockVessel(0.1, 0, -100); // Angle 0.1, Velocity Up
-    sas.setMode(SASModes.PROGRADE, 0.1); // Mode set, current angle irrelevant for target calculation
+    const vesselPrograde = createMockVessel(0.1, 0, -100); // Angle 0.1, Velocity Up (0, -100) -> Target 0
+    sas.setMode(SASModes.PROGRADE, 0.1);
+    assert(sas.getModeName() === 'PROGRADE', "Mode name should be PROGRADE");
 
     output = sas.update(vesselPrograde, 0.1);
-    // Target (Prograde) = 0.
-    // Current = 0.1.
-    // Error = -0.1.
-    // PID sees -0.1.
-    // Output negative.
     assert(output < 0, "Prograde should correct drift (Expected Negative Output)");
+
+    // 5. Retrograde Mode
+    console.log("  - Testing Retrograde Mode");
+    // Velocity Up (0, -100).
+    // Retrograde = Opposite of Velocity = Down (0, 100). Angle PI.
+    const vesselRetro = createMockVessel(3.0, 0, -100); // Angle 3.0 (approx PI).
+    sas.setMode(SASModes.RETROGRADE, 3.0);
+    assert(sas.getModeName() === 'RETROGRADE', "Mode name should be RETROGRADE");
+
+    output = sas.update(vesselRetro, 0.1);
+    assert(output > 0, "Retrograde should correct drift (Expected Positive Output to reach PI)");
+
+
+    // 6. Low Velocity Handling (Hold Mode)
+    console.log("  - Testing Low Velocity Handling");
+    const vesselSlow = createMockVessel(1.0, 0, -0.1); // Slow moving
+
+    // First set stability to seed the target angle
+    sas.setMode(SASModes.STABILITY, 1.0);
+    // Now switch to Prograde. It should inherit target angle because speed < 1
+    sas.setMode(SASModes.PROGRADE, 1.0);
+
+    // If speed < 1, it should use targetAngle (1.0).
+    // Current angle = 1.0. Output should be 0.
+    output = sas.update(vesselSlow, 0.1);
+    assert(Math.abs(output) < 0.0001, "Should hold last angle when velocity is too low");
+
+    // Now change angle, it should try to return to 1.0
+    vesselSlow.angle = 1.1;
+    output = sas.update(vesselSlow, 0.1);
+    assert(output < 0, "Should correct to held angle");
+
+
+    // 7. Output Clamping
+    console.log("  - Testing Output Clamping");
+    // Create large error
+    const vesselFar = createMockVessel(0);
+    sas.setMode(SASModes.STABILITY, 0);
+    vesselFar.angle = 1.0; // Error -1.0.
+    // PID Internal -1.0.
+    // Kp=5. Output = -5.0.
+    // Should clamp to -0.5.
+    output = sas.update(vesselFar, 0.1);
+    assert(Math.abs(output - (-0.5)) < 0.0001, `Output should be clamped to -0.5, got ${output}`);
+
+    vesselFar.angle = -1.0; // Error 1.0.
+    // PID Internal 1.0.
+    // Output 5.0 -> 0.5.
+    output = sas.update(vesselFar, 0.1);
+    assert(Math.abs(output - 0.5) < 0.0001, `Output should be clamped to 0.5, got ${output}`);
 
 
     console.log("✅ All SAS tests passed!");
