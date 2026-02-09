@@ -45,6 +45,13 @@ export type {
     ReliabilityConfig
 };
 
+// Re-export environment types for convenience
+export type {
+    WindLayer,
+    EnvironmentConfig,
+    EnvironmentState
+} from '../physics/Environment';
+
 // ============================================================================
 // Vector Types
 // ============================================================================

@@ -16,7 +16,7 @@
     <div id="splash-screen">
         <div class="content">
             <h1>DeltaV Lab <span
-                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v1.7.0</span>
+                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v1.8.0</span>
             </h1>
             <p class="subtitle">Engineering-Grade Spaceflight Simulation</p>
 
@@ -100,6 +100,21 @@
             <div class="hud-module">
                 <div class="hud-label">IGN</div>
                 <div class="hud-value-large"><span id="hud-igniters" style="color: #2ecc71;">3</span></div>
+            </div>
+            <div class="hud-module environment">
+                <div class="hud-label">WIND</div>
+                <div class="hud-value-large"><span id="hud-wind-speed" style="color: #2ecc71;">0 m/s</span> <span
+                        id="hud-wind-dir" class="unit">N</span></div>
+            </div>
+            <div class="hud-module environment">
+                <div class="hud-label">LOCAL TIME</div>
+                <div class="hud-value-large"><span id="hud-time-of-day" style="color: #3498db;">12:00</span></div>
+            </div>
+            <div class="hud-module environment launch-status">
+                <div class="hud-label">LAUNCH</div>
+                <div class="hud-value-large"><span id="hud-launch-status" class="go-status"
+                        style="color: #2ecc71;">GO</span></div>
+                <div id="hud-maxq-warning" style="display: none; color: #e67e22; font-size: 0.7rem;"></div>
             </div>
         </div>
 

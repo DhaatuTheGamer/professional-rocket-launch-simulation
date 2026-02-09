@@ -6,7 +6,7 @@
  * proper dependency injection or a state management pattern.
  */
 
-import { GameState, IVessel, IParticle, IAudioEngine, IMissionLog, IAssetLoader } from './types';
+import { GameState, IVessel, IParticle, IAudioEngine, IMissionLog, IAssetLoader, Vector2D, vec2 } from './types';
 
 /**
  * Global simulation state
@@ -23,6 +23,21 @@ export const state: GameState = {
     autopilotEnabled: false,
     assets: undefined
 };
+
+/**
+ * Current wind velocity at various altitudes - updated by EnvironmentSystem
+ * This is used by Vessel.ts for aerodynamic calculations
+ */
+export let currentWindVelocity: Vector2D = vec2(0, 0);
+export let currentDensityMultiplier: number = 1.0;
+
+export function setWindVelocity(wind: Vector2D): void {
+    currentWindVelocity = wind;
+}
+
+export function setDensityMultiplier(mult: number): void {
+    currentDensityMultiplier = mult;
+}
 
 /**
  * Reset state to initial values

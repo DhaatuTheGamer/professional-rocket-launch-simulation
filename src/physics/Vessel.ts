@@ -25,7 +25,7 @@ import {
     getMachNumber,
     DT
 } from '../constants';
-import { state, addParticle } from '../state';
+import { state, addParticle, currentWindVelocity, currentDensityMultiplier } from '../state';
 import { Particle } from './Particle';
 import {
     AerodynamicsConfig,
@@ -157,34 +157,36 @@ export class Vessel implements IVessel {
         // Atmospheric density
         const rho = getAtmosphericDensity(safeAlt);
 
-        // Velocity magnitude
-        const vSq = s.vx * s.vx + s.vy * s.vy;
+        // Velocity magnitude (relative to wind for aerodynamic calculations)
+        const relVx = s.vx - currentWindVelocity.x;
+        const relVy = s.vy - currentWindVelocity.y;
+        const vSq = relVx * relVx + relVy * relVy;
         const v = Math.sqrt(vSq);
-        const q = 0.5 * rho * vSq;
+        const q = 0.5 * rho * currentDensityMultiplier * vSq;
         const mach = getMachNumber(v);
 
-        // Calculate aerodynamic state (AoA, CP, CoM, stability)
+        // Calculate aerodynamic state using relative velocity (AoA, CP, CoM, stability)
         const vehicleLengthM = this.h / PIXELS_PER_METER;
         const fuelFraction = this.fuel;  // 0-1 normalized fuel level
 
         const aeroState = calculateAerodynamicState(
             this.aeroConfig,
-            s.vx,
-            s.vy,
+            relVx,
+            relVy,
             this.angle,
             fuelFraction,
             vehicleLengthM,
             mach
         );
 
-        // Calculate aerodynamic forces (lift and drag)
+        // Calculate aerodynamic forces using relative velocity (lift and drag)
         const aeroForces = calculateAerodynamicForces(
             this.aeroConfig,
             aeroState,
             safeAlt,
             v,
-            s.vx,
-            s.vy
+            relVx,
+            relVy
         );
 
         // Apply transonic drag multiplier to base drag

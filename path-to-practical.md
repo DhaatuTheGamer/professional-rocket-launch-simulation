@@ -50,7 +50,7 @@
 
 ## Environment & Mission Planning
 
-### 8. Atmospheric & Environmental Hazards
+### 8. Atmospheric & Environmental Hazards [DONE]
 **Current Status:** Standard atmosphere model.
 **Proposal:** Add **Wind Shear** layers and **Gusts**. Implement **Day/Night cycles** affecting atmospheric density.
 **Practicality:** Simulates "Go/No-Go" launch conditions. High altitude wind shear is a major launch constraint.

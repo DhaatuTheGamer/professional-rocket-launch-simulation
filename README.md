@@ -1,6 +1,6 @@
-# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.7.0)
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.8.0)
 
-Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
+Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, environmental hazards, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
@@ -218,4 +218,11 @@ Re-entry and high-speed heating modeled via:
 - **Bathtub Curve**: Engines have "infant mortality" and "wear-out" phases.
 - **Structural Fatigue**: High-G maneuvers accumulate stress, leading to potential structural failure.
 - **Sensor Glitches**: Random telemetry noise simulating real-world sensor imperfections.
+
+### Environmental Hazards (v1.8.0)
+- **Wind Shear Layers**: Altitude-based wind profiles with varying speeds and directions.
+- **Gusts & Turbulence**: Dynamic gusts using Dryden-style turbulence model.
+- **Day/Night Cycle**: Time progression with atmospheric density variation (±2%).
+- **Go/No-Go Launch Conditions**: Real-time evaluation based on surface wind limits (15 m/s threshold).
+- **Max-Q Wind Warning**: Alerts for dangerous wind shear at Max-Q altitudes (10-15km).
 

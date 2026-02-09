@@ -31,6 +31,8 @@ import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
 import { FlightComputer } from '../guidance/FlightComputer';
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
+import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
+import { setWindVelocity, setDensityMultiplier } from '../state';
 
 export class Game {
     // Canvas and rendering
@@ -50,6 +52,7 @@ export class Game {
     public sas: SAS;
     public flightComputer: FlightComputer;
     public blackBox: BlackBoxRecorder;
+    public environment: EnvironmentSystem;
 
     // Game state
     public entities: IVessel[] = [];
@@ -110,6 +113,7 @@ export class Game {
         this.sas = new SAS();
         this.flightComputer = new FlightComputer(this.groundY);
         this.blackBox = new BlackBoxRecorder(this.groundY);
+        this.environment = new EnvironmentSystem();
 
         // Bloom canvas for glow effects
         this.bloomCanvas = document.createElement('canvas');
@@ -211,6 +215,20 @@ export class Game {
         }
 
         const simDt = dt * this.timeScale;
+
+        // Update environment system
+        this.environment.update(simDt);
+
+        // Update global wind state for tracked entity's altitude
+        if (this.trackedEntity) {
+            const alt = (this.groundY - this.trackedEntity.y - this.trackedEntity.h) / PIXELS_PER_METER;
+            const envState = this.environment.getState(alt);
+            setWindVelocity(envState.windVelocity);
+            setDensityMultiplier(envState.densityMultiplier);
+
+            // Update environment HUD
+            this.updateEnvironmentHUD(envState);
+        }
 
         // Control active vessel
         if (this.mainStack && this.mainStack.active) {
@@ -323,6 +341,60 @@ export class Game {
         (window as any).trackedEntity = this.trackedEntity;
         (window as any).mainStack = this.mainStack;
     }
+
+    /**
+     * Update environment HUD elements
+     */
+    private updateEnvironmentHUD(envState: import('../physics/Environment').EnvironmentState): void {
+        const hudWindSpeed = document.getElementById('hud-wind-speed');
+        const hudWindDir = document.getElementById('hud-wind-dir');
+        const hudTimeOfDay = document.getElementById('hud-time-of-day');
+        const hudLaunchStatus = document.getElementById('hud-launch-status');
+
+        if (hudWindSpeed) {
+            const speed = Math.round(envState.surfaceWindSpeed);
+            hudWindSpeed.textContent = speed + ' m/s';
+
+            // Color coding based on wind limits
+            if (speed > 15) {
+                hudWindSpeed.style.color = '#e74c3c';  // Red
+            } else if (speed > 10) {
+                hudWindSpeed.style.color = '#f1c40f';  // Yellow
+            } else {
+                hudWindSpeed.style.color = '#2ecc71';  // Green
+            }
+        }
+
+        if (hudWindDir) {
+            hudWindDir.textContent = getWindDirectionString(envState.surfaceWindDirection);
+        }
+
+        if (hudTimeOfDay) {
+            hudTimeOfDay.textContent = formatTimeOfDay(envState.timeOfDay);
+        }
+
+        if (hudLaunchStatus) {
+            if (envState.isLaunchSafe) {
+                hudLaunchStatus.textContent = 'GO';
+                hudLaunchStatus.style.color = '#2ecc71';
+                hudLaunchStatus.className = 'go-status';
+            } else {
+                hudLaunchStatus.textContent = 'NO GO';
+                hudLaunchStatus.style.color = '#e74c3c';
+                hudLaunchStatus.className = 'no-go-status';
+            }
+
+            // Add Max-Q warning
+            if (envState.maxQWindWarning) {
+                const hudMaxQ = document.getElementById('hud-maxq-warning');
+                if (hudMaxQ) {
+                    hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
+                    hudMaxQ.style.display = 'block';
+                }
+            }
+        }
+    }
+
 
     /**
      * Update orbit prediction paths
