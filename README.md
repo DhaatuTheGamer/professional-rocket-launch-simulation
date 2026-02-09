@@ -1,6 +1,6 @@
-# 🚀 DeltaV Lab AKA Professional Rocket Launch Simulation
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.5.0)
 
-Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, and Kerbal Space Program-inspired controls.
+Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, autonomous guidance, and Kerbal Space Program-inspired controls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
@@ -34,6 +34,8 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 | `Shift` | Throttle up |
 | `Ctrl` | Throttle down |
 | `X` | Cut engine |
+| `G` | Toggle Flight Computer |
+| `F` | Open Script Editor |
 | `A` | Toggle autopilot |
 | `M` | Toggle map view |
 | `.` `,` | Time warp |
@@ -88,6 +90,34 @@ Then open http://localhost:8080
 ├── style.css
 └── package.json
 ```
+
+## Flight Computer (v1.5.0)
+
+Autonomous guidance system with a custom DSL for mission scripts.
+
+### DSL Syntax
+```
+WHEN <condition> THEN <action>
+WHEN <condition> AND <condition> THEN <action>
+```
+
+**Conditions:** `ALTITUDE`, `VELOCITY`, `APOGEE`, `FUEL`, `TIME`  
+**Operators:** `>`, `<`, `>=`, `<=`, `==`  
+**Actions:** `PITCH <degrees>`, `THROTTLE <0-100>`, `STAGE`, `SAS <OFF|STABILITY|PROGRADE|RETROGRADE>`
+
+### Example Script
+```
+# Gravity Turn to Orbit
+WHEN ALTITUDE > 1000 THEN PITCH 80
+WHEN ALTITUDE > 10000 THEN PITCH 60
+WHEN ALTITUDE > 30000 THEN PITCH 45
+WHEN APOGEE > 100000 THEN THROTTLE 0
+```
+
+### Controls
+- **G** - Toggle Flight Computer on/off
+- **F** - Open Script Editor
+- Scripts are saved to localStorage
 
 ## Type Safety
 

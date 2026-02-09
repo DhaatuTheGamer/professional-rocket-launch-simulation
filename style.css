@@ -968,7 +968,6 @@ button.primary:hover {
     border: 1px solid var(--color-danger);
 }
 
-/* Enhanced Controls Help */
 #controls-help {
     background: var(--glass-bg);
     border-radius: var(--radius-md);
@@ -976,4 +975,289 @@ button.primary:hover {
     backdrop-filter: var(--glass-blur);
     padding: 8px 15px;
     font-size: 0.75rem;
+}
+
+/* ========================================
+   FLIGHT COMPUTER - Script Editor Modal
+   ======================================== */
+.script-editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 3000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+.script-editor-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.script-editor-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-lg);
+    width: 700px;
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 60px rgba(52, 152, 219, 0.3);
+    animation: tooltipBounce 0.3s ease;
+}
+
+.script-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.script-editor-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.script-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 8px;
+    transition: color var(--transition-fast);
+}
+
+.script-close-btn:hover {
+    color: var(--color-danger);
+}
+
+.script-editor-body {
+    padding: var(--spacing-lg);
+    flex: 1;
+    overflow-y: auto;
+}
+
+.script-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.script-select {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.script-select:hover {
+    border-color: var(--color-primary);
+}
+
+.script-select option {
+    background: #1a1a2e;
+    color: var(--color-text);
+}
+
+.script-btn {
+    background: var(--glass-bg-light);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.script-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--color-primary);
+}
+
+.script-btn-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    border-color: var(--color-primary);
+}
+
+.script-btn-primary:hover {
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+}
+
+.script-btn-secondary {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+    border-color: var(--color-success);
+}
+
+.script-btn-danger {
+    background: transparent;
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+.script-btn-danger:hover {
+    background: var(--color-danger);
+    color: white;
+}
+
+.script-syntax-help {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 3px solid var(--color-primary);
+    padding: 10px 15px;
+    margin-bottom: var(--spacing-md);
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.script-help-vars {
+    color: var(--color-text-dim);
+    font-size: 0.7rem;
+}
+
+.script-textarea {
+    width: 100%;
+    height: 250px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: #7fdbff;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    padding: var(--spacing-md);
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.script-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+}
+
+.script-textarea::placeholder {
+    color: var(--color-text-dim);
+}
+
+.script-errors {
+    margin-top: var(--spacing-sm);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-size: 0.8rem;
+    min-height: 20px;
+    white-space: pre-wrap;
+}
+
+.script-errors-error {
+    background: rgba(231, 76, 60, 0.2);
+    border: 1px solid var(--color-danger);
+    color: var(--color-danger);
+}
+
+.script-errors-success {
+    background: rgba(46, 204, 113, 0.2);
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+}
+
+.script-editor-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid var(--glass-border);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.script-footer-left {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.script-name-input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    color: var(--color-text);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    width: 150px;
+}
+
+.script-name-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+/* Flight Computer Status Indicator in HUD */
+#fc-status {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glass-bg);
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    font-size: 0.85rem;
+    display: none;
+    z-index: 15;
+}
+
+#fc-status.active {
+    display: block;
+    border-color: var(--color-success);
+}
+
+#fc-status .fc-mode {
+    color: var(--color-success);
+    font-weight: bold;
+}
+
+#fc-status .fc-command {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+/* Flight Computer Button */
+#fc-btn {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    border-color: #8e44ad;
+}
+
+#fc-btn:hover {
+    box-shadow: 0 0 20px rgba(155, 89, 182, 0.5);
+}
+
+#fc-btn.enabled {
+    background: linear-gradient(135deg, var(--color-success), var(--color-success-dark));
+    border-color: var(--color-success);
+    animation: successPulse 2s ease-in-out infinite;
 }

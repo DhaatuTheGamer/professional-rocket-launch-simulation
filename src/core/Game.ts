@@ -29,6 +29,7 @@ import { Navball } from '../ui/Navball';
 import { TelemetrySystem } from '../ui/Telemetry';
 import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
+import { FlightComputer } from '../guidance/FlightComputer';
 
 export class Game {
     // Canvas and rendering
@@ -46,6 +47,7 @@ export class Game {
     public telemetry: TelemetrySystem;
     public missionLog: MissionLog;
     public sas: SAS;
+    public flightComputer: FlightComputer;
 
     // Game state
     public entities: IVessel[] = [];
@@ -103,6 +105,7 @@ export class Game {
         this.telemetry = new TelemetrySystem();
         this.missionLog = new MissionLog();
         this.sas = new SAS();
+        this.flightComputer = new FlightComputer(this.groundY);
 
         // Bloom canvas for glow effects
         this.bloomCanvas = document.createElement('canvas');
@@ -207,20 +210,47 @@ export class Game {
 
         // Control active vessel
         if (this.mainStack && this.mainStack.active) {
-            const steer = this.input.getSteering();
+            // Flight Computer control (takes priority when active)
+            if (this.flightComputer.isActive()) {
+                const fcOutput = this.flightComputer.update(this.mainStack, simDt);
 
-            if (Math.abs(steer) > 0.1) {
-                // Manual control
-                this.mainStack.gimbalAngle = steer * 0.4;
-            } else if (this.sas.isActive()) {
-                // SAS control
-                const sasOut = this.sas.update(this.mainStack, simDt);
-                this.mainStack.gimbalAngle = sasOut;
+                // Apply pitch control via angle target
+                if (fcOutput.pitchAngle !== null) {
+                    // Flight computer controls pitch angle directly
+                    // Use SAS in STABILITY mode to achieve target
+                    const targetAngle = fcOutput.pitchAngle;
+                    const angleError = targetAngle - this.mainStack.angle;
+                    // Simple P-control for gimbal
+                    this.mainStack.gimbalAngle = Math.max(-0.5, Math.min(0.5, angleError * 2));
+                }
+
+                // Apply throttle control
+                if (fcOutput.throttle !== null) {
+                    this.mainStack.throttle = fcOutput.throttle;
+                }
+
+                // Handle abort
+                if (fcOutput.abort) {
+                    this.mainStack.throttle = 0;
+                    this.missionLog.log("FC: ABORT COMMAND", "warn");
+                }
             } else {
-                this.mainStack.gimbalAngle = 0;
+                // Manual steering
+                const steer = this.input.getSteering();
+
+                if (Math.abs(steer) > 0.1) {
+                    // Manual control
+                    this.mainStack.gimbalAngle = steer * 0.4;
+                } else if (this.sas.isActive()) {
+                    // SAS control
+                    const sasOut = this.sas.update(this.mainStack, simDt);
+                    this.mainStack.gimbalAngle = sasOut;
+                } else {
+                    this.mainStack.gimbalAngle = 0;
+                }
             }
 
-            // Throttle
+            // Throttle (manual always works, even in FC mode for override)
             if (this.input.actions.THROTTLE_UP) {
                 this.mainStack.throttle = Math.min(1, this.mainStack.throttle + 0.02 * this.timeScale);
             }

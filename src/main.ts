@@ -10,10 +10,14 @@ import { CONFIG, PIXELS_PER_METER } from './constants';
 import { state } from './state';
 import { SASModes } from './utils/SAS';
 import { FullStack } from './physics/RocketComponents';
+import { ScriptEditor } from './ui/ScriptEditor';
 
 // Create and initialize game
 const game = new Game();
 game.init();
+
+// Create Script Editor UI for Flight Computer
+const scriptEditor = new ScriptEditor(game.flightComputer);
 
 // ========================================
 // UI/UX IMPROVEMENTS - Event Listeners
@@ -212,6 +216,30 @@ document.querySelectorAll('#camera-panel button').forEach(btn => {
     });
 });
 
+// --- Flight Computer Button ---
+document.getElementById('fc-btn')?.addEventListener('click', () => {
+    scriptEditor.open();
+});
+
+// --- Flight Computer HUD Update ---
+function updateFCStatus(): void {
+    const fcStatus = document.getElementById('fc-status');
+    if (!fcStatus) return;
+
+    if (game.flightComputer.isActive()) {
+        fcStatus.classList.add('active');
+        fcStatus.innerHTML = `
+            <div class="fc-mode">${game.flightComputer.getStatusString()}</div>
+            <div class="fc-command">${game.flightComputer.getActiveCommandText()}</div>
+        `;
+    } else if (game.flightComputer.state.mode !== 'OFF') {
+        fcStatus.classList.add('active');
+        fcStatus.innerHTML = `<div class="fc-mode">${game.flightComputer.getStatusString()}</div>`;
+    } else {
+        fcStatus.classList.remove('active');
+    }
+}
+
 // ========================================
 // KEYBOARD SHORTCUTS
 // ========================================
@@ -253,10 +281,29 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'a' || e.key === 'A') {
         document.getElementById('autopilot-btn')?.click();
     }
+
+    // G - Toggle Flight Computer
+    if (e.key === 'g' || e.key === 'G') {
+        game.flightComputer.toggle();
+        game.missionLog.log(`Flight Computer: ${game.flightComputer.getStatusString()}`, "info");
+
+        // Update FC button state
+        const fcBtn = document.getElementById('fc-btn');
+        if (fcBtn) {
+            fcBtn.classList.toggle('enabled', game.flightComputer.isActive());
+        }
+    }
+
+    // F - Open Script Editor
+    if (e.key === 'f' || e.key === 'F') {
+        scriptEditor.open();
+    }
 });
 
 // Update action button periodically
 setInterval(updateActionButton, 500);
+setInterval(updateFCStatus, 100);
 
 // Export for debugging
 (window as any).game = game;
+(window as any).scriptEditor = scriptEditor;
