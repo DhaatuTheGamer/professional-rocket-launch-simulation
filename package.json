@@ -9,6 +9,7 @@
         "serve": "npx http-server . -p 8080 -c-1",
         "dev": "npm run serve",
         "test": "node --experimental-strip-types tests/PIDController.test.ts",
+        "test:rocket": "esbuild tests/RocketComponents.test.ts --bundle --platform=node --outfile=dist/test_rocket.js && node dist/test_rocket.js",
         "test:perf": "esbuild tests/Performance.test.ts --bundle --platform=node --outfile=dist/test_perf.js && node dist/test_perf.js"
     },
     "devDependencies": {
