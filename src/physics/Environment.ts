@@ -361,29 +361,6 @@ export function formatTimeOfDay(hours: number): string {
 }
 
 /**
- * Get sky color based on time of day
- * Returns CSS color string for background gradient
- */
-export function getSkyColor(timeOfDay: number): { top: string; bottom: string } {
-    // Normalize to 0-24
-    const t = timeOfDay % 24;
-
-    if (t >= 6 && t < 8) {
-        // Sunrise
-        return { top: '#1a1a2e', bottom: '#ff7e5f' };
-    } else if (t >= 8 && t < 18) {
-        // Day
-        return { top: '#0a0a20', bottom: '#1a1a40' };
-    } else if (t >= 18 && t < 20) {
-        // Sunset
-        return { top: '#1a1a2e', bottom: '#feb47b' };
-    } else {
-        // Night
-        return { top: '#000010', bottom: '#0a0a20' };
-    }
-}
-
-/**
  * Get wind direction as compass string
  */
 export function getWindDirectionString(radians: number): string {
