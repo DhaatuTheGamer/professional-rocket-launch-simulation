@@ -5,7 +5,7 @@
  * This is the entry point for the bundled application.
  */
 
-import { Game, performStaging } from './core/Game';
+import { Game } from './core/Game';
 import { CONFIG, PIXELS_PER_METER } from './constants';
 import { state } from './state';
 import { SASModes } from './utils/SAS';
@@ -256,13 +256,13 @@ window.addEventListener('keydown', (e) => {
             updateActionButton();
         } else if (flightPhase !== 'prelaunch') {
             // Staging
-            performStaging(game);
+            game.performStaging();
         }
     }
 
     // S - Staging
     if (e.key === 's' || e.key === 'S') {
-        performStaging(game);
+        game.performStaging();
     }
 
     // 1, 2, 3 - Camera modes
