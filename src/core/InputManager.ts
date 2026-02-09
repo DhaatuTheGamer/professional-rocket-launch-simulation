@@ -17,7 +17,6 @@ export class InputManager {
         THROTTLE_DOWN: false,
         YAW_LEFT: false,
         YAW_RIGHT: false,
-        STAGE: false,
         MAP_MODE: false,
         TIME_WARP_UP: false,
         TIME_WARP_DOWN: false,
@@ -98,7 +97,6 @@ export class InputManager {
         this.actions.THROTTLE_DOWN = this.keys['Control'] ?? false;
         this.actions.YAW_LEFT = this.keys['ArrowLeft'] ?? false;
         this.actions.YAW_RIGHT = this.keys['ArrowRight'] ?? false;
-        this.actions.STAGE = this.keys[' '] ?? false;
         this.actions.CUT_ENGINE = (this.keys['x'] ?? false) || (this.keys['X'] ?? false);
         this.actions.TIME_WARP_UP = (this.keys['.'] ?? false) || (this.keys['>'] ?? false);
         this.actions.TIME_WARP_DOWN = (this.keys[','] ?? false) || (this.keys['<'] ?? false);

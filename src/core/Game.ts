@@ -297,12 +297,6 @@ export class Game {
             this.input.actions.MAP_MODE = false;
         }
 
-        // Staging
-        if (this.input.actions.STAGE) {
-            // Staging is triggered via event listeners in main.ts
-            // to ensure precise, one-shot execution outside the fixed-timestep physics loop.
-            this.input.actions.STAGE = false;
-        }
 
         const simDt = dt * this.timeScale;
 

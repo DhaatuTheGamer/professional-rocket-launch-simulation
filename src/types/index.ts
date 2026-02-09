@@ -219,7 +219,6 @@ export interface InputActions {
     THROTTLE_DOWN: boolean;
     YAW_LEFT: boolean;
     YAW_RIGHT: boolean;
-    STAGE: boolean;
     MAP_MODE: boolean;
     TIME_WARP_UP: boolean;
     TIME_WARP_DOWN: boolean;
