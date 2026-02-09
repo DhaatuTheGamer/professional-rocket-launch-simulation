@@ -604,7 +604,19 @@ export class Vessel implements IVessel {
     spawnExhaust(timeScale: number): void {
         if (this.throttle <= 0 || this.fuel <= 0 || this.crashed) return;
 
-        const count = Math.ceil(this.throttle * 5 * timeScale);
+        const rawCount = Math.ceil(this.throttle * 5 * timeScale);
+
+        // Clamp particle count to prevent performance issues during time warp
+        const MAX_PARTICLES = 20;
+        let count = rawCount;
+        let sizeScale = 1.0;
+
+        if (count > MAX_PARTICLES) {
+            count = MAX_PARTICLES;
+            // Scale size by sqrt of count reduction to maintain visual mass (area)
+            sizeScale = Math.sqrt(rawCount / count);
+        }
+
         const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
         const vacuumFactor = Math.min(Math.max(0, altitude) / 30000, 1.0);
 
@@ -626,6 +638,12 @@ export class Vessel implements IVessel {
             const rocketVyPx = this.vy * PIXELS_PER_METER * DT;
 
             const p = new Particle(exX, exY, 'fire', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
+
+            // Apply visual scaling
+            if (sizeScale > 1.0) {
+                p.size *= sizeScale;
+            }
+
             if (vacuumFactor > 0.8) {
                 p.decay *= 0.5; // Particles last longer in vacuum
             }
@@ -633,7 +651,11 @@ export class Vessel implements IVessel {
 
             // Add smoke at lower altitudes
             if (Math.random() > 0.5 && vacuumFactor < 0.5) {
-                addParticle(new Particle(exX, exY, 'smoke', rocketVxPx + ejectVx, rocketVyPx + ejectVy));
+                const s = new Particle(exX, exY, 'smoke', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
+                if (sizeScale > 1.0) {
+                    s.size *= sizeScale;
+                }
+                addParticle(s);
             }
         }
     }
