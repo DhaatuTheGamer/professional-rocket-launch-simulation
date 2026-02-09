@@ -113,6 +113,46 @@ function runTests() {
     outEdge = pidEps.update(5, Number.EPSILON);
     assert(isFinite(outEdge), `Output should be finite for dt=EPSILON, got ${outEdge}`);
 
+    // 8. Isolated P Term
+    console.log("  - Testing P term only");
+    // kp=2, ki=0, kd=0, setpoint=10
+    const pidP = new PIDController(2, 0, 0, 10);
+    // error = 10 - 5 = 5
+    // output = 2 * 5 = 10
+    let outP = pidP.update(5, 0.1);
+    assert(outP === 10, `Expected P output 10, got ${outP}`);
+
+    // 9. Isolated I Term
+    console.log("  - Testing I term only");
+    // kp=0, ki=2, kd=0, setpoint=10
+    const pidI = new PIDController(0, 2, 0, 10);
+    // First update: error=5, dt=0.1 -> integral += 5*0.1 = 0.5
+    // output = 2 * 0.5 = 1
+    let outI = pidI.update(5, 0.1);
+    assert(Math.abs(outI - 1) < 0.000001, `Expected I output 1, got ${outI}`);
+
+    // Second update: error=5, dt=0.1 -> integral += 5*0.1 = 1.0 (accumulated)
+    // output = 2 * 1.0 = 2
+    outI = pidI.update(5, 0.1);
+    assert(Math.abs(outI - 2) < 0.000001, `Expected I output 2, got ${outI}`);
+
+    // 10. Isolated D Term
+    console.log("  - Testing D term only");
+    // kp=0, ki=0, kd=0.5, setpoint=10
+    const pidD = new PIDController(0, 0, 0.5, 10);
+    // First update: error=5, lastError=0, dt=0.1
+    // derivative = (5 - 0) / 0.1 = 50
+    // output = 0.5 * 50 = 25
+    let outD = pidD.update(5, 0.1);
+    assert(Math.abs(outD - 25) < 0.000001, `Expected D output 25, got ${outD}`);
+
+    // Second update: measurement=8 -> error=2
+    // lastError=5
+    // derivative = (2 - 5) / 0.1 = -30
+    // output = 0.5 * -30 = -15
+    outD = pidD.update(8, 0.1);
+    assert(Math.abs(outD - (-15)) < 0.000001, `Expected D output -15, got ${outD}`);
+
     console.log("✅ All PIDController tests passed!");
 }
 
