@@ -8,7 +8,9 @@
         "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --watch",
         "serve": "npx http-server . -p 8080 -c-1",
         "dev": "npm run serve",
-        "test": "node --experimental-strip-types tests/PIDController.test.ts"
+        "test": "npm run test:unit && npm run test:orbital",
+        "test:unit": "node --experimental-strip-types tests/PIDController.test.ts && node --experimental-strip-types tests/SAS.test.ts && node --experimental-strip-types tests/Propulsion.test.ts",
+        "test:orbital": "node -e \"require('fs').mkdirSync('dist/tests', {recursive: true})\" && esbuild tests/OrbitalMechanics.test.ts --bundle --outfile=dist/tests/OrbitalMechanics.test.js --platform=node && node dist/tests/OrbitalMechanics.test.js"
     },
     "devDependencies": {
         "typescript": "^5.3.3",
