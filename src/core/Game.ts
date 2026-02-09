@@ -514,6 +514,9 @@ export class Game {
         this.entities.forEach(e => {
             if (e.crashed) return;
 
+            // Throttle: minimum 100ms between updates
+            if (now - e.lastOrbitUpdate < 100) return;
+
             const alt = (this.groundY - e.y - e.h) / PIXELS_PER_METER;
             let needsUpdate = false;
 
@@ -943,10 +946,11 @@ export class Game {
         // Fixed timestep physics
         while (this.accumulator >= this.FIXED_DT) {
             this.updatePhysics(this.FIXED_DT);
-            if (this.cameraMode === 'MAP') {
-                this.updateOrbitPaths(currentTime);
-            }
             this.accumulator -= this.FIXED_DT;
+        }
+
+        if (this.cameraMode === 'MAP') {
+            this.updateOrbitPaths(currentTime);
         }
 
         this.draw();
