@@ -202,12 +202,14 @@ export type CameraMode = 'ROCKET' | 'MAP';
 /**
  * SAS (Stability Assist System) modes
  */
-export enum SASMode {
-    OFF = 'OFF',
-    STABILITY = 'STABILITY',
-    PROGRADE = 'PROGRADE',
-    RETROGRADE = 'RETROGRADE'
-}
+export const SASMode = {
+    OFF: 'OFF',
+    STABILITY: 'STABILITY',
+    PROGRADE: 'PROGRADE',
+    RETROGRADE: 'RETROGRADE'
+} as const;
+
+export type SASMode = typeof SASMode[keyof typeof SASMode];
 
 /**
  * Input action states

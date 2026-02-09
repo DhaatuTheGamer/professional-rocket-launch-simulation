@@ -11,8 +11,8 @@
  * - RETROGRADE: Point opposite to velocity (for deceleration/landing)
  */
 
-import { PIDController } from './PIDController';
-import { SASMode, IVessel } from '../types';
+import { PIDController } from './PIDController.ts';
+import { SASMode, type IVessel } from '../types/index.ts';
 
 /**
  * SAS Mode enum for external access
