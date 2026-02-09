@@ -137,6 +137,7 @@ export class Particle implements IParticle {
      * Draw particle to canvas
      * 
      * @param ctx - Canvas 2D rendering context
+     * @deprecated Use Particle.drawParticles for batched rendering instead.
      */
     draw(ctx: CanvasRenderingContext2D): void {
         ctx.beginPath();
