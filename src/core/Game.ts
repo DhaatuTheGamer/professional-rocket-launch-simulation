@@ -35,6 +35,7 @@ import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../p
 import { setWindVelocity, setDensityMultiplier } from '../state';
 import { ManeuverPlanner } from '../ui/ManeuverPlanner';
 import { MissionControl } from '../ui/MissionControl';
+import { UI_COLORS } from '../ui/UIConstants';
 
 export class Game {
     // Canvas and rendering
@@ -89,6 +90,39 @@ export class Game {
     // Bloom effect (for engine glow)
     private bloomCanvas: HTMLCanvasElement;
     private bloomCtx: CanvasRenderingContext2D;
+
+    // HUD state cache for minimizing DOM updates
+    private lastHUDState = {
+        // Environment
+        windSpeed: -1,
+        windDir: '',
+        timeOfDay: '',
+        launchStatus: '',
+        maxQWarning: false,
+
+        // Telemetry
+        alt: '',
+        vel: '',
+        apogee: '',
+        fuelPct: -1,
+        thrustPct: -1,
+
+        // Flight Data
+        aoa: '',
+        aoaColor: '',
+        stability: '',
+        stabilityColor: '',
+
+        // TPS & Engine
+        skinTemp: '',
+        skinTempColor: '',
+        tpsStatus: '',
+        tpsStatusColor: '',
+        engineStatus: '',
+        engineStatusColor: '',
+        igniters: -1,
+        ignitersColor: ''
+    };
 
     // HUD element cache
     private hudWindSpeed: HTMLElement | null = null;
@@ -409,42 +443,60 @@ export class Game {
         const hudWindDir = this.hudWindDir;
         const hudTimeOfDay = this.hudTimeOfDay;
         const hudLaunchStatus = this.hudLaunchStatus;
+        const last = this.lastHUDState;
 
         if (hudWindSpeed) {
             const speed = Math.round(envState.surfaceWindSpeed);
-            hudWindSpeed.textContent = speed + ' m/s';
+            if (last.windSpeed !== speed) {
+                last.windSpeed = speed;
+                hudWindSpeed.textContent = speed + ' m/s';
 
-            // Color coding based on wind limits
-            if (speed > 15) {
-                hudWindSpeed.style.color = '#e74c3c';  // Red
-            } else if (speed > 10) {
-                hudWindSpeed.style.color = '#f1c40f';  // Yellow
-            } else {
-                hudWindSpeed.style.color = '#2ecc71';  // Green
+                // Color coding based on wind limits
+                if (speed > 15) {
+                    hudWindSpeed.style.color = UI_COLORS.RED;
+                } else if (speed > 10) {
+                    hudWindSpeed.style.color = UI_COLORS.YELLOW;
+                } else {
+                    hudWindSpeed.style.color = UI_COLORS.GREEN;
+                }
             }
         }
 
         if (hudWindDir) {
-            hudWindDir.textContent = getWindDirectionString(envState.surfaceWindDirection);
+            const dirStr = getWindDirectionString(envState.surfaceWindDirection);
+            if (last.windDir !== dirStr) {
+                last.windDir = dirStr;
+                hudWindDir.textContent = dirStr;
+            }
         }
 
         if (hudTimeOfDay) {
-            hudTimeOfDay.textContent = formatTimeOfDay(envState.timeOfDay);
+            const timeStr = formatTimeOfDay(envState.timeOfDay);
+            if (last.timeOfDay !== timeStr) {
+                last.timeOfDay = timeStr;
+                hudTimeOfDay.textContent = timeStr;
+            }
         }
 
         if (hudLaunchStatus) {
-            if (envState.isLaunchSafe) {
-                hudLaunchStatus.textContent = 'GO';
-                hudLaunchStatus.style.color = '#2ecc71';
-                hudLaunchStatus.className = 'go-status';
-            } else {
-                hudLaunchStatus.textContent = 'NO GO';
-                hudLaunchStatus.style.color = '#e74c3c';
-                hudLaunchStatus.className = 'no-go-status';
+            const statusStr = envState.isLaunchSafe ? 'GO' : 'NO GO';
+
+            if (last.launchStatus !== statusStr) {
+                last.launchStatus = statusStr;
+                hudLaunchStatus.textContent = statusStr;
+
+                if (envState.isLaunchSafe) {
+                    hudLaunchStatus.style.color = UI_COLORS.GREEN;
+                    hudLaunchStatus.className = 'go-status';
+                } else {
+                    hudLaunchStatus.style.color = UI_COLORS.RED;
+                    hudLaunchStatus.className = 'no-go-status';
+                }
             }
 
             // Add Max-Q warning
-            if (envState.maxQWindWarning) {
+            if (envState.maxQWindWarning && !last.maxQWarning) {
+                last.maxQWarning = true;
                 const hudMaxQ = this.hudMaxQ;
                 if (hudMaxQ) {
                     hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
@@ -665,36 +717,94 @@ export class Game {
         const gaugeThrust = this.gaugeThrust;
         const hudAoa = this.hudAoa;
         const hudStability = this.hudStability;
+        const last = this.lastHUDState;
 
-        if (hudAlt) hudAlt.textContent = (alt / 1000).toFixed(1);
-        if (hudVel) hudVel.textContent = Math.floor(vel).toString();
-        if (hudApogee) hudApogee.textContent = (Math.max(alt, apogeeEst) / 1000).toFixed(1);
-        if (gaugeFuel) gaugeFuel.style.height = (this.trackedEntity.fuel * 100) + '%';
-        if (gaugeThrust) gaugeThrust.style.height = (this.trackedEntity.throttle * 100) + '%';
+        if (hudAlt) {
+            const altStr = (alt / 1000).toFixed(1);
+            if (last.alt !== altStr) {
+                last.alt = altStr;
+                hudAlt.textContent = altStr;
+            }
+        }
+
+        if (hudVel) {
+            const velStr = Math.floor(vel).toString();
+            if (last.vel !== velStr) {
+                last.vel = velStr;
+                hudVel.textContent = velStr;
+            }
+        }
+
+        if (hudApogee) {
+            const apStr = (Math.max(alt, apogeeEst) / 1000).toFixed(1);
+            if (last.apogee !== apStr) {
+                last.apogee = apStr;
+                hudApogee.textContent = apStr;
+            }
+        }
+
+        if (gaugeFuel) {
+            const fuelPct = this.trackedEntity.fuel;
+            // Only update if changed by more than 0.001
+            if (Math.abs(last.fuelPct - fuelPct) > 0.001) {
+                last.fuelPct = fuelPct;
+                gaugeFuel.style.height = (fuelPct * 100) + '%';
+            }
+        }
+
+        if (gaugeThrust) {
+             const thrustPct = this.trackedEntity.throttle;
+             if (Math.abs(last.thrustPct - thrustPct) > 0.001) {
+                 last.thrustPct = thrustPct;
+                 gaugeThrust.style.height = (thrustPct * 100) + '%';
+             }
+        }
 
         // Aerodynamic stability display
         if (hudAoa) {
             const aoaDeg = Math.abs(this.trackedEntity.aoa * 180 / Math.PI);
-            hudAoa.textContent = aoaDeg.toFixed(1) + '°';
+            const aoaStr = aoaDeg.toFixed(1) + '°';
 
-            // Color coding: green < 5°, yellow 5-15°, red > 15°
-            if (aoaDeg > 15) {
-                hudAoa.style.color = '#e74c3c';
-            } else if (aoaDeg > 5) {
-                hudAoa.style.color = '#f1c40f';
-            } else {
-                hudAoa.style.color = '#2ecc71';
+            if (last.aoa !== aoaStr) {
+                last.aoa = aoaStr;
+                hudAoa.textContent = aoaStr;
+
+                // Color coding: green < 5°, yellow 5-15°, red > 15°
+                let color = UI_COLORS.GREEN;
+                if (aoaDeg > 15) {
+                    color = UI_COLORS.RED;
+                } else if (aoaDeg > 5) {
+                    color = UI_COLORS.YELLOW;
+                }
+
+                if (last.aoaColor !== color) {
+                    last.aoaColor = color;
+                    hudAoa.style.color = color;
+                }
             }
         }
 
         if (hudStability) {
             const margin = this.trackedEntity.stabilityMargin;
+            let stabStr = '';
+            let color = '';
+
             if (this.trackedEntity.isAeroStable) {
-                hudStability.textContent = (margin * 100).toFixed(1) + '%';
-                hudStability.style.color = '#2ecc71';
+                stabStr = (margin * 100).toFixed(1) + '%';
+                color = UI_COLORS.GREEN;
             } else {
-                hudStability.textContent = 'UNSTABLE';
-                hudStability.style.color = '#e74c3c';
+                stabStr = 'UNSTABLE';
+                color = UI_COLORS.RED;
+            }
+
+            if (last.stability !== stabStr) {
+                last.stability = stabStr;
+                hudStability.textContent = stabStr;
+            }
+
+            if (last.stabilityColor !== color) {
+                last.stabilityColor = color;
+                hudStability.style.color = color;
             }
         }
 
@@ -705,34 +815,56 @@ export class Game {
         if (hudSkinTemp) {
             // Convert from Kelvin to Celsius
             const tempC = Math.round(this.trackedEntity.skinTemp - 273.15);
-            hudSkinTemp.textContent = tempC + '°C';
+            const tempStr = tempC + '°C';
 
-            // Color coding based on temperature ratio to max
-            if (this.trackedEntity.isThermalCritical) {
-                hudSkinTemp.style.color = '#e74c3c';  // Red - critical
-            } else if (tempC > 400) {
-                hudSkinTemp.style.color = '#e67e22';  // Orange - warning
-            } else if (tempC > 200) {
-                hudSkinTemp.style.color = '#f1c40f';  // Yellow - elevated
-            } else {
-                hudSkinTemp.style.color = '#2ecc71';  // Green - nominal
+            if (last.skinTemp !== tempStr) {
+                last.skinTemp = tempStr;
+                hudSkinTemp.textContent = tempStr;
+
+                let color = UI_COLORS.GREEN;
+                // Color coding based on temperature ratio to max
+                if (this.trackedEntity.isThermalCritical) {
+                    color = UI_COLORS.RED;  // Red - critical
+                } else if (tempC > 400) {
+                    color = UI_COLORS.ORANGE;  // Orange - warning
+                } else if (tempC > 200) {
+                    color = UI_COLORS.YELLOW;  // Yellow - elevated
+                }
+
+                if (last.skinTempColor !== color) {
+                    last.skinTempColor = color;
+                    hudSkinTemp.style.color = color;
+                }
             }
         }
 
         if (hudTpsStatus) {
             const shieldPct = Math.round(this.trackedEntity.heatShieldRemaining * 100);
+            let statusStr = '';
+            let color = '';
+
             if (shieldPct > 0) {
-                hudTpsStatus.textContent = shieldPct + '%';
+                statusStr = shieldPct + '%';
                 if (this.trackedEntity.isAblating) {
-                    hudTpsStatus.style.color = '#e67e22';  // Orange when ablating
+                    color = UI_COLORS.ORANGE;  // Orange when ablating
                 } else if (shieldPct < 30) {
-                    hudTpsStatus.style.color = '#e74c3c';  // Red when low
+                    color = UI_COLORS.RED;  // Red when low
                 } else {
-                    hudTpsStatus.style.color = '#2ecc71';  // Green
+                    color = UI_COLORS.GREEN;  // Green
                 }
             } else {
-                hudTpsStatus.textContent = 'N/A';
-                hudTpsStatus.style.color = '#95a5a6';  // Gray when no TPS
+                statusStr = 'N/A';
+                color = UI_COLORS.GRAY;  // Gray when no TPS
+            }
+
+            if (last.tpsStatus !== statusStr) {
+                last.tpsStatus = statusStr;
+                hudTpsStatus.textContent = statusStr;
+            }
+
+            if (last.tpsStatusColor !== color) {
+                last.tpsStatusColor = color;
+                hudTpsStatus.style.color = color;
             }
         }
 
@@ -742,35 +874,58 @@ export class Game {
 
         if (hudEngineStatus) {
             const state = this.trackedEntity.engineState;
+            let statusStr = '';
+            let color = '';
+
             switch (state) {
                 case 'off':
-                    hudEngineStatus.textContent = 'OFF';
-                    hudEngineStatus.style.color = '#95a5a6';
+                    statusStr = 'OFF';
+                    color = UI_COLORS.GRAY;
                     break;
                 case 'starting':
-                    hudEngineStatus.textContent = 'SPOOL';
-                    hudEngineStatus.style.color = '#f1c40f';
+                    statusStr = 'SPOOL';
+                    color = UI_COLORS.YELLOW;
                     break;
                 case 'running':
-                    hudEngineStatus.textContent = 'RUN';
-                    hudEngineStatus.style.color = '#2ecc71';
+                    statusStr = 'RUN';
+                    color = UI_COLORS.GREEN;
                     break;
                 case 'shutdown':
-                    hudEngineStatus.textContent = 'STOP';
-                    hudEngineStatus.style.color = '#e67e22';
+                    statusStr = 'STOP';
+                    color = UI_COLORS.ORANGE;
                     break;
+            }
+
+            if (last.engineStatus !== statusStr) {
+                last.engineStatus = statusStr;
+                hudEngineStatus.textContent = statusStr;
+            }
+
+            if (last.engineStatusColor !== color) {
+                last.engineStatusColor = color;
+                hudEngineStatus.style.color = color;
             }
         }
 
         if (hudIgniters) {
             const count = this.trackedEntity.ignitersRemaining;
-            hudIgniters.textContent = count.toString();
-            if (count === 0) {
-                hudIgniters.style.color = '#e74c3c';  // Red - no restarts
-            } else if (count === 1) {
-                hudIgniters.style.color = '#e67e22';  // Orange - last one
-            } else {
-                hudIgniters.style.color = '#2ecc71';  // Green
+            if (last.igniters !== count) {
+                last.igniters = count;
+                hudIgniters.textContent = count.toString();
+
+                let color = '';
+                if (count === 0) {
+                    color = UI_COLORS.RED;  // Red - no restarts
+                } else if (count === 1) {
+                    color = UI_COLORS.ORANGE;  // Orange - last one
+                } else {
+                    color = UI_COLORS.GREEN;  // Green
+                }
+
+                if (last.ignitersColor !== color) {
+                    last.ignitersColor = color;
+                    hudIgniters.style.color = color;
+                }
             }
         }
     }
