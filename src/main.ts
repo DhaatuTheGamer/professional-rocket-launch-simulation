@@ -19,6 +19,24 @@ import { VehicleBlueprint, calculateStats } from './vab/VehicleBlueprint';
 const game = new Game();
 game.init();
 
+// UI Cache for optimized updates
+const uiCache = {
+    fcStatus: null as HTMLElement | null,
+    launchBtn: null as HTMLElement | null,
+    bbStatus: null as HTMLElement | null,
+    sasModeText: null as HTMLElement | null,
+    tooltipOverlay: null as HTMLElement | null
+};
+
+function initUI() {
+    uiCache.fcStatus = document.getElementById('fc-status');
+    uiCache.launchBtn = document.getElementById('launch-btn');
+    uiCache.bbStatus = document.getElementById('bb-status');
+    uiCache.sasModeText = document.getElementById('sas-mode-text');
+    uiCache.tooltipOverlay = document.getElementById('tooltip-overlay');
+}
+initUI();
+
 // Create Script Editor UI for Flight Computer
 const scriptEditor = new ScriptEditor(game.flightComputer);
 
@@ -47,12 +65,12 @@ let flightPhase: 'prelaunch' | 'ascending' | 'descending' | 'landed' = 'prelaunc
 // --- IMPROVEMENT #7: Onboarding System ---
 function showOnboarding(): void {
     if (localStorage.getItem('onboarding-complete')) return;
-    const overlay = document.getElementById('tooltip-overlay');
+    const overlay = uiCache.tooltipOverlay;
     if (overlay) overlay.classList.add('visible');
 }
 
 document.getElementById('tooltip-dismiss')?.addEventListener('click', () => {
-    const overlay = document.getElementById('tooltip-overlay');
+    const overlay = uiCache.tooltipOverlay;
     if (overlay) overlay.classList.remove('visible');
     localStorage.setItem('onboarding-complete', 'true');
 });
@@ -71,7 +89,7 @@ document.getElementById('open-vab-btn')?.addEventListener('click', () => {
 
 // --- IMPROVEMENT #2: Dynamic Action Buttons ---
 function updateActionButton(): void {
-    const btn = document.getElementById('launch-btn');
+    const btn = uiCache.launchBtn;
     if (!btn || !game.trackedEntity) return;
 
     const alt = (state.groundY - game.trackedEntity.y - game.trackedEntity.h) / PIXELS_PER_METER;
@@ -138,7 +156,7 @@ document.querySelectorAll('.sas-btn').forEach(btn => {
         game.sas.setMode(sasMode, game.trackedEntity?.angle ?? 0);
 
         // Update SAS mode indicator
-        const modeText = document.getElementById('sas-mode-text');
+        const modeText = uiCache.sasModeText;
         const modeIcons: Record<string, string> = {
             OFF: '⭕',
             STABILITY: '⚡',
@@ -183,7 +201,7 @@ document.getElementById('fc-btn')?.addEventListener('click', () => {
 
 // --- Flight Computer HUD Update ---
 function updateFCStatus(): void {
-    const fcStatus = document.getElementById('fc-status');
+    const fcStatus = uiCache.fcStatus;
     if (!fcStatus) return;
 
     const isActive = game.flightComputer.isActive();
@@ -303,7 +321,7 @@ setInterval(updateFCStatus, 100);
 
 // Update Black Box status in HUD
 function updateBlackBoxStatus(): void {
-    const bbStatus = document.getElementById('bb-status');
+    const bbStatus = uiCache.bbStatus;
     if (bbStatus) {
         const status = game.blackBox.getStatusString();
         bbStatus.textContent = status;
