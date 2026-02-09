@@ -5,7 +5,7 @@
  * Each particle has physics properties and renders with type-specific appearance.
  */
 
-import { IParticle, ParticleType } from '../types';
+import type { IParticle, ParticleType } from '../types/index.ts';
 
 /**
  * Particle configuration by type
@@ -168,9 +168,12 @@ export class Particle implements IParticle {
     }
 
     // Reusable batches to reduce GC pressure
-    // Map<ParticleType, Array<Particle[]>>
-    private static batches: Map<string, Particle[][]> = new Map();
-    private static initialized = false;
+    private static batches: Record<ParticleType, Particle[][]> = {
+        smoke: Array.from({ length: 20 }, () => []),
+        fire: Array.from({ length: 20 }, () => []),
+        spark: Array.from({ length: 20 }, () => []),
+        debris: Array.from({ length: 20 }, () => [])
+    };
 
     /**
      * Batch render multiple particles
@@ -179,20 +182,10 @@ export class Particle implements IParticle {
     static drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]): void {
         if (particles.length === 0) return;
 
-        // Initialize batches once
-        if (!Particle.initialized) {
-            const types: ParticleType[] = ['smoke', 'fire', 'spark', 'debris'];
-            for (const type of types) {
-                // Create 20 buckets for life stages (0.05 steps)
-                const buckets = new Array(20);
-                for (let i = 0; i < 20; i++) buckets[i] = [];
-                Particle.batches.set(type, buckets);
-            }
-            Particle.initialized = true;
-        }
-
         // Clear existing batches
-        for (const buckets of Particle.batches.values()) {
+        for (const type in Particle.batches) {
+            // Safety cast as we know keys match ParticleType
+            const buckets = Particle.batches[type as ParticleType];
             for (const bucket of buckets) {
                 bucket.length = 0;
             }
@@ -204,7 +197,8 @@ export class Particle implements IParticle {
             // Clamp between 0 and 19 (for life 0.0 to 1.0)
             const lifeIndex = Math.max(0, Math.min(19, Math.floor(p.life * 20)));
 
-            const buckets = Particle.batches.get(p.type);
+            // Direct access is safe because ParticleType is exhausted in batches initialization
+            const buckets = Particle.batches[p.type];
             if (buckets) {
                 buckets[lifeIndex].push(p);
             } else {
@@ -214,7 +208,12 @@ export class Particle implements IParticle {
         }
 
         // Render each batch
-        for (const [type, buckets] of Particle.batches) {
+        // Explicitly iterate known types
+        const types: ParticleType[] = ['smoke', 'fire', 'spark', 'debris'];
+
+        for (const type of types) {
+            const buckets = Particle.batches[type];
+
             for (let i = 0; i < 20; i++) {
                 const group = buckets[i];
                 if (group.length === 0) continue;
@@ -247,9 +246,6 @@ export class Particle implements IParticle {
                         ctx.fillStyle = `rgba(100,100,100,${life})`;
                         break;
                     }
-                    default:
-                        // Should not happen as we only iterate known types in batches
-                        continue;
                 }
 
                 // Draw all particles in this batch in one path
