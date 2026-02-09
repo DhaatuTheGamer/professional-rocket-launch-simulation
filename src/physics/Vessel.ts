@@ -21,6 +21,7 @@ import {
     SPEED_OF_SOUND,
     getAtmosphericDensity,
     getGravity,
+    getDynamicPressure,
     getTransonicDragMultiplier,
     getMachNumber,
     DT
@@ -162,7 +163,7 @@ export class Vessel implements IVessel {
         const relVy = s.vy - currentWindVelocity.y;
         const vSq = relVx * relVx + relVy * relVy;
         const v = Math.sqrt(vSq);
-        const q = 0.5 * rho * currentDensityMultiplier * vSq;
+        const q = getDynamicPressure(rho * currentDensityMultiplier, v);
         const mach = getMachNumber(v);
 
         // Calculate aerodynamic state using relative velocity (AoA, CP, CoM, stability)
@@ -342,7 +343,7 @@ export class Vessel implements IVessel {
         const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
         const rho = getAtmosphericDensity(altitude);
         const v = Math.sqrt(this.vx ** 2 + this.vy ** 2);
-        this.q = 0.5 * rho * v * v;
+        this.q = getDynamicPressure(rho, v);
 
         // Update propulsion state (spool-up/down, ullage, igniters)
         this.updatePropulsionState(v, altitude, dt);
