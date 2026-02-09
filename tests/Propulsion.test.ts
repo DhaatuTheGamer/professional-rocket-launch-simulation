@@ -6,10 +6,13 @@ import {
     attemptIgnition,
     commandShutdown,
     FULLSTACK_PROP_CONFIG,
+    PAYLOAD_PROP_CONFIG,
     type PropulsionState,
     type PropulsionConfig,
     getEngineStateDisplay,
-    getIgnitionFailureMessage
+    getIgnitionFailureMessage,
+    getEngineStateColor,
+    getEffectiveThrustMultiplier
 } from '../src/physics/Propulsion.ts';
 
 /**
@@ -85,6 +88,21 @@ function runTests() {
     testState = updateUllageStatus(testState, FULLSTACK_PROP_CONFIG, 0, 0.1); // 0.1
     testState = updateUllageStatus(testState, FULLSTACK_PROP_CONFIG, 0, 0.1); // 0.0 -> unsettles
     assert(testState.ullageSettled === false, "Should unsettle after grace period");
+
+    // Boundary Test: Exact acceleration requirement
+    // minUllageAccel is 0.1
+    let boundaryState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    boundaryState.ullageSettled = false;
+    boundaryState.ullageTimer = 0;
+
+    // updateUllageStatus checks if (currentAcceleration >= config.minUllageAccel)
+    // So 0.1 should work.
+    boundaryState = updateUllageStatus(boundaryState, FULLSTACK_PROP_CONFIG, 0.1, 0.1);
+    assert(boundaryState.ullageTimer > 0, "Should accumulate settling time at exact min acceleration");
+
+    boundaryState.ullageTimer = 0;
+    boundaryState = updateUllageStatus(boundaryState, FULLSTACK_PROP_CONFIG, 0.099, 0.1);
+    assert(boundaryState.ullageTimer === 0, "Should not accumulate settling time below min acceleration");
 
 
     // 3. Ignition Logic
@@ -216,6 +234,38 @@ function runTests() {
 
     testState.lastIgnitionResult = 'no_fuel';
     assert(getIgnitionFailureMessage(testState)?.includes('No fuel'), "Should display no fuel message");
+
+    // 7. Payload Configuration (No Engine)
+    console.log("  - Testing Payload Configuration (No Engine)");
+    const payloadState = createInitialPropulsionState(PAYLOAD_PROP_CONFIG);
+    assert(payloadState.engineState === 'off', "Payload should start off");
+
+    // Attempt ignition
+    const payloadResult = attemptIgnition(payloadState, PAYLOAD_PROP_CONFIG, true);
+    assert(payloadResult.engineState === 'off', "Payload should not ignite");
+    assert(payloadResult.lastIgnitionResult === 'none', "Payload ignition result should be 'none'");
+
+
+    // 8. Helper Functions
+    console.log("  - Testing Helper Functions");
+
+    // getEngineStateColor
+    const offState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    assert(getEngineStateColor(offState) === '#95a5a6', "Off state color should be gray");
+
+    offState.engineState = 'starting';
+    assert(getEngineStateColor(offState) === '#f1c40f', "Starting state color should be yellow");
+
+    offState.engineState = 'running';
+    assert(getEngineStateColor(offState) === '#2ecc71', "Running state color should be green");
+
+    offState.engineState = 'shutdown';
+    assert(getEngineStateColor(offState) === '#e67e22', "Shutdown state color should be orange");
+
+    // getEffectiveThrustMultiplier
+    offState.actualThrottle = 0.5;
+    assert(getEffectiveThrustMultiplier(offState) === 0.5, "Effective thrust should match actual throttle");
+
 
     console.log("✅ All Propulsion tests passed!");
 }
