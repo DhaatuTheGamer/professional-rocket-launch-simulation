@@ -5,8 +5,9 @@
  * Includes Keplerian element calculation, Vis-Viva equation, and maneuver planning algorithms.
  */
 
-import { Vector2D, PhysicsState, Vec2 } from '../types';
-import { R_EARTH, GRAVITY } from '../constants';
+import type { Vector2D, PhysicsState } from '../types/index.ts';
+import { Vec2 } from '../types/index.ts';
+import { R_EARTH, GRAVITY } from '../constants.ts';
 
 // Standard gravitational parameter for Earth (mu = GM)
 // G = 6.67430e-11, M = 5.972e24 => mu ≈ 3.986e14 m^3/s^2
