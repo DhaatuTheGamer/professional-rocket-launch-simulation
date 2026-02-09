@@ -33,6 +33,8 @@ import { FlightComputer } from '../guidance/FlightComputer';
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
 import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
 import { setWindVelocity, setDensityMultiplier } from '../state';
+import { ManeuverPlanner } from '../ui/ManeuverPlanner';
+import { MissionControl } from '../ui/MissionControl';
 
 export class Game {
     // Canvas and rendering
@@ -40,7 +42,7 @@ export class Game {
     private ctx: CanvasRenderingContext2D;
     private width: number;
     private height: number;
-    private groundY: number;
+    public groundY: number;
 
     // Subsystems
     public input: InputManager;
@@ -53,6 +55,8 @@ export class Game {
     public flightComputer: FlightComputer;
     public blackBox: BlackBoxRecorder;
     public environment: EnvironmentSystem;
+    public maneuverPlanner: ManeuverPlanner;
+    public missionControl: MissionControl;
 
     // Game state
     public entities: IVessel[] = [];
@@ -114,6 +118,8 @@ export class Game {
         this.flightComputer = new FlightComputer(this.groundY);
         this.blackBox = new BlackBoxRecorder(this.groundY);
         this.environment = new EnvironmentSystem();
+        this.maneuverPlanner = new ManeuverPlanner(this);
+        this.missionControl = new MissionControl(this);
 
         // Bloom canvas for glow effects
         this.bloomCanvas = document.createElement('canvas');
@@ -152,6 +158,13 @@ export class Game {
             this.audio.resume();
             this.audio.init();
         }, { once: true });
+
+        // Toggle Maneuver Planner with 'O'
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'o' || e.key === 'O') {
+                this.maneuverPlanner.toggle();
+            }
+        });
 
         // Load assets
         await this.assets.loadAll();
@@ -228,6 +241,9 @@ export class Game {
 
             // Update environment HUD
             this.updateEnvironmentHUD(envState);
+
+            // Update Mission Control
+            this.missionControl.update(simDt, this.missionTime);
         }
 
         // Control active vessel
@@ -457,6 +473,9 @@ export class Game {
         } else {
             this.drawRocketView();
         }
+
+        // Draw Mission Control Overlay
+        this.missionControl.draw(this.ctx, this.width, this.height);
     }
 
     /**

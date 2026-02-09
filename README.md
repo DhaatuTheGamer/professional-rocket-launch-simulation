@@ -1,4 +1,4 @@
-# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.8.0)
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v2.0.0)
 
 Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, environmental hazards, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
 
@@ -7,6 +7,11 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 ![Build](https://img.shields.io/badge/build-esbuild-yellow.svg)
 
 ## Features
+
+### Mission Control & Orbital Planning (v2.0.0)
+- **Orbital Maneuver Planner** - Calculate burns for Circularization and Hohmann Transfers.
+- **Ground Track Visualization** - Mercator map projection of rocket path and impact zone.
+- **Spherical Physics** - Accurate latitude/longitude calculation based on downrange distance.
 
 ### Physics Engine
 - **RK4 Integration** - 4th order Runge-Kutta for accurate orbital mechanics

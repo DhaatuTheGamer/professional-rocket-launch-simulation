@@ -166,6 +166,16 @@ document.querySelectorAll('#camera-panel button').forEach(btn => {
     });
 });
 
+// --- Maneuver Planner Button ---
+document.getElementById('maneuver-btn')?.addEventListener('click', () => {
+    game.maneuverPlanner.toggle();
+});
+
+// --- Mission Control Button ---
+document.getElementById('mission-control-btn')?.addEventListener('click', () => {
+    game.missionControl.toggle();
+});
+
 // --- Flight Computer Button ---
 document.getElementById('fc-btn')?.addEventListener('click', () => {
     scriptEditor.open();

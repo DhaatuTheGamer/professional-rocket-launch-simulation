@@ -55,14 +55,14 @@
 **Proposal:** Add **Wind Shear** layers and **Gusts**. Implement **Day/Night cycles** affecting atmospheric density.
 **Practicality:** Simulates "Go/No-Go" launch conditions. High altitude wind shear is a major launch constraint.
 
-### 9. Orbital Maneuver Planner
+### 9. Orbital Maneuver Planner [DONE]
 **Current Status:** Visual orbit lines.
 **Proposal:** A tool to calculate burn times for specific maneuvers.
 - "Hohmann Transfer" calculator.
 - "Circularization Burn" calculator.
 **Practicality:** Transforms the sim from "fly and see" to "plan and execute," essential for orbital rendezvous and precise payload delivery.
 
-### 10. Ground Track & Mission Control Visualization
-**Current Status:** 2D side view and simple map.
+### 10. Ground Track & Mission Control Visualization [DONE]
+**Current Status:** Implemented in v2.0.
 **Proposal:** Project the 2D trajectory onto a **3D Globe** visualization to show the **Ground Track**.
 **Practicality:** Visualizes impact zones for spent stages (range safety) and ground station coverage (telemetry links).
