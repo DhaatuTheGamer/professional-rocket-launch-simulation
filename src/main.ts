@@ -304,6 +304,3 @@ document.getElementById('export-btn')?.addEventListener('click', () => {
     }
 });
 
-// Export for debugging
-(window as any).game = game;
-(window as any).scriptEditor = scriptEditor;
