@@ -30,6 +30,7 @@ import { TelemetrySystem } from '../ui/Telemetry';
 import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
 import { FlightComputer } from '../guidance/FlightComputer';
+import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
 
 export class Game {
     // Canvas and rendering
@@ -48,6 +49,7 @@ export class Game {
     public missionLog: MissionLog;
     public sas: SAS;
     public flightComputer: FlightComputer;
+    public blackBox: BlackBoxRecorder;
 
     // Game state
     public entities: IVessel[] = [];
@@ -75,6 +77,7 @@ export class Game {
     private lastTime: number = 0;
     private accumulator: number = 0;
     private readonly FIXED_DT: number = 1 / 60;
+    public missionTime: number = 0;
 
     // Bloom effect (for engine glow)
     private bloomCanvas: HTMLCanvasElement;
@@ -106,6 +109,7 @@ export class Game {
         this.missionLog = new MissionLog();
         this.sas = new SAS();
         this.flightComputer = new FlightComputer(this.groundY);
+        this.blackBox = new BlackBoxRecorder(this.groundY);
 
         // Bloom canvas for glow effects
         this.bloomCanvas = document.createElement('canvas');
@@ -286,6 +290,21 @@ export class Game {
                 this.missionState.liftoff = true;
                 this.missionLog.log("LIFTOFF", "warn");
                 this.audio.speak("Liftoff");
+                // Auto-start black box recording on liftoff
+                if (this.blackBox.getState() === 'idle') {
+                    this.blackBox.start('Flight');
+                }
+            }
+
+            // Record to black box
+            if (this.missionState.liftoff) {
+                this.missionTime += simDt;
+                this.blackBox.record(this.trackedEntity, this.missionTime);
+            }
+
+            // Auto-stop black box on crash
+            if (this.trackedEntity.crashed && this.blackBox.isRecording()) {
+                this.blackBox.stop('crashed');
             }
         }
 

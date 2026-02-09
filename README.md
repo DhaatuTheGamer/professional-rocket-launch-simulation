@@ -1,6 +1,6 @@
-# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.5.0)
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v1.6.0)
 
-Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, autonomous guidance, and Kerbal Space Program-inspired controls.
+Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, autonomous guidance, telemetry recording, and Kerbal Space Program-inspired controls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
@@ -36,6 +36,8 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 | `X` | Cut engine |
 | `G` | Toggle Flight Computer |
 | `F` | Open Script Editor |
+| `R` | Toggle Black Box Recording |
+| `E` | Export Flight Data (CSV) |
 | `A` | Toggle autopilot |
 | `M` | Toggle map view |
 | `.` `,` | Time warp |
@@ -118,6 +120,26 @@ WHEN APOGEE > 100000 THEN THROTTLE 0
 - **G** - Toggle Flight Computer on/off
 - **F** - Open Script Editor
 - Scripts are saved to localStorage
+
+## Black Box Telemetry Recorder (v1.6.0)
+
+Records all flight variables at 20Hz for post-flight analysis.
+
+### Recorded Data
+- Time, Altitude, Velocity (X/Y), Speed
+- Acceleration (X/Y), G-Force
+- Pitch Angle, Gimbal Angle, Throttle
+- Mass, Fuel, Dynamic Pressure (Q), Mach
+- Angle of Attack, Skin Temperature, Engine State
+
+### Export Formats
+- **CSV** - Standard comma-separated values with headers
+- **JSON** - Structured format with flight summary metadata
+
+### Controls
+- **R** - Toggle recording manually
+- **E** - Export flight data to CSV
+- Auto-starts on liftoff, auto-stops on crash
 
 ## Type Safety
 

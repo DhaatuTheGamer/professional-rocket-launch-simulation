@@ -32,13 +32,13 @@
 
 ## Flight Software & Operations
 
-### 5. Scriptable Flight Computer (Guidance & Navigation)
+### 5. Scriptable Flight Computer (Guidance & Navigation) [DONE]
 **Current Status:** Manual control or basic PID autopilot for landing.
 **Proposal:** Implement a domain-specific language (DSL) or block-coding interface for **Mission Scripts**.
 - Example: `IF ALITITUDE > 10km THEN PITCH = 80 DEG`.
 **Practicality:** Real rockets fly autonomously. This allows testing of guidance algorithms and launch profiles without manual piloting error.
 
-### 6. "Black Box" Telemetry Recorder
+### 6. "Black Box" Telemetry Recorder [DONE]
 **Current Status:** Live display on HUD.
 **Proposal:** Record all flight variables (Alt, Vel, Accel, Q, Throttle, Gimbal, Mass) at 20Hz. Export to **CSV/JSON** after flight.
 **Practicality:** Essential for post-flight analysis. Engineers can plot actual performance against predicted models to refine drag coefficients and engine efficiency.

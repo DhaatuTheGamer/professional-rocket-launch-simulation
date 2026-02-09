@@ -11,6 +11,7 @@ import { state } from './state';
 import { SASModes } from './utils/SAS';
 import { FullStack } from './physics/RocketComponents';
 import { ScriptEditor } from './ui/ScriptEditor';
+import { exportFlightData } from './telemetry/TelemetryExporter';
 
 // Create and initialize game
 const game = new Game();
@@ -298,11 +299,51 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'f' || e.key === 'F') {
         scriptEditor.open();
     }
+
+    // R - Toggle Black Box Recording
+    if (e.key === 'r' || e.key === 'R') {
+        game.blackBox.toggle();
+        const status = game.blackBox.getStatusString();
+        game.missionLog.log(`Black Box: ${status || 'IDLE'}`, "info");
+    }
+
+    // E - Export Flight Data
+    if (e.key === 'e' || e.key === 'E') {
+        const frames = game.blackBox.getFrames();
+        if (frames.length > 0) {
+            exportFlightData(frames, game.blackBox.getSummary(), 'csv');
+            game.missionLog.log(`Exported ${frames.length} frames to CSV`, "success");
+        } else {
+            game.missionLog.log("No flight data to export", "warn");
+        }
+    }
 });
 
 // Update action button periodically
 setInterval(updateActionButton, 500);
 setInterval(updateFCStatus, 100);
+
+// Update Black Box status in HUD
+function updateBlackBoxStatus(): void {
+    const bbStatus = document.getElementById('bb-status');
+    if (bbStatus) {
+        const status = game.blackBox.getStatusString();
+        bbStatus.textContent = status;
+        bbStatus.classList.toggle('recording', game.blackBox.isRecording());
+    }
+}
+setInterval(updateBlackBoxStatus, 200);
+
+// Export button handler
+document.getElementById('export-btn')?.addEventListener('click', () => {
+    const frames = game.blackBox.getFrames();
+    if (frames.length > 0) {
+        exportFlightData(frames, game.blackBox.getSummary(), 'csv');
+        game.missionLog.log(`Exported ${frames.length} frames to CSV`, "success");
+    } else {
+        game.missionLog.log("No flight data to export", "warn");
+    }
+});
 
 // Export for debugging
 (window as any).game = game;
