@@ -86,6 +86,7 @@ export class Game {
     private accumulator: number = 0;
     private readonly FIXED_DT: number = 1 / 60;
     public missionTime: number = 0;
+    private lastStageTime: number = 0;
 
     // Bloom effect (for engine glow)
     private bloomCanvas: HTMLCanvasElement;
@@ -277,6 +278,118 @@ export class Game {
         (window as any).trackedEntity = this.trackedEntity;
         (window as any).booster = null;
         (window as any).upperStage = null;
+    }
+
+    /**
+     * Perform staging sequence
+     */
+    public performStaging(): void {
+        if (Date.now() - this.lastStageTime < 1000) return;
+        this.lastStageTime = Date.now();
+
+        if (!this.trackedEntity) return;
+
+        if (this.trackedEntity instanceof FullStack) {
+            this.missionLog.log("STAGING: S1 SEP", "warn");
+            this.audio.playStaging();
+
+            // Create staging particles
+            for (let i = 0; i < 30; i++) {
+                addParticle(new Particle(
+                    this.trackedEntity.x + (Math.random() - 0.5) * 20,
+                    this.trackedEntity.y + 80,
+                    'smoke',
+                    this.trackedEntity.vx + (Math.random() - 0.5) * 20,
+                    this.trackedEntity.vy + (Math.random() - 0.5) * 20
+                ));
+            }
+
+            // Remove full stack
+            this.entities = this.entities.filter(e => e !== this.trackedEntity);
+
+            // Create booster
+            this.booster = new Booster(
+                this.trackedEntity.x,
+                this.trackedEntity.y,
+                this.trackedEntity.vx,
+                this.trackedEntity.vy
+            );
+            this.booster.angle = this.trackedEntity.angle;
+            this.booster.fuel = 0.05;
+            this.booster.active = true;
+            this.entities.push(this.booster);
+
+            // Create upper stage
+            this.upperStage = new UpperStage(
+                this.trackedEntity.x,
+                this.trackedEntity.y - 60,
+                this.trackedEntity.vx,
+                this.trackedEntity.vy + 2
+            );
+            this.upperStage.angle = this.trackedEntity.angle;
+            this.upperStage.active = true;
+            this.upperStage.throttle = 1.0;
+            this.entities.push(this.upperStage);
+
+            this.mainStack = this.upperStage;
+            this.trackedEntity = this.upperStage;
+
+            // Sync globals
+            (window as any).mainStack = this.mainStack;
+            (window as any).trackedEntity = this.trackedEntity;
+            (window as any).booster = this.booster;
+
+        } else if (this.trackedEntity instanceof UpperStage) {
+            if (!this.trackedEntity.fairingsDeployed) {
+                // Fairing separation
+                this.trackedEntity.fairingsDeployed = true;
+                this.missionLog.log("FAIRING SEP", "info");
+                this.audio.playStaging();
+
+                const fL = new Fairing(
+                    this.trackedEntity.x - 12,
+                    this.trackedEntity.y - 40,
+                    this.trackedEntity.vx - 10,
+                    this.trackedEntity.vy,
+                    -1
+                );
+                fL.angle = this.trackedEntity.angle - 0.5;
+                this.entities.push(fL);
+
+                const fR = new Fairing(
+                    this.trackedEntity.x + 12,
+                    this.trackedEntity.y - 40,
+                    this.trackedEntity.vx + 10,
+                    this.trackedEntity.vy,
+                    1
+                );
+                fR.angle = this.trackedEntity.angle + 0.5;
+                this.entities.push(fR);
+            } else {
+                // Payload deployment
+                this.missionLog.log("PAYLOAD DEP", "success");
+                this.audio.playStaging();
+
+                this.trackedEntity.active = false;
+                this.trackedEntity.throttle = 0;
+
+                const payload = new Payload(
+                    this.trackedEntity.x,
+                    this.trackedEntity.y - 20,
+                    this.trackedEntity.vx,
+                    this.trackedEntity.vy + 1
+                );
+                payload.angle = this.trackedEntity.angle;
+                this.entities.push(payload);
+
+                this.trackedEntity = payload;
+                this.mainStack = payload;
+                (window as any).trackedEntity = payload;
+            }
+        }
+
+        // Update state
+        state.entities = this.entities as any;
     }
 
     /**
@@ -961,113 +1074,3 @@ export class Game {
     }
 }
 
-// Export staging function for use by main.ts
-export function performStaging(game: Game): void {
-    const lastStageTime = (window as any).lastStageTime ?? 0;
-    if (Date.now() - lastStageTime < 1000) return;
-    (window as any).lastStageTime = Date.now();
-
-    if (!game.trackedEntity) return;
-
-    if (game.trackedEntity instanceof FullStack) {
-        game.missionLog.log("STAGING: S1 SEP", "warn");
-        game.audio.playStaging();
-
-        // Create staging particles
-        for (let i = 0; i < 30; i++) {
-            addParticle(new Particle(
-                game.trackedEntity.x + (Math.random() - 0.5) * 20,
-                game.trackedEntity.y + 80,
-                'smoke',
-                game.trackedEntity.vx + (Math.random() - 0.5) * 20,
-                game.trackedEntity.vy + (Math.random() - 0.5) * 20
-            ));
-        }
-
-        // Remove full stack
-        game.entities = game.entities.filter(e => e !== game.trackedEntity);
-
-        // Create booster
-        game.booster = new Booster(
-            game.trackedEntity.x,
-            game.trackedEntity.y,
-            game.trackedEntity.vx,
-            game.trackedEntity.vy
-        );
-        game.booster.angle = game.trackedEntity.angle;
-        game.booster.fuel = 0.05;
-        game.booster.active = true;
-        game.entities.push(game.booster);
-
-        // Create upper stage
-        game.upperStage = new UpperStage(
-            game.trackedEntity.x,
-            game.trackedEntity.y - 60,
-            game.trackedEntity.vx,
-            game.trackedEntity.vy + 2
-        );
-        game.upperStage.angle = game.trackedEntity.angle;
-        game.upperStage.active = true;
-        game.upperStage.throttle = 1.0;
-        game.entities.push(game.upperStage);
-
-        game.mainStack = game.upperStage;
-        game.trackedEntity = game.upperStage;
-
-        // Sync globals
-        (window as any).mainStack = game.mainStack;
-        (window as any).trackedEntity = game.trackedEntity;
-        (window as any).booster = game.booster;
-
-    } else if (game.trackedEntity instanceof UpperStage) {
-        if (!(game.trackedEntity as UpperStage).fairingsDeployed) {
-            // Fairing separation
-            (game.trackedEntity as UpperStage).fairingsDeployed = true;
-            game.missionLog.log("FAIRING SEP", "info");
-            game.audio.playStaging();
-
-            const fL = new Fairing(
-                game.trackedEntity.x - 12,
-                game.trackedEntity.y - 40,
-                game.trackedEntity.vx - 10,
-                game.trackedEntity.vy,
-                -1
-            );
-            fL.angle = game.trackedEntity.angle - 0.5;
-            game.entities.push(fL);
-
-            const fR = new Fairing(
-                game.trackedEntity.x + 12,
-                game.trackedEntity.y - 40,
-                game.trackedEntity.vx + 10,
-                game.trackedEntity.vy,
-                1
-            );
-            fR.angle = game.trackedEntity.angle + 0.5;
-            game.entities.push(fR);
-        } else {
-            // Payload deployment
-            game.missionLog.log("PAYLOAD DEP", "success");
-            game.audio.playStaging();
-
-            game.trackedEntity.active = false;
-            game.trackedEntity.throttle = 0;
-
-            const payload = new Payload(
-                game.trackedEntity.x,
-                game.trackedEntity.y - 20,
-                game.trackedEntity.vx,
-                game.trackedEntity.vy + 1
-            );
-            payload.angle = game.trackedEntity.angle;
-            game.entities.push(payload);
-
-            game.trackedEntity = payload;
-            game.mainStack = payload;
-            (window as any).trackedEntity = payload;
-        }
-    }
-
-    // Update state
-    state.entities = game.entities as any;
-}
