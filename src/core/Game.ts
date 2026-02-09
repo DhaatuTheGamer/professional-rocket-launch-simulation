@@ -61,6 +61,7 @@ export class Game {
 
     // Game state
     public entities: IVessel[] = [];
+    private nextOrbitUpdateIndex: number = 0;
     public particles: Particle[] = [];
     private cameraY: number = 0;
     private cameraMode: CameraMode = 'ROCKET';
@@ -511,11 +512,20 @@ export class Game {
      * Update orbit prediction paths
      */
     private updateOrbitPaths(now: number): void {
-        this.entities.forEach(e => {
-            if (e.crashed) return;
+        const totalEntities = this.entities.length;
+        if (totalEntities === 0) return;
+
+        // Spread updates over ~6 frames (assuming 60fps) or 100ms
+        const updateBudget = Math.max(1, Math.ceil(totalEntities / 6));
+
+        for (let i = 0; i < updateBudget; i++) {
+            const index = (this.nextOrbitUpdateIndex + i) % totalEntities;
+            const e = this.entities[index];
+
+            if (e.crashed) continue;
 
             // Throttle: minimum 100ms between updates
-            if (now - e.lastOrbitUpdate < 100) return;
+            if (now - e.lastOrbitUpdate < 100) continue;
 
             const alt = (this.groundY - e.y - e.h) / PIXELS_PER_METER;
             let needsUpdate = false;
@@ -542,7 +552,7 @@ export class Game {
                 const startR = R_EARTH + (this.groundY / 10 - simState.y - e.h / 10);
                 e.orbitPath.push({ phi: startPhi, r: startR });
 
-                for (let i = 0; i < 200; i++) {
+                for (let j = 0; j < 200; j++) {
                     const pAlt = this.groundY / 10 - simState.y - e.h / 10;
                     const pRad = pAlt + R_EARTH;
                     const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
@@ -559,7 +569,9 @@ export class Game {
                     e.orbitPath.push({ phi: pPhi, r: pR });
                 }
             }
-        });
+        }
+
+        this.nextOrbitUpdateIndex = (this.nextOrbitUpdateIndex + updateBudget) % totalEntities;
     }
 
     /**
