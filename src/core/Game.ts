@@ -223,7 +223,8 @@ export class Game {
 
         // Staging
         if (this.input.actions.STAGE) {
-            // Staging is handled by main.ts
+            // Staging is triggered via event listeners in main.ts
+            // to ensure precise, one-shot execution outside the fixed-timestep physics loop.
             this.input.actions.STAGE = false;
         }
 
