@@ -697,6 +697,7 @@ export class Game {
 
     /**
      * Draw heads-up display
+     * Optimized: Uses cached DOM elements to avoid expensive getElementById calls every frame.
      */
     private drawHUD(): void {
         if (!this.trackedEntity) return;
