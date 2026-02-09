@@ -267,6 +267,109 @@ function runTests() {
     assert(getEffectiveThrustMultiplier(offState) === 0.5, "Effective thrust should match actual throttle");
 
 
+    // 9. Detailed updatePropulsionState Verification
+    console.log("  - Testing Detailed updatePropulsionState Verification");
+
+    // 9.1 Auto-Ignition Logic
+    let autoIgniteState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    // Case 1: All conditions met
+    autoIgniteState = updatePropulsionState(autoIgniteState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, 0.1);
+    assert(autoIgniteState.engineState === 'starting', "Should auto-ignite when throttle > 0 and conditions met");
+
+    // Case 2: No Fuel
+    autoIgniteState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    autoIgniteState = updatePropulsionState(autoIgniteState, FULLSTACK_PROP_CONFIG, 1.0, false, 1.0, 0.1);
+    assert(autoIgniteState.engineState === 'off', "Should not auto-ignite without fuel");
+    assert(autoIgniteState.lastIgnitionResult === 'no_fuel', "Should set lastIgnitionResult to no_fuel");
+
+    // Case 3: No Ullage
+    autoIgniteState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    autoIgniteState.ullageSettled = false;
+    autoIgniteState = updatePropulsionState(autoIgniteState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, 0.1);
+    assert(autoIgniteState.engineState === 'off', "Should not auto-ignite without ullage");
+    assert(autoIgniteState.lastIgnitionResult === 'no_ullage', "Should set lastIgnitionResult to no_ullage");
+
+    // Case 4: No Igniters
+    autoIgniteState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    autoIgniteState.ignitersRemaining = 0;
+    autoIgniteState = updatePropulsionState(autoIgniteState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, 0.1);
+    assert(autoIgniteState.engineState === 'off', "Should not auto-ignite without igniters");
+    assert(autoIgniteState.lastIgnitionResult === 'no_igniters', "Should set lastIgnitionResult to no_igniters");
+
+    // 9.2 Starting Phase Details
+    let startState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    // Ignition
+    startState = updatePropulsionState(startState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, 0.1);
+    assert(startState.engineState === 'starting', "State should be starting");
+    assert(startState.spoolProgress === 0, "Initial spool progress 0");
+
+    // Step 1
+    const spoolUpTime = FULLSTACK_PROP_CONFIG.spoolUpTime; // 2.0s
+    const stepDt = 0.1;
+    const expectedSpoolRate = 1 / spoolUpTime; // 0.5 per sec
+    startState = updatePropulsionState(startState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, stepDt);
+    assert(Math.abs(startState.spoolProgress - (expectedSpoolRate * stepDt)) < 0.0001, "Spool progress should increment correctly");
+    assert(Math.abs(startState.actualThrottle - (1.0 * startState.spoolProgress)) < 0.0001, "Actual throttle should match spool progress * commanded");
+
+    // Transition to Running
+    startState.spoolProgress = 0.99;
+    startState = updatePropulsionState(startState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, stepDt); // +0.05 -> 1.04
+    assert(startState.engineState === 'running', "Should transition to running when spool >= 1");
+    // Code uses Math.min(1, ...), so it should be exactly 1
+    assert(startState.spoolProgress === 1, "Spool progress should be clamped to 1");
+
+    // 9.3 Running Phase Details
+    let runState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    runState.engineState = 'running';
+    runState.actualThrottle = 0.5;
+    runState.totalBurnTime = 10.0;
+
+    // Burn time increment
+    runState = updatePropulsionState(runState, FULLSTACK_PROP_CONFIG, 0.5, true, 1.0, stepDt);
+    assert(Math.abs(runState.totalBurnTime - 10.1) < 0.0001, "Burn time should increment by stepDt");
+
+    // Throttle Lag
+    // commanded = 1.0, actual = 0.5. Delta = 0.5.
+    // throttleLag = 0.1. dt = 0.05.
+    // change = delta * min(1, dt/lag) = 0.5 * 0.5 = 0.25.
+    // new actual = 0.75.
+    runState.actualThrottle = 0.5;
+    runState = updatePropulsionState(runState, FULLSTACK_PROP_CONFIG, 1.0, true, 1.0, 0.05);
+    assert(Math.abs(runState.actualThrottle - 0.75) < 0.0001, "Throttle lag should apply correctly");
+
+    // Flameout check
+    runState.engineState = 'running';
+    runState = updatePropulsionState(runState, FULLSTACK_PROP_CONFIG, 1.0, false, 1.0, stepDt);
+    assert(runState.engineState === 'off', "Should flameout if hasFuel is false");
+
+    // Shutdown check
+    runState.engineState = 'running';
+    runState = updatePropulsionState(runState, FULLSTACK_PROP_CONFIG, 0, true, 1.0, stepDt);
+    assert(runState.engineState === 'shutdown', "Should shutdown if commanded <= 0");
+
+    // 9.4 Shutdown Phase Details
+    let shutState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    shutState.engineState = 'shutdown';
+    shutState.actualThrottle = 1.0;
+    // spoolDownTime = 0.5s -> rate = 2.0/s
+    // dt = 0.1 -> decrease 0.2
+    shutState = updatePropulsionState(shutState, FULLSTACK_PROP_CONFIG, 0, true, 1.0, stepDt);
+    assert(Math.abs(shutState.actualThrottle - 0.8) < 0.0001, "Throttle should decrease during shutdown");
+
+    // Transition to Off
+    shutState.actualThrottle = 0.05;
+    shutState = updatePropulsionState(shutState, FULLSTACK_PROP_CONFIG, 0, true, 1.0, stepDt); // -0.2 -> < 0
+    assert(shutState.engineState === 'off', "Should transition to off when throttle <= 0");
+    assert(shutState.actualThrottle === 0, "Throttle should be clamped to 0");
+
+    // 9.5 Ullage Integration
+    let ullageState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
+    // Initially settled.
+    // Pass accel=0. Should unsettle after some time.
+    ullageState.ullageTimer = 0.1; // small positive
+    ullageState = updatePropulsionState(ullageState, FULLSTACK_PROP_CONFIG, 0, true, 0, stepDt); // accel=0
+    assert(ullageState.ullageTimer < 0.1, "Ullage timer should decrease in freefall via updatePropulsionState");
+
     console.log("✅ All Propulsion tests passed!");
 }
 
