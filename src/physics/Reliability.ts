@@ -25,6 +25,7 @@ export interface ReliabilityConfig {
     mtbfElectronics: number;  // Mean Time Between Failures (seconds)
     ignitionReliability: number; // 0-1 probability of successful start (1.0 = 100%)
     wearFactor: number;       // Multiplier for wear-out phase (e.g. 2.0 = 2x faster wear)
+    sensorGlitchDuration?: number; // Duration of sensor glitches in seconds (default: 5.0)
 }
 
 export const DEFAULT_RELIABILITY_CONFIG: ReliabilityConfig = {
@@ -32,7 +33,8 @@ export const DEFAULT_RELIABILITY_CONFIG: ReliabilityConfig = {
     mtbfStructure: 5000,      // Very reliable structure
     mtbfElectronics: 200,     // Occasional sensor glitches (more frequent for visibility)
     ignitionReliability: 0.99, // 1% chance of ignition failure
-    wearFactor: 1.0
+    wearFactor: 1.0,
+    sensorGlitchDuration: 5.0
 };
 
 export class ReliabilitySystem {
@@ -42,6 +44,9 @@ export class ReliabilitySystem {
 
     // Active failures
     public activeFailures: FailureType[] = [];
+
+    // Track duration of transient failures (time remaining in seconds)
+    private transientFailures: Map<FailureType, number> = new Map();
 
     constructor(config: ReliabilityConfig = DEFAULT_RELIABILITY_CONFIG) {
         this.config = config;
@@ -113,18 +118,45 @@ export class ReliabilitySystem {
         // 3. Sensor/Electronics Reliability (Random constant rate)
         const pSensorFail = (1 / this.config.mtbfElectronics) * dt;
         if (Math.random() < pSensorFail) {
-            // Sensors glitches are transient, so we don't store them in activeFailures necessarily, 
-            // or we do and clear them. For now, let's treat them as events.
+            // Sensors glitches are transient, so we handle them with duration tracking
             if (this.triggerFailure('SENSOR_GLITCH')) newFailures.push('SENSOR_GLITCH');
+        }
+
+        // Update transient failures (decrement duration)
+        for (const [type, duration] of this.transientFailures.entries()) {
+            const newDuration = duration - dt;
+            if (newDuration <= 0) {
+                this.transientFailures.delete(type);
+
+                // Remove from active failures list
+                const index = this.activeFailures.indexOf(type);
+                if (index > -1) {
+                    this.activeFailures.splice(index, 1);
+                }
+            } else {
+                this.transientFailures.set(type, newDuration);
+            }
         }
 
         return newFailures;
     }
 
     private triggerFailure(type: FailureType): boolean {
-        // Prevent duplicate permanent failures
-        if (this.activeFailures.includes(type) && type !== 'SENSOR_GLITCH') {
-            return false;
+        // Handle transient failures (currently only SENSOR_GLITCH)
+        if (type === 'SENSOR_GLITCH') {
+            // Reset/Extend duration
+            const duration = this.config.sensorGlitchDuration ?? 5.0;
+            this.transientFailures.set(type, duration);
+
+            // If already active, don't re-log or re-add
+            if (this.activeFailures.includes(type)) {
+                return false;
+            }
+        } else {
+            // Prevent duplicate permanent failures
+            if (this.activeFailures.includes(type)) {
+                return false;
+            }
         }
 
         this.activeFailures.push(type);
