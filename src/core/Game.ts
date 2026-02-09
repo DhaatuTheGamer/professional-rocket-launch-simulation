@@ -86,6 +86,7 @@ export class Game {
     private accumulator: number = 0;
     private readonly FIXED_DT: number = 1 / 60;
     public missionTime: number = 0;
+    private nextOrbitUpdateIndex: number = 0;
 
     // Bloom effect (for engine glow)
     private bloomCanvas: HTMLCanvasElement;
@@ -511,11 +512,21 @@ export class Game {
      * Update orbit prediction paths
      */
     private updateOrbitPaths(now: number): void {
-        this.entities.forEach(e => {
-            if (e.crashed) return;
+        const entityCount = this.entities.length;
+        if (entityCount === 0) return;
+
+        // Process a subset of entities per frame to target a 100ms update cycle (6 frames at 60fps)
+        const batchSize = Math.ceil(entityCount / 6);
+
+        for (let i = 0; i < batchSize; i++) {
+            const index = (this.nextOrbitUpdateIndex + i) % entityCount;
+            const e = this.entities[index];
+
+            if (!e) continue;
+            if (e.crashed) continue;
 
             // Throttle: minimum 100ms between updates
-            if (now - e.lastOrbitUpdate < 100) return;
+            if (now - e.lastOrbitUpdate < 100) continue;
 
             const alt = (this.groundY - e.y - e.h) / PIXELS_PER_METER;
             let needsUpdate = false;
@@ -542,7 +553,7 @@ export class Game {
                 const startR = R_EARTH + (this.groundY / 10 - simState.y - e.h / 10);
                 e.orbitPath.push({ phi: startPhi, r: startR });
 
-                for (let i = 0; i < 200; i++) {
+                for (let j = 0; j < 200; j++) {
                     const pAlt = this.groundY / 10 - simState.y - e.h / 10;
                     const pRad = pAlt + R_EARTH;
                     const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
@@ -559,7 +570,10 @@ export class Game {
                     e.orbitPath.push({ phi: pPhi, r: pR });
                 }
             }
-        });
+        }
+
+        // Advance index
+        this.nextOrbitUpdateIndex = (this.nextOrbitUpdateIndex + batchSize) % entityCount;
     }
 
     /**
