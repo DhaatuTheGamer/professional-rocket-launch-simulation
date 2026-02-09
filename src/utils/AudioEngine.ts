@@ -41,8 +41,7 @@ export class AudioEngine implements IAudioEngine {
         if (this.initialized) return;
 
         try {
-            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-            this.ctx = new AudioContextClass();
+            this.ctx = new AudioContext();
 
             // Master gain
             this.masterGain = this.ctx.createGain();
