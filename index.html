@@ -142,9 +142,9 @@
 
         <!-- IMPROVEMENT #10: Camera Panel -->
         <div id="camera-panel">
-            <button data-cam="1" class="active">👁 Follow</button>
-            <button data-cam="2">🔄 Orbit</button>
-            <button data-cam="3">🎬 Cinema</button>
+            <button data-cam="1" class="active" title="Follow Camera [1]">👁 Follow</button>
+            <button data-cam="2" title="Orbit Camera [2]">🔄 Orbit</button>
+            <button data-cam="3" title="Cinema Camera [3]">🎬 Cinema</button>
         </div>
 
         <!-- SAS Controls - Enhanced -->
@@ -174,7 +174,7 @@
         <div id="mission-log">
             <h3 onclick="document.getElementById('mission-log').classList.toggle('collapsed')">
                 MISSION LOG
-                <button id="log-toggle">−</button>
+                <button id="log-toggle" title="Toggle Mission Log" aria-label="Toggle Mission Log">−</button>
             </h3>
             <ul id="log-list">
             </ul>
@@ -198,12 +198,12 @@
     </div>
 
     <div id="controls">
-        <button id="launch-btn" class="primary state-launch">🚀 INITIATE LAUNCH</button>
-        <button id="maneuver-btn">📐 Maneuver</button>
-        <button id="mission-control-btn">🌍 CAPCOM</button>
-        <button id="fc-btn">✈️ Flight PC</button>
-        <button id="export-btn">💾 Export Data</button>
-        <button id="autopilot-btn">🤖 Auto-Land: OFF</button>
+        <button id="launch-btn" class="primary state-launch" title="Launch [SPACE]">🚀 INITIATE LAUNCH</button>
+        <button id="maneuver-btn" title="Maneuver Planner [O]">📐 Maneuver</button>
+        <button id="mission-control-btn" title="Mission Control">🌍 CAPCOM</button>
+        <button id="fc-btn" title="Open Flight Computer Script Editor [F]">✈️ Flight PC</button>
+        <button id="export-btn" title="Export Flight Data [E]">💾 Export Data</button>
+        <button id="autopilot-btn" title="Toggle Auto-Land [A]">🤖 Auto-Land: OFF</button>
         <button id="audio-btn" class="disabled">🔇 Enable Audio</button>
         <button id="reset-btn" onclick="location.reload()">🔄 Reset</button>
     </div>
