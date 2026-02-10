@@ -5,9 +5,9 @@
  * Includes Keplerian element calculation, Vis-Viva equation, and maneuver planning algorithms.
  */
 
-import type { Vector2D, PhysicsState } from '../types/index.ts';
-import { Vec2 } from '../types/index.ts';
-import { R_EARTH, GRAVITY } from '../constants.ts';
+import type { Vector2D, PhysicsState } from '../types/index';
+import { Vec2 } from '../types/index';
+import { R_EARTH, GRAVITY } from '../constants';
 
 // Standard gravitational parameter for Earth (mu = GM)
 // G = 6.67430e-11, M = 5.972e24 => mu ≈ 3.986e14 m^3/s^2
@@ -85,7 +85,7 @@ export function calculateOrbitalElements(r: Vector2D, v: Vector2D): KeplerianEle
 
     // 4. Eccentricity vector (e_vec = (v x h)/mu - r/r)
     // Simplified for magnitude: e = sqrt(1 + 2Eh^2/mu^2)
-    let e = 0;
+    let e: number;
     if (a !== Infinity) {
         e = Math.sqrt(Math.max(0, 1 + (2 * E * h * h) / (MU * MU)));
     } else {

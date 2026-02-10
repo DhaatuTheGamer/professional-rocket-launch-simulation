@@ -1,49 +1,46 @@
-
+import { describe, it, expect, vi } from 'vitest';
 import { AudioEngine } from '../src/utils/AudioEngine';
-import assert from 'assert';
 
+// Mock Web Audio API
 class MockAudioContext {
-    state: string = 'running';
-    sampleRate: number = 44100;
-    currentTime: number = 0;
-    destination: any = {};
-    createGain() { return { gain: { value: 0, setTargetAtTime: () => {}, setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} }, connect: () => {} }; }
-    createBuffer(channels: number, length: number, sampleRate: number) { return { getChannelData: () => new Float32Array(length) }; }
-    createBufferSource() { return { buffer: null, loop: false, connect: () => {}, start: () => {}, stop: () => {} }; }
-    createBiquadFilter() { return { type: 'lowpass', frequency: { value: 0, setTargetAtTime: () => {} }, connect: () => {} }; }
-    createOscillator() { return { type: 'sine', frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} }, connect: () => {}, start: () => {}, stop: () => {} }; }
-    resume() { return Promise.resolve(); }
+    state = 'running';
+    sampleRate = 44100;
+    currentTime = 0;
+    destination = {};
+    createGain = vi.fn(() => ({
+        gain: { value: 0, setTargetAtTime: vi.fn(), setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+        connect: vi.fn()
+    }));
+    createBuffer = vi.fn(() => ({ getChannelData: () => new Float32Array(10) }));
+    createBufferSource = vi.fn(() => ({
+        buffer: null, loop: false, connect: vi.fn(), start: vi.fn(), stop: vi.fn()
+    }));
+    createBiquadFilter = vi.fn(() => ({
+        type: 'lowpass', frequency: { value: 0, setTargetAtTime: vi.fn() }, connect: vi.fn()
+    }));
+    createOscillator = vi.fn(() => ({
+        type: 'sine', frequency: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() },
+        connect: vi.fn(), start: vi.fn(), stop: vi.fn()
+    }));
+    resume = vi.fn().mockResolvedValue(undefined);
 }
 
-// Mock window and AudioContext
-(global as any).window = {
+// Global mocks
+vi.stubGlobal('AudioContext', MockAudioContext);
+vi.stubGlobal('window', {
     AudioContext: MockAudioContext,
-    webkitAudioContext: undefined,
     speechSynthesis: {
-        getVoices: () => [],
-        cancel: () => {},
-        speak: () => {}
+        getVoices: vi.fn(() => []),
+        cancel: vi.fn(),
+        speak: vi.fn()
     }
-};
-(global as any).AudioContext = MockAudioContext;
+});
 
-// Test function
-async function runTest() {
-    console.log('Testing AudioEngine initialization...');
-
-    const engine = new AudioEngine();
-
-    // Call init
-    engine.init();
-
-    assert.ok(engine.initialized, 'AudioEngine should be initialized');
-    // Verify context is created
-    assert.strictEqual((engine as any).ctx instanceof MockAudioContext, true, 'Should use AudioContext');
-
-    console.log('PASS: AudioEngine initializes with standard AudioContext');
-}
-
-runTest().catch(e => {
-    console.error(e);
-    process.exit(1);
+describe('AudioEngine', () => {
+    it('should initialize successfully', () => {
+        const engine = new AudioEngine();
+        engine.init();
+        expect(engine.initialized).toBe(true);
+        expect((engine as any).ctx).toBeInstanceOf(MockAudioContext);
+    });
 });

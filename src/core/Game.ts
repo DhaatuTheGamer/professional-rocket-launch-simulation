@@ -36,6 +36,11 @@ import { setWindVelocity, setDensityMultiplier } from '../state';
 import { ManeuverPlanner } from '../ui/ManeuverPlanner';
 import { MissionControl } from '../ui/MissionControl';
 import { UI_COLORS } from '../ui/UIConstants';
+import { FlightTerminationSystem } from '../safety/FlightTermination';
+import { LaunchChecklist } from '../safety/LaunchChecklist';
+import { FaultInjector } from '../safety/FaultInjector';
+import { Vessel } from '../physics/Vessel';
+import { PhysicsProxy } from './PhysicsProxy';
 
 export class Game {
     // Canvas and rendering
@@ -58,6 +63,9 @@ export class Game {
     public environment: EnvironmentSystem;
     public maneuverPlanner: ManeuverPlanner;
     public missionControl: MissionControl;
+    public fts: FlightTerminationSystem;
+    public checklist: LaunchChecklist;
+    public faultInjector: FaultInjector;
 
     // Game state
     public entities: IVessel[] = [];
@@ -123,7 +131,11 @@ export class Game {
         engineStatus: '',
         engineStatusColor: '',
         igniters: -1,
-        ignitersColor: ''
+        ignitersColor: '',
+
+        // FTS
+        ftsState: '',
+        ftsStateColor: ''
     };
 
     // HUD element cache
@@ -143,20 +155,21 @@ export class Game {
     private hudTpsStatus: HTMLElement | null = null;
     private hudEngineStatus: HTMLElement | null = null;
     private hudIgniters: HTMLElement | null = null;
+    private hudFtsState: HTMLElement | null = null;
+
+    private physics: PhysicsProxy;
 
     constructor() {
-        // Get canvas
-        const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-        if (!canvas) throw new Error('Canvas element not found');
-        this.canvas = canvas;
+        this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
+        this.ctx = this.canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
 
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not get 2D context');
-        this.ctx = ctx;
+        // Initialize physics proxy
+        this.physics = new PhysicsProxy();
+        this.physics.onEvent(this.handlePhysicsEvent.bind(this));
 
-        // Set dimensions
         this.width = window.innerWidth;
         this.height = window.innerHeight;
+        updateDimensions(this.width, this.height, this.height - 100);
         this.canvas.width = this.width;
         this.canvas.height = this.height;
         this.groundY = this.height - 100;
@@ -174,6 +187,9 @@ export class Game {
         this.environment = new EnvironmentSystem();
         this.maneuverPlanner = new ManeuverPlanner(this);
         this.missionControl = new MissionControl(this);
+        this.fts = new FlightTerminationSystem();
+        this.checklist = new LaunchChecklist('checklist-panel');
+        this.faultInjector = new FaultInjector('fis-panel');
 
         // Bloom canvas for glow effects
         this.bloomCanvas = document.createElement('canvas');
@@ -220,6 +236,7 @@ export class Game {
         this.hudTpsStatus = document.getElementById('hud-tps-status');
         this.hudEngineStatus = document.getElementById('hud-engine-status');
         this.hudIgniters = document.getElementById('hud-igniters');
+        this.hudFtsState = document.getElementById('hud-fts-state');
     }
 
     /**
@@ -264,133 +281,59 @@ export class Game {
         this.timeScale = 1;
         this.missionState = { liftoff: false, supersonic: false, maxq: false };
 
-        // Create initial rocket
-        const rocket = new FullStack(this.width / 2, this.groundY - 160);
-        this.entities.push(rocket);
-        this.mainStack = rocket;
-        this.trackedEntity = rocket;
+        // Reset safety systems
+        // FTS reset handled by worker init
+        this.checklist.reset(); // UI only
+        // FaultInjector reset handled by worker init
 
-        // Update global state
-        state.entities = this.entities as any;
-        state.particles = [];
+        // Initialize physics worker
+        this.physics.init({
+            width: this.width,
+            height: this.height,
+            groundY: this.groundY
+        });
 
-        // Legacy globals
-        (window as any).mainStack = this.mainStack;
-        (window as any).trackedEntity = this.trackedEntity;
-        (window as any).booster = null;
-        (window as any).upperStage = null;
+        // Verify init with a short delay or allow frame 1 to sync?
+        // We'll rely on frame 1 sync.
+
+        // Legacy globals (will be synced next frame)
+        (window as any).mainStack = null;
+        (window as any).trackedEntity = null;
     }
 
     /**
-     * Perform staging sequence
+     * Handle events from physics worker
      */
+    private handlePhysicsEvent(e: any): void {
+        if (e.name === 'STAGING_S1') {
+            this.missionLog.log("STAGING: S1 SEP", "warn");
+            this.audio.playStaging();
+
+            // Create staging particles (Visual only)
+            for (let i = 0; i < 30; i++) {
+                addParticle(new Particle(
+                    e.x + (Math.random() - 0.5) * 20,
+                    e.y + 80,
+                    'smoke',
+                    0, // velocity handled by particle logic?
+                    0
+                ));
+            }
+        } else if (e.name === 'FAIRING_SEP') {
+            this.missionLog.log("FAIRING SEP", "info");
+            this.audio.playStaging();
+        } else if (e.name === 'PAYLOAD_SEP') {
+            this.missionLog.log("PAYLOAD DEP", "success");
+            this.audio.playStaging();
+        }
+    }
+
     public performStaging(): void {
         if (Date.now() - this.lastStageTime < 1000) return;
         this.lastStageTime = Date.now();
 
-        if (!this.trackedEntity) return;
-
-        if (this.trackedEntity instanceof FullStack) {
-            this.missionLog.log("STAGING: S1 SEP", "warn");
-            this.audio.playStaging();
-
-            // Create staging particles
-            for (let i = 0; i < 30; i++) {
-                addParticle(new Particle(
-                    this.trackedEntity.x + (Math.random() - 0.5) * 20,
-                    this.trackedEntity.y + 80,
-                    'smoke',
-                    this.trackedEntity.vx + (Math.random() - 0.5) * 20,
-                    this.trackedEntity.vy + (Math.random() - 0.5) * 20
-                ));
-            }
-
-            // Remove full stack
-            this.entities = this.entities.filter(e => e !== this.trackedEntity);
-
-            // Create booster
-            this.booster = new Booster(
-                this.trackedEntity.x,
-                this.trackedEntity.y,
-                this.trackedEntity.vx,
-                this.trackedEntity.vy
-            );
-            this.booster.angle = this.trackedEntity.angle;
-            this.booster.fuel = 0.05;
-            this.booster.active = true;
-            this.entities.push(this.booster);
-
-            // Create upper stage
-            this.upperStage = new UpperStage(
-                this.trackedEntity.x,
-                this.trackedEntity.y - 60,
-                this.trackedEntity.vx,
-                this.trackedEntity.vy + 2
-            );
-            this.upperStage.angle = this.trackedEntity.angle;
-            this.upperStage.active = true;
-            this.upperStage.throttle = 1.0;
-            this.entities.push(this.upperStage);
-
-            this.mainStack = this.upperStage;
-            this.trackedEntity = this.upperStage;
-
-            // Sync globals
-            (window as any).mainStack = this.mainStack;
-            (window as any).trackedEntity = this.trackedEntity;
-            (window as any).booster = this.booster;
-
-        } else if (this.trackedEntity instanceof UpperStage) {
-            if (!this.trackedEntity.fairingsDeployed) {
-                // Fairing separation
-                this.trackedEntity.fairingsDeployed = true;
-                this.missionLog.log("FAIRING SEP", "info");
-                this.audio.playStaging();
-
-                const fL = new Fairing(
-                    this.trackedEntity.x - 12,
-                    this.trackedEntity.y - 40,
-                    this.trackedEntity.vx - 10,
-                    this.trackedEntity.vy,
-                    -1
-                );
-                fL.angle = this.trackedEntity.angle - 0.5;
-                this.entities.push(fL);
-
-                const fR = new Fairing(
-                    this.trackedEntity.x + 12,
-                    this.trackedEntity.y - 40,
-                    this.trackedEntity.vx + 10,
-                    this.trackedEntity.vy,
-                    1
-                );
-                fR.angle = this.trackedEntity.angle + 0.5;
-                this.entities.push(fR);
-            } else {
-                // Payload deployment
-                this.missionLog.log("PAYLOAD DEP", "success");
-                this.audio.playStaging();
-
-                this.trackedEntity.active = false;
-                this.trackedEntity.throttle = 0;
-
-                const payload = new Payload(
-                    this.trackedEntity.x,
-                    this.trackedEntity.y - 20,
-                    this.trackedEntity.vx,
-                    this.trackedEntity.vy + 1
-                );
-                payload.angle = this.trackedEntity.angle;
-                this.entities.push(payload);
-
-                this.trackedEntity = payload;
-                this.mainStack = payload;
-                (window as any).trackedEntity = payload;
-            }
-        }
-
-        // Update state
-        state.entities = this.entities as any;
+        // Send command to worker
+        this.physics.command('STAGE', {});
     }
 
     /**
@@ -411,130 +354,122 @@ export class Game {
             this.input.actions.MAP_MODE = false;
         }
 
+        // Collect inputs
+        let controls: any = {};
 
-        const simDt = dt * this.timeScale;
+        let throttle = 0;
+        let gimbalAngle = 0;
+        let stage = false;
+        let abort = false;
 
-        // Update environment system
-        this.environment.update(simDt);
-
-        // Update global wind state for tracked entity's altitude
-        if (this.trackedEntity) {
-            const alt = (this.groundY - this.trackedEntity.y - this.trackedEntity.h) / PIXELS_PER_METER;
-            const envState = this.environment.getState(alt);
-            setWindVelocity(envState.windVelocity);
-            setDensityMultiplier(envState.densityMultiplier);
-
-            // Update environment HUD
-            this.updateEnvironmentHUD(envState);
-
-            // Update Mission Control
-            this.missionControl.update(simDt, this.missionTime);
-        }
-
-        // Control active vessel
         if (this.mainStack && this.mainStack.active) {
-            // Flight Computer control (takes priority when active)
-            if (this.flightComputer.isActive()) {
-                const fcOutput = this.flightComputer.update(this.mainStack, simDt);
+            throttle = this.mainStack.throttle; // Start with current
+            gimbalAngle = this.mainStack.gimbalAngle;
 
-                // Apply pitch control via angle target
+            if (this.flightComputer.isActive()) {
+                const fcOutput = this.flightComputer.update(this.mainStack, dt * this.timeScale);
+
+                // Apply inputs
                 if (fcOutput.pitchAngle !== null) {
-                    // Flight computer controls pitch angle directly
-                    // Use SAS in STABILITY mode to achieve target
                     const targetAngle = fcOutput.pitchAngle;
                     const angleError = targetAngle - this.mainStack.angle;
-                    // Simple P-control for gimbal
-                    this.mainStack.gimbalAngle = Math.max(-0.5, Math.min(0.5, angleError * 2));
+                    gimbalAngle = Math.max(-0.5, Math.min(0.5, angleError * 2));
                 }
 
-                // Apply throttle control
                 if (fcOutput.throttle !== null) {
-                    this.mainStack.throttle = fcOutput.throttle;
+                    throttle = fcOutput.throttle;
                 }
 
-                // Handle abort
                 if (fcOutput.abort) {
-                    this.mainStack.throttle = 0;
+                    throttle = 0;
+                    abort = true;
                     this.missionLog.log("FC: ABORT COMMAND", "warn");
+                }
+
+                // Staging command from FC?
+                if (fcOutput.stage) {
+                    stage = true;
                 }
             } else {
                 // Manual steering
                 const steer = this.input.getSteering();
 
                 if (Math.abs(steer) > 0.1) {
-                    // Manual control
-                    this.mainStack.gimbalAngle = steer * 0.4;
+                    gimbalAngle = steer * 0.4;
                 } else if (this.sas.isActive()) {
-                    // SAS control
-                    const sasOut = this.sas.update(this.mainStack, simDt);
-                    this.mainStack.gimbalAngle = sasOut;
+                    const sasOut = this.sas.update(this.mainStack, dt * this.timeScale);
+                    gimbalAngle = sasOut;
                 } else {
-                    this.mainStack.gimbalAngle = 0;
+                    gimbalAngle = 0;
                 }
-            }
 
-            // Throttle (manual always works, even in FC mode for override)
-            if (this.input.actions.THROTTLE_UP) {
-                this.mainStack.throttle = Math.min(1, this.mainStack.throttle + 0.02 * this.timeScale);
-            }
-            if (this.input.actions.THROTTLE_DOWN) {
-                this.mainStack.throttle = Math.max(0, this.mainStack.throttle - 0.02 * this.timeScale);
-            }
-            if (this.input.actions.CUT_ENGINE) {
-                this.mainStack.throttle = 0;
+                if (this.input.actions.THROTTLE_UP) throttle = Math.min(1, throttle + 0.02);
+                if (this.input.actions.THROTTLE_DOWN) throttle = Math.max(0, throttle - 0.02);
+                if (this.input.actions.CUT_ENGINE) throttle = 0;
             }
         }
 
-        // Update entities
-        this.entities.forEach(e => {
-            e.applyPhysics(simDt, {});
-            e.spawnExhaust(this.timeScale);
-        });
+        controls = { throttle, gimbalAngle, stage, abort };
 
-        // Transfer particles from global state
-        if (state.particles.length > 0) {
-            this.particles.push(...(state.particles as Particle[]));
-            state.particles = [];
+        // Step Physics logic in Worker
+        this.physics.step(dt, { timeScale: this.timeScale, controls });
+
+        // Sync State
+        this.entities = this.physics.getEntities();
+        this.missionTime = this.physics.getMissionTime();
+
+        // Update references
+        const trackedIdx = this.physics.getTrackedIndex();
+        this.trackedEntity = this.entities[trackedIdx] || null;
+        this.mainStack = this.trackedEntity; // Simplified assumption
+
+        // Sync globals for legacy/UI
+        state.entities = this.entities as any;
+        (window as any).trackedEntity = this.trackedEntity;
+        (window as any).mainStack = this.mainStack;
+
+        // Update Environment (View)
+        // Worker sends environment state?
+        const envState = this.physics.getEnvironmentState();
+        if (envState) {
+            setWindVelocity(envState.windVelocity);
+            setDensityMultiplier(envState.densityMultiplier);
+            this.updateEnvironmentHUD(envState);
+        } else {
+            this.environment.update(dt * this.timeScale); // Fallback
         }
+
+        // Update Mission Control
+        this.missionControl.update(dt * this.timeScale, this.missionTime);
 
         // Mission events
         if (this.trackedEntity) {
             const alt = (this.groundY - this.trackedEntity.y - this.trackedEntity.h) / PIXELS_PER_METER;
+
+            // Update FTS HUD
+            //  const ftsStatus = this.physics.getFTSStatus();
+
+            // Audio update
             const vel = Math.sqrt(this.trackedEntity.vx ** 2 + this.trackedEntity.vy ** 2);
             const rho = getAtmosphericDensity(alt);
-
             this.audio.setThrust(this.trackedEntity.throttle, rho, vel);
 
             if (!this.missionState.liftoff && alt > 20) {
                 this.missionState.liftoff = true;
                 this.missionLog.log("LIFTOFF", "warn");
                 this.audio.speak("Liftoff");
-                // Auto-start black box recording on liftoff
                 if (this.blackBox.getState() === 'idle') {
                     this.blackBox.start('Flight');
                 }
             }
 
-            // Record to black box
+            // Blackbox
             if (this.missionState.liftoff) {
-                this.missionTime += simDt;
                 this.blackBox.record(this.trackedEntity, this.missionTime);
             }
 
-            // Auto-stop black box on crash
             if (this.trackedEntity.crashed && this.blackBox.isRecording()) {
                 this.blackBox.stop('crashed');
-            }
-        }
-
-        // Update particles
-        for (let i = this.particles.length - 1; i >= 0; i--) {
-            const p = this.particles[i];
-            if (p) {
-                p.update(this.groundY, this.timeScale);
-                if (p.isDead()) {
-                    this.particles.splice(i, 1);
-                }
             }
         }
 
@@ -630,7 +565,7 @@ export class Game {
             const index = (this.nextOrbitUpdateIndex + i) % totalEntities;
             const e = this.entities[index];
 
-            if (e.crashed) continue;
+            if (!e || e.crashed) continue;
 
             // Throttle: minimum 100ms between updates
             if (now - e.lastOrbitUpdate < 100) continue;
@@ -648,7 +583,7 @@ export class Game {
                 e.lastOrbitUpdate = now;
 
                 // Simple orbit prediction
-                let simState = {
+                const simState = {
                     x: e.x / 10,
                     y: e.y / 10,
                     vx: e.vx,
@@ -877,11 +812,11 @@ export class Game {
         }
 
         if (gaugeThrust) {
-             const thrustPct = this.trackedEntity.throttle;
-             if (Math.abs(last.thrustPct - thrustPct) > 0.001) {
-                 last.thrustPct = thrustPct;
-                 gaugeThrust.style.height = (thrustPct * 100) + '%';
-             }
+            const thrustPct = this.trackedEntity.throttle;
+            if (Math.abs(last.thrustPct - thrustPct) > 0.001) {
+                last.thrustPct = thrustPct;
+                gaugeThrust.style.height = (thrustPct * 100) + '%';
+            }
         }
 
         // Aerodynamic stability display
@@ -910,8 +845,8 @@ export class Game {
 
         if (hudStability) {
             const margin = this.trackedEntity.stabilityMargin;
-            let stabStr = '';
-            let color = '';
+            let stabStr: string;
+            let color: string;
 
             if (this.trackedEntity.isAeroStable) {
                 stabStr = (margin * 100).toFixed(1) + '%';
@@ -964,8 +899,8 @@ export class Game {
 
         if (hudTpsStatus) {
             const shieldPct = Math.round(this.trackedEntity.heatShieldRemaining * 100);
-            let statusStr = '';
-            let color = '';
+            let statusStr: string;
+            let color: string;
 
             if (shieldPct > 0) {
                 statusStr = shieldPct + '%';
@@ -998,8 +933,8 @@ export class Game {
 
         if (hudEngineStatus) {
             const state = this.trackedEntity.engineState;
-            let statusStr = '';
-            let color = '';
+            let statusStr: string;
+            let color: string;
 
             switch (state) {
                 case 'off':
@@ -1037,7 +972,7 @@ export class Game {
                 last.igniters = count;
                 hudIgniters.textContent = count.toString();
 
-                let color = '';
+                let color: string;
                 if (count === 0) {
                     color = UI_COLORS.RED;  // Red - no restarts
                 } else if (count === 1) {
@@ -1050,6 +985,42 @@ export class Game {
                     last.ignitersColor = color;
                     hudIgniters.style.color = color;
                 }
+            }
+        }
+
+        // FTS Status display
+        const hudFtsState = this.hudFtsState;
+        if (hudFtsState) {
+            const ftsStatus = this.fts.getStatus();
+            let ftsStr: string = ftsStatus.state;
+            let ftsColor = '';
+
+            switch (ftsStatus.state) {
+                case 'SAFE':
+                    ftsColor = UI_COLORS.GREEN;
+                    break;
+                case 'WARNING':
+                    ftsStr = `WARN ${(this.fts.config.warningDurationS - ftsStatus.warningTimer).toFixed(0)}s`;
+                    ftsColor = UI_COLORS.YELLOW;
+                    break;
+                case 'ARM':
+                    ftsStr = ftsStatus.armed ? 'ARMED' : 'ARM';
+                    ftsColor = UI_COLORS.ORANGE;
+                    break;
+                case 'DESTRUCT':
+                    ftsStr = 'DESTRUCT';
+                    ftsColor = UI_COLORS.RED;
+                    break;
+            }
+
+            if (last.ftsState !== ftsStr) {
+                last.ftsState = ftsStr;
+                hudFtsState.textContent = ftsStr;
+            }
+
+            if (last.ftsStateColor !== ftsColor) {
+                last.ftsStateColor = ftsColor;
+                hudFtsState.style.color = ftsColor;
             }
         }
     }

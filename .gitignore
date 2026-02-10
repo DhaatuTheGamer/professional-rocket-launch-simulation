@@ -38,3 +38,9 @@ coverage/
 # Temp files
 *.tmp
 *.temp
+
+# Linting & Testing Caches
+.eslintcache
+.prettiercache
+test-results/
+junit.xml

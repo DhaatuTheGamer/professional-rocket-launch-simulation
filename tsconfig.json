@@ -14,7 +14,7 @@
         "forceConsistentCasingInFileNames": true,
         "declaration": false,
         "outDir": "./dist",
-        "rootDir": "./src",
+        "rootDir": ".",
         "lib": [
             "ES2020",
             "DOM",
@@ -43,7 +43,8 @@
         }
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "tests/**/*.ts"
     ],
     "exclude": [
         "node_modules",

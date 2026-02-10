@@ -141,7 +141,7 @@ export class ReliabilitySystem {
         return newFailures;
     }
 
-    private triggerFailure(type: FailureType): boolean {
+    public triggerFailure(type: FailureType): boolean {
         // Handle transient failures (currently only SENSOR_GLITCH)
         if (type === 'SENSOR_GLITCH') {
             // Reset/Extend duration

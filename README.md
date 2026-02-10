@@ -1,14 +1,26 @@
-# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v2.0.0)
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v2.7.0)
 
 Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, environmental hazards, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)
 ![Build](https://img.shields.io/badge/build-esbuild-yellow.svg)
+![Tests](https://img.shields.io/badge/tests-vitest-green.svg)
 
 ## Features
 
-### Mission Control & Orbital Planning (v2.0.0)
+### Safety Systems (v2.7.0)
+New professional-grade safety features for training and operations:
+- **Flight Termination System (FTS)** - Independent system with SAFE, ARM, and DESTRUCT modes. Automatically triggers if the rocket breaches the safety corridor.
+- **Launch Checklist** - Interactive Go/No-Go checklist that gates the launch sequence.
+- **Fault Injection System (FIS)** - Instructor tool to inject failures (Engine Flameout, Gimbal Lock, Sensor Glitch, Fuel Leak) for emergency training.
+
+### Engineering Improvements (v2.7.0)
+- **Deterministic Physics** - Physics loop runs in a Web Worker for consistent 50Hz simulation independent of frame rate.
+- **Vitest Testing** - Comprehensive unit test suite covering physics, safety logic, and state management.
+- **Strict State Management** - Redux-like store pattern for predictable state updates.
+
+### Mission Control & Orbital Planning
 - **Orbital Maneuver Planner** - Calculate burns for Circularization and Hohmann Transfers.
 - **Ground Track Visualization** - Mercator map projection of rocket path and impact zone.
 - **Spherical Physics** - Accurate latitude/longitude calculation based on downrange distance.
@@ -49,30 +61,60 @@ Build custom rockets from modular parts in the VAB:
 | **UpperStage** | Second stage with payload fairing |
 | **Payload** | Deployable satellite |
 
-### Controls
-| Key | Action |
-|-----|--------|
-| `SPACE` | Launch / Stage |
-| `S` | Force stage separation |
-| `←` `→` | Steer (gimbal) |
-| `Shift` | Throttle up |
-| `Ctrl` | Throttle down |
-| `X` | Cut engine |
-| `G` | Toggle Flight Computer |
-| `F` | Open Script Editor |
-| `R` | Toggle Black Box Recording |
-| `E` | Export Flight Data (CSV) |
-| `A` | Toggle autopilot |
-| `M` | Toggle map view |
-| `.` `,` | Time warp |
-| `1` `2` `3` | Camera modes |
+## 🎮 How to Fly: Controls & Shortcuts
 
-### UI Features
-- **Navball** - Attitude indicator with prograde marker
-- **Telemetry** - Real-time altitude/velocity graphs
-- **Advanced HUD** - Displays AoA, Stability Margin, Skin Temp, and TPS Status
-- **Mission Log** - Timestamped event logging
-- **Modular VAB** - Build custom rockets from 15+ parts with real-time stats
+| Key | Action | Context |
+|-----|--------|---------|
+| `SPACE` | **Launch** / **Stage** | Pre-launch / In-flight |
+| `S` | Force Staging | Separation override |
+| `Shift` | Throttle Up | Increments of 10% |
+| `Ctrl` | Throttle Down | Decrements of 10% |
+| `X` | Cut Engine | Instant 0% throttle |
+| `←` `→` | Steer (Yaw) | Vectoring |
+| `A` | Toggle Autopilot | Landing / Ascent modes |
+| `G` | Toggle Flight Computer | Activates programmed script |
+| `F` | Open Script Editor | Edit mission scripts |
+| `C` | Toggle Checklist | View Launch Checklist |
+| `T` | Arm/Disarm FTS | Safety system |
+| `R` | Toggle Black Box | Start/Stop recording |
+| `E` | Export Data | Download CSV telemetry |
+| `M` | Toggle Map View | Ground track & orbit |
+| `Ctrl+I` | Toggle Fault Injector | Instructor Panel |
+| `.` `,` | Time Warp | Speed up / Slow down |
+| `1`-`3` | Camera Modes | 1:Fixed, 2:Follow, 3:Onboard |
+
+## 📋 Mission Walkthrough: Step-by-Step
+
+**1. Pre-Launch Configuration**
+- Open the **VAB** and select "Falcon 9" preset.
+- Click "Go to Pad".
+- Press `C` to open the **Launch Checklist**.
+- Verify Wind Conditions on HUD (< 15 m/s).
+- Click "Verify" on all checklist items until Launch Status is **GO**.
+
+**2. Liftoff**
+- Press `SPACE` to ignite engines.
+- Monitor TWR on the HUD; ensure it > 1.0.
+- Rocket will clear the tower.
+
+**3. Gravity Turn**
+- At **1,000m** altitude, tap `→` (Right Arrow) to tilt the rocket slightly (pitch ~85°).
+- The rocket will naturally follow the prograde marker due to aerodynamics.
+- Keep aerodynamic stress (Max Q) in check by throttling down if necessary around 10km.
+
+**4. Staging**
+- Monitor Fuel Gauge.
+- When First Stage fuel runs out (or manually), press `SPACE` to **Stage**.
+- The booster will separate, and the Second Stage engine will ignite.
+
+**5. Orbital Insertion**
+- Pitch down to ~0° (parallel to horizon) once above 60km.
+- Accelerate until Velocity > **7,500 m/s**.
+- Press `X` to cut engines once Perigee > 150km.
+
+**6. Safety & Emergencies**
+- If the rocket deviates from course, press `T` to **ARM** the Flight Termination System.
+- Click the red **DESTRUCT** button in the FTS panel to terminate the flight safely.
 
 ## Quick Start
 
@@ -80,11 +122,11 @@ Build custom rockets from modular parts in the VAB:
 # Install dependencies
 npm install
 
-# Build TypeScript
-npm run build
+# Run Tests (New!)
+npm test
 
-# Start local server
-npm run serve
+# Build & Start local server
+npm run dev
 ```
 
 Then open http://localhost:8080
@@ -93,27 +135,16 @@ Then open http://localhost:8080
 
 ```
 ├── src/
-│   ├── types/           # TypeScript interfaces
-│   │   ├── index.ts     # Core types (Vector2D, Vessel, GameState)
-│   │   └── units.ts     # Branded unit types (Meters, Newtons)
-│   ├── physics/         # Simulation engine
-│   │   ├── Vessel.ts    # Base class with RK4 integration
-│   │   ├── RocketComponents.ts  # Stage implementations
-│   │   └── Particle.ts  # Visual effects
-│   ├── utils/           # Helpers
-│   │   ├── PIDController.ts
-│   │   ├── SAS.ts       # Stability Assist System
-│   │   ├── AudioEngine.ts
-│   │   └── AssetLoader.ts
-│   ├── ui/              # Interface components
-│   ├── core/            # Game loop & input
-│   ├── constants.ts     # Physics constants
-│   ├── state.ts         # Global state
+│   ├── types/           # TypeScript interfaces (Units, GameState)
+│   ├── physics/         # Core Engine (RK4, Aerodynamics)
+│   ├── core/            # Game Loop, PhysicsWorker, SimulationStore
+│   ├── safety/          # FTS, Checklist, FaultInjector
+│   ├── guidance/        # FlightComputer, Scripts
+│   ├── ui/              # HUD, Editors, Panels
+│   ├── telemetry/       # BlackBox, Exporter
 │   └── main.ts          # Entry point
+├── tests/               # Vitest Unit Tests
 ├── dist/                # Compiled output
-├── assets/              # Sprites
-├── index.html
-├── style.css
 └── package.json
 ```
 
@@ -140,71 +171,6 @@ WHEN ALTITUDE > 30000 THEN PITCH 45
 WHEN APOGEE > 100000 THEN THROTTLE 0
 ```
 
-### Controls
-- **G** - Toggle Flight Computer on/off
-- **F** - Open Script Editor
-- Scripts are saved to localStorage
-
-## Black Box Telemetry Recorder (v1.6.0)
-
-Records all flight variables at 20Hz for post-flight analysis.
-
-### Recorded Data
-- Time, Altitude, Velocity (X/Y), Speed
-- Acceleration (X/Y), G-Force
-- Pitch Angle, Gimbal Angle, Throttle
-- Mass, Fuel, Dynamic Pressure (Q), Mach
-- Angle of Attack, Skin Temperature, Engine State
-
-### Export Formats
-- **CSV** - Standard comma-separated values with headers
-- **JSON** - Structured format with flight summary metadata
-
-### Controls
-- **R** - Toggle recording manually
-- **E** - Export flight data to CSV
-- Auto-starts on liftoff, auto-stops on crash
-
-## Type Safety
-
-This project uses **branded types** to prevent unit mixing at compile time:
-
-```typescript
-type Meters = number & { readonly __brand: 'meters' };
-type Kilograms = number & { readonly __brand: 'kilograms' };
-
-// This would cause a compile error:
-const mass: Kilograms = altitude; // Error!
-```
-
-## Build Commands
-
-| Command | Description |
-|---------|-------------|
-| `npm run build` | Compile TypeScript to bundle |
-| `npm run watch` | Watch mode for development |
-| `npm run serve` | Start local HTTP server |
-
-## Physics Constants
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| Gravity | 9.81 m/s² | Sea level |
-| Earth Radius | 6,371,000 m | |
-| Scale Height | 8,500 m | Atmospheric |
-| Sea Level Density | 1.225 kg/m³ | |
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-Inspired by:
-- Kerbal Space Program
-- SpaceX landing sequences
-- Real orbital mechanics
-
 ## Advanced Physics Details
 
 ### Aerodynamics & Stability
@@ -214,20 +180,19 @@ The simulation now calculates:
 - **Lift & Drag**: Calculated based on Angle of Attack (AoA) and Mach number
 
 ### Thermal Protection
-Re-entry and high-speed heating modeled via:
 - **Sutton-Graves Equation**: Stagnation point heating based on velocity and nose radius
-- **Stefan-Boltzmann Law**: Radiative cooling to environment/space
 - **Ablation**: Mass loss and heat absorption when shield temperature critical
 
 ### Reliability & Failure Modes
 - **Bathtub Curve**: Engines have "infant mortality" and "wear-out" phases.
-- **Structural Fatigue**: High-G maneuvers accumulate stress, leading to potential structural failure.
 - **Sensor Glitches**: Random telemetry noise simulating real-world sensor imperfections.
 
 ### Environmental Hazards (v1.8.0)
-- **Wind Shear Layers**: Altitude-based wind profiles with varying speeds and directions.
-- **Gusts & Turbulence**: Dynamic gusts using Dryden-style turbulence model.
-- **Day/Night Cycle**: Time progression with atmospheric density variation (±2%).
-- **Go/No-Go Launch Conditions**: Real-time evaluation based on surface wind limits (15 m/s threshold).
-- **Max-Q Wind Warning**: Alerts for dangerous wind shear at Max-Q altitudes (10-15km).
+- **Wind Shear Layers**: Altitude-based wind profiles.
+- **Gusts & Turbulence**: Dryden-style turbulence model.
+- **Go/No-Go Launch Conditions**: Real-time evaluation based on surface wind limits.
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details.
 

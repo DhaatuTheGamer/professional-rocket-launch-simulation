@@ -1,0 +1,263 @@
+/**
+ * Interactive Launch Checklist System
+ * 
+ * Provides Go/No-Go polling for launch readiness.
+ * Mimics real-world launch procedures where each station
+ * must confirm readiness before proceeding.
+ */
+
+import { state } from '../state';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export type ChecklistStatus = 'pending' | 'go' | 'no-go';
+
+export interface ChecklistItem {
+    id: string;
+    label: string;
+    station: string;
+    status: ChecklistStatus;
+    autoCheck?: () => boolean;  // Optional auto-evaluation function
+}
+
+export interface ChecklistAuditEntry {
+    timestamp: number;       // Mission time or wall clock
+    itemId: string;
+    previousStatus: ChecklistStatus;
+    newStatus: ChecklistStatus;
+    operator: string;        // 'MANUAL' or 'AUTO'
+}
+
+// ============================================================================
+// Launch Checklist
+// ============================================================================
+
+export class LaunchChecklist {
+    private items: ChecklistItem[] = [];
+    private auditLog: ChecklistAuditEntry[] = [];
+    private containerEl: HTMLElement | null = null;
+    private _visible: boolean = false;
+
+    constructor(containerId: string) {
+        this.containerEl = document.getElementById(containerId);
+        this.initDefaultItems();
+    }
+
+    /** Initialize default checklist items */
+    private initDefaultItems(): void {
+        this.items = [
+            {
+                id: 'prop-pressure',
+                label: 'Tank pressure nominal',
+                station: 'PROPULSION',
+                status: 'pending'
+            },
+            {
+                id: 'guid-fc',
+                label: 'Flight computer loaded',
+                station: 'GUIDANCE',
+                status: 'pending'
+            },
+            {
+                id: 'range-fts',
+                label: 'FTS armed and green',
+                station: 'RANGE SAFETY',
+                status: 'pending'
+            },
+            {
+                id: 'wx-winds',
+                label: 'Winds within limits',
+                station: 'WEATHER',
+                status: 'pending',
+                autoCheck: () => {
+                    // Auto-check: use environment system's launch safety
+                    const launchStatus = document.getElementById('hud-launch-status');
+                    return launchStatus?.textContent === 'GO';
+                }
+            },
+            {
+                id: 'tlm-downlink',
+                label: 'Telemetry downlink active',
+                station: 'TELEMETRY',
+                status: 'pending'
+            },
+            {
+                id: 'pad-clear',
+                label: 'Launch pad clear',
+                station: 'GROUND',
+                status: 'pending'
+            }
+        ];
+    }
+
+    /** Get all items */
+    getItems(): readonly ChecklistItem[] {
+        return this.items;
+    }
+
+    /** Get audit log */
+    getAuditLog(): readonly ChecklistAuditEntry[] {
+        return this.auditLog;
+    }
+
+    /** Check if all items are GO */
+    isReadyForLaunch(): boolean {
+        return this.items.every(item => item.status === 'go');
+    }
+
+    /** Get count of completed items */
+    getCompletionCount(): { go: number; noGo: number; pending: number; total: number } {
+        const go = this.items.filter(i => i.status === 'go').length;
+        const noGo = this.items.filter(i => i.status === 'no-go').length;
+        const pending = this.items.filter(i => i.status === 'pending').length;
+        return { go, noGo, pending, total: this.items.length };
+    }
+
+    /** Set item status */
+    setItemStatus(id: string, status: ChecklistStatus, operator: string = 'MANUAL'): void {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        const previous = item.status;
+        item.status = status;
+
+        // Audit log
+        this.auditLog.push({
+            timestamp: Date.now(),
+            itemId: id,
+            previousStatus: previous,
+            newStatus: status,
+            operator
+        });
+
+        // Mission log
+        if (state.missionLog) {
+            const icon = status === 'go' ? '✅' : status === 'no-go' ? '❌' : '⏳';
+            state.missionLog.log(
+                `POLL: ${item.station} — ${icon} ${status.toUpperCase()}`,
+                status === 'go' ? 'success' : status === 'no-go' ? 'warn' : 'info'
+            );
+        }
+
+        this.render();
+    }
+
+    /** Run auto-checks for items that have autoCheck functions */
+    runAutoChecks(): void {
+        this.items.forEach(item => {
+            if (item.autoCheck && item.status === 'pending') {
+                const result = item.autoCheck();
+                if (result) {
+                    this.setItemStatus(item.id, 'go', 'AUTO');
+                }
+            }
+        });
+    }
+
+    /** Toggle visibility */
+    toggle(): void {
+        this._visible = !this._visible;
+        if (this._visible) {
+            this.runAutoChecks();
+            this.render();
+        }
+        if (this.containerEl) {
+            this.containerEl.style.display = this._visible ? 'block' : 'none';
+        }
+    }
+
+    /** Show the panel */
+    show(): void {
+        this._visible = true;
+        this.runAutoChecks();
+        this.render();
+        if (this.containerEl) {
+            this.containerEl.style.display = 'block';
+        }
+    }
+
+    /** Hide the panel */
+    hide(): void {
+        this._visible = false;
+        if (this.containerEl) {
+            this.containerEl.style.display = 'none';
+        }
+    }
+
+    get visible(): boolean {
+        return this._visible;
+    }
+
+    /** Reset all items to pending */
+    reset(): void {
+        this.items.forEach(i => i.status = 'pending');
+        this.auditLog = [];
+        this.render();
+    }
+
+    /** Render the checklist UI */
+    render(): void {
+        if (!this.containerEl) return;
+
+        const counts = this.getCompletionCount();
+        const allGo = this.isReadyForLaunch();
+
+        let html = `
+            <div class="checklist-inner">
+                <div class="checklist-header">
+                    <h3>📋 LAUNCH READINESS POLL</h3>
+                    <span class="checklist-count">${counts.go}/${counts.total} GO</span>
+                    <button class="checklist-close" id="checklist-close-btn">✕</button>
+                </div>
+                <div class="checklist-items">
+        `;
+
+        for (const item of this.items) {
+            const statusClass = item.status === 'go' ? 'go' : item.status === 'no-go' ? 'no-go' : 'pending';
+            html += `
+                <div class="checklist-row ${statusClass}">
+                    <div class="checklist-station">${item.station}</div>
+                    <div class="checklist-label">${item.label}</div>
+                    <div class="checklist-buttons">
+                        <button class="cl-btn cl-go ${item.status === 'go' ? 'active' : ''}" 
+                                data-item="${item.id}" data-action="go">GO</button>
+                        <button class="cl-btn cl-nogo ${item.status === 'no-go' ? 'active' : ''}" 
+                                data-item="${item.id}" data-action="no-go">NO GO</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        html += `
+                </div>
+                <div class="checklist-footer">
+                    <div class="checklist-verdict ${allGo ? 'all-go' : 'not-ready'}">
+                        ${allGo ? '✅ ALL STATIONS GO — LAUNCH AUTHORIZED' : '⏳ AWAITING ALL STATIONS'}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.containerEl.innerHTML = html;
+
+        // Wire up button events
+        this.containerEl.querySelectorAll('.cl-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const target = e.target as HTMLButtonElement;
+                const itemId = target.dataset.item;
+                const action = target.dataset.action as ChecklistStatus;
+                if (itemId && action) {
+                    this.setItemStatus(itemId, action);
+                }
+            });
+        });
+
+        // Close button
+        const closeBtn = this.containerEl.querySelector('#checklist-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.hide());
+        }
+    }
+}

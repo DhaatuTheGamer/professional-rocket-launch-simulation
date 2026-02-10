@@ -421,7 +421,7 @@ export function calculateAerodynamicDamageRate(
     }
     
     // Calculate damage rate
-    let damageRate = aoaFactor * stabilityFactor * qFactor * 50;
+    const damageRate = aoaFactor * stabilityFactor * qFactor * 50;
     
     // Cap maximum damage rate
     return Math.min(200, Math.max(0, damageRate));

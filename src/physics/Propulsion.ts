@@ -270,7 +270,7 @@ export function updatePropulsionState(
             }
             break;
 
-        case 'starting':
+        case 'starting': {
             // Spool up
             const spoolRate = 1 / config.spoolUpTime;
             newState.spoolProgress = Math.min(1, state.spoolProgress + spoolRate * dt);
@@ -288,8 +288,9 @@ export function updatePropulsionState(
                 newState = commandShutdown(newState);
             }
             break;
+        }
 
-        case 'running':
+        case 'running': {
             // Track burn time
             if (state.actualThrottle > 0) {
                 newState.totalBurnTime += dt;
@@ -314,8 +315,9 @@ export function updatePropulsionState(
                 newState.actualThrottle = 0;
             }
             break;
+        }
 
-        case 'shutdown':
+        case 'shutdown': {
             // Spool down
             const shutdownRate = 1 / config.spoolDownTime;
             newState.actualThrottle = Math.max(0, state.actualThrottle - shutdownRate * dt);
@@ -326,6 +328,7 @@ export function updatePropulsionState(
                 newState.spoolProgress = 0;
             }
             break;
+        }
     }
 
     return newState;

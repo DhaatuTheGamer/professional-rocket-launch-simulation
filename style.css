@@ -1771,3 +1771,374 @@ button.primary:hover {
 #export-btn:hover {
     box-shadow: 0 0 20px rgba(26, 188, 156, 0.5);
 }
+
+/* ========================================
+   SAFETY SYSTEMS STYLES
+   ======================================== */
+
+/* FTS HUD Module */
+.fts-module {
+    border-color: rgba(231, 76, 60, 0.3) !important;
+}
+
+/* FTS Destruct Button */
+.fts-destruct {
+    background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
+    border-color: #922b21 !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.fts-destruct:hover {
+    box-shadow: 0 0 25px rgba(231, 76, 60, 0.7), 0 0 50px rgba(231, 76, 60, 0.3) !important;
+    transform: scale(1.05);
+}
+
+.fts-destruct:active {
+    transform: scale(0.98);
+}
+
+@keyframes ftsDestructPulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(231, 76, 60, 0.9), 0 0 50px rgba(231, 76, 60, 0.4);
+    }
+}
+
+.fts-destruct.armed {
+    animation: ftsDestructPulse 1s ease-in-out infinite;
+}
+
+/* Checklist Button */
+#checklist-btn {
+    background: linear-gradient(135deg, #2980b9, #3498db);
+    border-color: #2471a3;
+}
+
+#checklist-btn:hover {
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+}
+
+/* ========================================
+   CHECKLIST PANEL
+   ======================================== */
+#checklist-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    width: 480px;
+    max-height: 80vh;
+    pointer-events: all;
+}
+
+.checklist-inner {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow), 0 0 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.checklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.checklist-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    color: var(--color-primary);
+}
+
+.checklist-count {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+}
+
+.checklist-close {
+    background: none !important;
+    border: none !important;
+    color: var(--color-text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 !important;
+    min-width: auto;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checklist-close:hover {
+    color: white;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+.checklist-items {
+    padding: 10px 20px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.checklist-row {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background var(--transition-fast);
+}
+
+.checklist-row:last-child {
+    border-bottom: none;
+}
+
+.checklist-row.go {
+    background: rgba(46, 204, 113, 0.08);
+}
+
+.checklist-row.no-go {
+    background: rgba(231, 76, 60, 0.08);
+}
+
+.checklist-station {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.checklist-label {
+    font-size: 0.85rem;
+    color: var(--color-text);
+}
+
+.checklist-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.cl-btn {
+    padding: 5px 12px !important;
+    font-size: 0.7rem !important;
+    font-weight: bold;
+    border-radius: 3px !important;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-width: 55px;
+    text-align: center;
+}
+
+.cl-go {
+    background: rgba(46, 204, 113, 0.15) !important;
+    border: 1px solid rgba(46, 204, 113, 0.3) !important;
+    color: #2ecc71 !important;
+}
+
+.cl-go:hover, .cl-go.active {
+    background: #2ecc71 !important;
+    color: #000 !important;
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.5) !important;
+}
+
+.cl-nogo {
+    background: rgba(231, 76, 60, 0.15) !important;
+    border: 1px solid rgba(231, 76, 60, 0.3) !important;
+    color: #e74c3c !important;
+}
+
+.cl-nogo:hover, .cl-nogo.active {
+    background: #e74c3c !important;
+    color: #fff !important;
+    box-shadow: 0 0 12px rgba(231, 76, 60, 0.5) !important;
+}
+
+.checklist-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.checklist-verdict {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+}
+
+.checklist-verdict.all-go {
+    color: #2ecc71;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    animation: successPulse 2s ease-in-out infinite;
+}
+
+.checklist-verdict.not-ready {
+    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ========================================
+   FAULT INJECTION SYSTEM PANEL
+   ======================================== */
+#fis-panel {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 100;
+    width: 320px;
+    pointer-events: all;
+}
+
+.fis-inner {
+    background: rgba(10, 15, 25, 0.92);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow), 0 0 30px rgba(231, 76, 60, 0.1);
+    overflow: hidden;
+}
+
+.fis-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(231, 76, 60, 0.1);
+    border-bottom: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.fis-header h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #e74c3c;
+    letter-spacing: 1px;
+    flex: 1;
+}
+
+.fis-badge {
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #e74c3c;
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+}
+
+.fis-close {
+    background: none !important;
+    border: none !important;
+    color: var(--color-text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0 !important;
+    min-width: auto;
+    width: 24px;
+    height: 24px;
+}
+
+.fis-close:hover {
+    color: white;
+    background: none !important;
+    box-shadow: none !important;
+}
+
+.fis-hint {
+    padding: 8px 16px;
+    font-size: 0.7rem;
+    color: var(--color-text-dim);
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fis-category {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fis-category:last-child {
+    border-bottom: none;
+}
+
+.fis-category-label {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.fis-fault-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fis-fault-btn {
+    padding: 6px 10px !important;
+    font-size: 0.7rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 4px !important;
+    color: var(--color-text) !important;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    min-width: 80px;
+}
+
+.fis-fault-btn:hover {
+    border-color: rgba(231, 76, 60, 0.5) !important;
+    background: rgba(231, 76, 60, 0.1) !important;
+    box-shadow: none !important;
+}
+
+.fis-fault-btn.armed {
+    border-color: #e74c3c !important;
+    background: rgba(231, 76, 60, 0.2) !important;
+    animation: ftsDestructPulse 1.5s ease-in-out infinite;
+}
+
+.fis-fault-btn.injected {
+    border-color: #e67e22 !important;
+    background: rgba(230, 126, 34, 0.2) !important;
+    opacity: 0.7;
+}
+
+.fis-fault-name {
+    font-weight: bold;
+}
+
+.fis-fault-status {
+    font-size: 0.6rem;
+    color: #e74c3c;
+}

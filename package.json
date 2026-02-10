@@ -1,6 +1,6 @@
 {
     "name": "professional-rocket-simulation",
-    "version": "2.0.0",
+    "version": "2.7.0",
     "description": "Engineering-Grade Spaceflight Simulation",
     "type": "module",
     "scripts": {
@@ -8,13 +8,23 @@
         "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --watch",
         "serve": "npx http-server . -p 8080 -c-1",
         "dev": "npm run serve",
-        "test": "node --experimental-strip-types tests/PIDController.test.ts",
-        "test:rocket": "esbuild tests/RocketComponents.test.ts --bundle --platform=node --outfile=dist/test_rocket.js && node dist/test_rocket.js",
-        "test:perf": "esbuild tests/Performance.test.ts --bundle --platform=node --outfile=dist/test_perf.js && node dist/test_perf.js"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "lint": "eslint src/",
+        "lint:fix": "eslint src/ --fix",
+        "format": "prettier --write src/"
     },
     "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@vitest/coverage-v8": "^4.0.18",
+        "esbuild": "^0.19.11",
+        "eslint": "^10.0.0",
+        "eslint-config-prettier": "^10.1.8",
+        "prettier": "^3.8.1",
         "typescript": "^5.3.3",
-        "esbuild": "^0.19.11"
+        "typescript-eslint": "^8.55.0",
+        "vitest": "^4.0.18"
     },
     "keywords": [
         "rocket",

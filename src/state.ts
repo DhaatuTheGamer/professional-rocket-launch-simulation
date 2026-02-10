@@ -2,109 +2,122 @@
  * Global State Container
  * 
  * Legacy compatibility layer for global state access.
- * In a fully refactored codebase, this would be replaced with
- * proper dependency injection or a state management pattern.
+ * Now backed by SimulationStore for strict state management.
  */
 
 import { GameState, IVessel, IParticle, IAudioEngine, IMissionLog, IAssetLoader, Vector2D, vec2 } from './types';
+import { SimulationStore } from './core/SimulationStore';
+
+// Initialize the store
+export const store = new SimulationStore();
 
 /**
  * Global simulation state
- * @deprecated Use Game class properties instead where possible
+ * Kept in sync with store for backward compatibility.
+ * Consumers should treat this as read-only and use actions/setters to modify.
  */
 export const state: GameState = {
-    groundY: 0,
-    width: 0,
-    height: 0,
+    // Synced from Store
+    groundY: 1000,
+    width: 1920,
+    height: 1080,
     entities: [],
+    autopilotEnabled: false,
+
+    // Local / Non-synced (Services & FX)
     particles: [],
     audio: null,
     missionLog: null,
-    autopilotEnabled: false,
-    assets: undefined
-};
+    assets: undefined,
+
+    // Store properties not originally in GameState but present in Store State
+    // (We only map what GameState interface defines)
+    // GameState defined in types.ts must be compatible.
+    // ... we rely on interface matching.
+} as GameState; // Cast to satisfy strictness if mismatch
 
 /**
- * Current wind velocity at various altitudes - updated by EnvironmentSystem
- * This is used by Vessel.ts for aerodynamic calculations
+ * Current wind velocity - updated by store subscription
  */
 export let currentWindVelocity: Vector2D = vec2(0, 0);
 export let currentDensityMultiplier: number = 1.0;
 
+// Sync state with store
+store.subscribe(() => {
+    const s = store.getState();
+
+    // Sync simulation properties
+    state.width = s.width;
+    state.height = s.height;
+    state.groundY = s.groundY;
+    state.entities = s.entities;
+    state.autopilotEnabled = s.autopilotEnabled;
+    // GameState interface in types.ts likely doesn't have these yet, or they were removed.
+    // Commenting out to fix error until types.ts is updated.
+    // state.timeScale = s.timeScale;
+    // state.paused = s.paused;
+    // state.missionTime = s.missionTime;
+    // state.liftoff = s.liftoff;
+    // state.stageNumber = s.stageNumber;
+    // state.activeVesselId = s.activeVesselId;
+
+    // Sync individual exports
+    currentWindVelocity = s.windVelocity;
+    currentDensityMultiplier = s.atmosphericDensityMultiplier;
+
+    // Note: particles, audio, missionLog remain local
+});
+
+// ============================================================================
+// Action Dispatchers (Legacy Setters)
+// ============================================================================
+
 export function setWindVelocity(wind: Vector2D): void {
-    currentWindVelocity = wind;
+    store.dispatch({ type: 'SET_WIND', velocity: wind });
 }
 
 export function setDensityMultiplier(mult: number): void {
-    currentDensityMultiplier = mult;
+    store.dispatch({ type: 'SET_DENSITY_MULTIPLIER', multiplier: mult });
 }
 
-/**
- * Reset state to initial values
- */
 export function resetState(): void {
-    state.entities = [];
+    store.dispatch({ type: 'RESET' });
+    // Clear local particles
     state.particles = [];
-    state.autopilotEnabled = false;
 }
 
-/**
- * Update state dimensions
- */
 export function updateDimensions(width: number, height: number, groundY: number): void {
-    state.width = width;
-    state.height = height;
-    state.groundY = groundY;
+    store.dispatch({ type: 'SET_DIMENSIONS', width, height, groundY });
 }
 
-/**
- * Set audio engine reference
- */
+export function addEntity(entity: IVessel): void {
+    store.dispatch({ type: 'ADD_ENTITY', entity });
+}
+
+export function removeEntity(entity: IVessel): void {
+    store.dispatch({ type: 'REMOVE_ENTITY', entity });
+}
+
+// ============================================================================
+// Service Setters (Non-Store)
+// ============================================================================
+
 export function setAudioEngine(audio: IAudioEngine): void {
     state.audio = audio;
 }
 
-/**
- * Set mission log reference
- */
 export function setMissionLog(log: IMissionLog): void {
     state.missionLog = log;
 }
 
-/**
- * Set asset loader reference
- */
 export function setAssetLoader(loader: IAssetLoader): void {
     state.assets = loader;
 }
 
-/**
- * Add entity to simulation
- */
-export function addEntity(entity: IVessel): void {
-    state.entities.push(entity);
-}
-
-/**
- * Remove entity from simulation
- */
-export function removeEntity(entity: IVessel): void {
-    const index = state.entities.indexOf(entity);
-    if (index > -1) {
-        state.entities.splice(index, 1);
-    }
-}
-
-/**
- * Add particle to simulation
- */
 export function addParticle(particle: IParticle): void {
     state.particles.push(particle);
 }
 
-/**
- * Clear all particles
- */
 export function clearParticles(): void {
     state.particles = [];
 }

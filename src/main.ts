@@ -14,6 +14,7 @@ import { ScriptEditor } from './ui/ScriptEditor';
 import { exportFlightData } from './telemetry/TelemetryExporter';
 import { VABEditor } from './ui/VABEditor';
 import { VehicleBlueprint, calculateStats } from './vab/VehicleBlueprint';
+import { Vessel } from './physics/Vessel';
 
 // Create and initialize game
 const game = new Game();
@@ -194,6 +195,33 @@ document.getElementById('mission-control-btn')?.addEventListener('click', () => 
     game.missionControl.toggle();
 });
 
+// --- Checklist Button ---
+document.getElementById('checklist-btn')?.addEventListener('click', () => {
+    game.checklist.toggle();
+});
+
+// --- FTS Destruct Button ---
+document.getElementById('fts-destruct-btn')?.addEventListener('click', () => {
+    if (game.trackedEntity) {
+        const success = game.fts.triggerManualDestruct(game.trackedEntity);
+        if (!success) {
+            game.missionLog.log('FTS: Arm the system first (press T)', 'warn');
+        }
+    }
+});
+
+// --- FIS Panel Fault Toggle ---
+document.getElementById('fis-panel')?.addEventListener('fis-toggle', ((e: CustomEvent) => {
+    const faultId = e.detail?.faultId;
+    if (faultId && game.trackedEntity && game.trackedEntity instanceof Vessel) {
+        game.faultInjector.toggleFault(
+            faultId,
+            game.trackedEntity,
+            (game.trackedEntity as Vessel).reliability
+        );
+    }
+}) as EventListener);
+
 // --- Flight Computer Button ---
 document.getElementById('fc-btn')?.addEventListener('click', () => {
     scriptEditor.open();
@@ -249,10 +277,17 @@ window.addEventListener('keydown', (e) => {
     // SPACE - Launch or Stage
     if (e.key === ' ') {
         if (flightPhase === 'prelaunch' && game.mainStack?.throttle === 0) {
+            // Gate launch on checklist
+            if (!game.checklist.isReadyForLaunch()) {
+                game.missionLog.log('LAUNCH HOLD — Complete checklist first (press C)', 'warn');
+                game.checklist.show();
+                return;
+            }
             // Initial ignition
             game.mainStack.active = true;
             game.mainStack.throttle = 1.0;
             game.missionLog.log("IGNITION SEQUENCE START", "warn");
+            game.checklist.hide();
             updateActionButton();
         } else if (flightPhase !== 'prelaunch') {
             // Staging
@@ -312,6 +347,26 @@ window.addEventListener('keydown', (e) => {
         } else {
             game.missionLog.log("No flight data to export", "warn");
         }
+    }
+
+    // T - Toggle FTS Arm
+    if (e.key === 't' || e.key === 'T') {
+        game.fts.toggleArm();
+        const ftsBtn = document.getElementById('fts-destruct-btn');
+        if (ftsBtn) {
+            ftsBtn.classList.toggle('armed', game.fts.getStatus().armed);
+        }
+    }
+
+    // C - Toggle Checklist
+    if (e.key === 'c' || e.key === 'C') {
+        game.checklist.toggle();
+    }
+
+    // Ctrl+I - Toggle Fault Injection System (instructor)
+    if (e.key === 'i' && e.ctrlKey) {
+        e.preventDefault();
+        game.faultInjector.toggle();
     }
 });
 

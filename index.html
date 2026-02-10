@@ -16,7 +16,7 @@
     <div id="splash-screen">
         <div class="content">
             <h1>Delta-V Lab <span
-                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v2.0.0</span>
+                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v2.7.0</span>
             </h1>
             <p class="subtitle">Engineering-Grade Spaceflight Simulation</p>
 
@@ -116,6 +116,10 @@
                         style="color: #2ecc71;">GO</span></div>
                 <div id="hud-maxq-warning" style="display: none; color: #e67e22; font-size: 0.7rem;"></div>
             </div>
+            <div class="hud-module fts-module">
+                <div class="hud-label">FTS</div>
+                <div class="hud-value-large"><span id="hud-fts-state" style="color: #2ecc71;">SAFE</span></div>
+            </div>
         </div>
 
         <div id="hud-gauges">
@@ -182,7 +186,7 @@
     </div>
 
     <div id="controls-help">
-        [SPACE] Launch | [S] Stage | [ARROWS] Control | [G] Flight PC | [R] Record | [E] Export
+        [SPACE] Launch | [S] Stage | [T] FTS Arm | [C] Checklist | [Ctrl+I] FIS | [G] Flight PC
     </div>
 
     <div id="status-msg">T-MINUS 3 SECONDS</div>
@@ -199,6 +203,8 @@
 
     <div id="controls">
         <button id="launch-btn" class="primary state-launch" title="Launch [SPACE]">🚀 INITIATE LAUNCH</button>
+        <button id="checklist-btn" title="Launch Checklist [C]">📋 Checklist</button>
+        <button id="fts-destruct-btn" class="fts-destruct" title="FTS Destruct [T to arm]">💥 FTS DESTRUCT</button>
         <button id="maneuver-btn" title="Maneuver Planner [O]">📐 Maneuver</button>
         <button id="mission-control-btn" title="Mission Control">🌍 CAPCOM</button>
         <button id="fc-btn" title="Open Flight Computer Script Editor [F]">✈️ Flight PC</button>
@@ -221,6 +227,12 @@
             <div id="throttle-handle"></div>
         </div>
     </div>
+
+    <!-- Launch Checklist Panel -->
+    <div id="checklist-panel" style="display: none;"></div>
+
+    <!-- Fault Injection System Panel (Instructor) -->
+    <div id="fis-panel" style="display: none;"></div>
 
     <canvas id="canvas"></canvas>
 

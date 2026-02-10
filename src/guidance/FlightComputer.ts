@@ -12,9 +12,9 @@
  *   fc.update(vessel, dt);
  */
 
-import { type IVessel, SASMode } from '../types/index.ts';
-import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../constants.ts';
-import { SAS } from '../utils/SAS.ts';
+import { type IVessel, SASMode } from '../types/index';
+import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../constants';
+import { SAS } from '../utils/SAS';
 import {
     type MissionScript,
     type ScriptCommand,
@@ -26,7 +26,7 @@ import {
     parseMissionScript,
     resetScript,
     type SASModeValue
-} from './FlightScript.ts';
+} from './FlightScript';
 
 // ============================================================================
 // Flight Computer Modes
@@ -389,11 +389,12 @@ export class FlightComputer {
         };
 
         switch (action.type) {
-            case 'PITCH':
+            case 'PITCH': {
                 // Convert degrees to radians
                 const pitchDeg = action.value as number;
                 output.pitchAngle = pitchDeg * Math.PI / 180;
                 break;
+            }
 
             case 'THROTTLE':
                 output.throttle = action.value as number;
@@ -404,11 +405,12 @@ export class FlightComputer {
                 if (this.onStage) this.onStage();
                 break;
 
-            case 'SAS':
+            case 'SAS': {
                 const sasValue = action.value as SASModeValue;
                 output.sasMode = SASMode[sasValue];
                 if (this.onSASChange) this.onSASChange(output.sasMode);
                 break;
+            }
 
             case 'ABORT':
                 output.abort = true;
