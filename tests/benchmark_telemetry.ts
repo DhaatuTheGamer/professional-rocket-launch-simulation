@@ -1,5 +1,5 @@
 
-import { performance } from 'perf_hooks';
+const perf = performance;
 
 interface TelemetryDataPoint {
     t: number;
@@ -27,7 +27,7 @@ function runBenchmark() {
     console.log(`Iterations: ${iterations}`);
 
     // --- Baseline Implementation ---
-    const startBaseline = performance.now();
+    const startBaseline = perf.now();
     let baselineAlt = 0;
     let baselineVel = 0;
 
@@ -40,11 +40,11 @@ function runBenchmark() {
         baselineAlt = maxAlt;
         baselineVel = maxVel;
     }
-    const endBaseline = performance.now();
+    const endBaseline = perf.now();
     const timeBaseline = endBaseline - startBaseline;
 
     // --- Optimized Implementation ---
-    const startOptimized = performance.now();
+    const startOptimized = perf.now();
     let optimizedAlt = 0;
     let optimizedVel = 0;
 
@@ -61,7 +61,7 @@ function runBenchmark() {
         optimizedAlt = maxAlt;
         optimizedVel = maxVel;
     }
-    const endOptimized = performance.now();
+    const endOptimized = perf.now();
     const timeOptimized = endOptimized - startOptimized;
 
     // Verify Correctness
@@ -69,7 +69,7 @@ function runBenchmark() {
         console.error("❌ ERROR: Optimized logic produced different results!");
         console.error(`Baseline: Alt=${baselineAlt}, Vel=${baselineVel}`);
         console.error(`Optimized: Alt=${optimizedAlt}, Vel=${optimizedVel}`);
-        process.exit(1);
+        throw new Error("Verification Failed");
     } else {
         console.log("✅ Verification Passed: Results match.");
     }
@@ -80,9 +80,12 @@ function runBenchmark() {
     const speedup = timeBaseline / timeOptimized;
     console.log(`Speedup: ${speedup.toFixed(2)}x`);
 
+
     if (timeOptimized >= timeBaseline) {
         console.warn("⚠️ Warning: No significant speedup detected.");
     }
 }
 
 runBenchmark();
+
+export { }; // Make this a module

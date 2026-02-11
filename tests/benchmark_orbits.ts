@@ -1,5 +1,5 @@
 
-import { performance } from 'perf_hooks';
+// import { performance } from 'perf_hooks';
 
 // Mock constants
 const R_EARTH = 6371000;
@@ -126,58 +126,60 @@ function updateOrbitPathsOptimized(entities: MockVessel[], now: number) {
         const index = (nextEntityToUpdate + i) % entities.length;
         const e = entities[index];
 
+        if (!e) continue;
+
         if (!e.crashed) {
-             // We can still respect the time check, but since we are scheduling round-robin,
-             // we are implicitly throttling.
-             // But if the loop is faster than 100ms, we might update too often.
-             // So keep the check.
+            // We can still respect the time check, but since we are scheduling round-robin,
+            // we are implicitly throttling.
+            // But if the loop is faster than 100ms, we might update too often.
+            // So keep the check.
 
-             if (now - e.lastOrbitUpdate >= 100) {
-                 // Update logic...
-                 const alt = (GROUND_Y - e.y - e.h) / PIXELS_PER_METER;
-                 let needsUpdate = false;
+            if (now - e.lastOrbitUpdate >= 100) {
+                // Update logic...
+                const alt = (GROUND_Y - e.y - e.h) / PIXELS_PER_METER;
+                let needsUpdate = false;
 
-                 if (e.throttle > 0) needsUpdate = true;
-                 if (alt < 140000) needsUpdate = true;
-                 if (now - e.lastOrbitUpdate > 1000) needsUpdate = true;
-                 if (!e.orbitPath) needsUpdate = true;
+                if (e.throttle > 0) needsUpdate = true;
+                if (alt < 140000) needsUpdate = true;
+                if (now - e.lastOrbitUpdate > 1000) needsUpdate = true;
+                if (!e.orbitPath) needsUpdate = true;
 
-                 if (needsUpdate) {
-                     updates++;
-                     e.orbitPath = [];
-                     e.lastOrbitUpdate = now;
+                if (needsUpdate) {
+                    updates++;
+                    e.orbitPath = [];
+                    e.lastOrbitUpdate = now;
 
-                     // Simple orbit prediction
-                     let simState = {
-                         x: e.x / 10,
-                         y: e.y / 10,
-                         vx: e.vx,
-                         vy: e.vy
-                     };
+                    // Simple orbit prediction
+                    let simState = {
+                        x: e.x / 10,
+                        y: e.y / 10,
+                        vx: e.vx,
+                        vy: e.vy
+                    };
 
-                     const dtPred = 10;
-                     const startPhi = simState.x / R_EARTH;
-                     const startR = R_EARTH + (GROUND_Y / 10 - simState.y - e.h / 10);
-                     e.orbitPath.push({ phi: startPhi, r: startR });
+                    const dtPred = 10;
+                    const startPhi = simState.x / R_EARTH;
+                    const startR = R_EARTH + (GROUND_Y / 10 - simState.y - e.h / 10);
+                    e.orbitPath.push({ phi: startPhi, r: startR });
 
-                     for (let k = 0; k < 200; k++) {
-                         const pAlt = GROUND_Y / 10 - simState.y - e.h / 10;
-                         const pRad = pAlt + R_EARTH;
-                         const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
-                         const pFy = pG - (simState.vx ** 2) / pRad;
+                    for (let k = 0; k < 200; k++) {
+                        const pAlt = GROUND_Y / 10 - simState.y - e.h / 10;
+                        const pRad = pAlt + R_EARTH;
+                        const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
+                        const pFy = pG - (simState.vx ** 2) / pRad;
 
-                         simState.vy += pFy * dtPred;
-                         simState.x += simState.vx * dtPred;
-                         simState.y += simState.vy * dtPred;
+                        simState.vy += pFy * dtPred;
+                        simState.x += simState.vx * dtPred;
+                        simState.y += simState.vy * dtPred;
 
-                         if (simState.y * 10 > GROUND_Y) break;
+                        if (simState.y * 10 > GROUND_Y) break;
 
-                         const pPhi = (simState.x * 10) / R_EARTH;
-                         const pR = R_EARTH + (GROUND_Y / 10 - simState.y - e.h / 10);
-                         e.orbitPath.push({ phi: pPhi, r: pR });
-                     }
-                 }
-             }
+                        const pPhi = (simState.x * 10) / R_EARTH;
+                        const pR = R_EARTH + (GROUND_Y / 10 - simState.y - e.h / 10);
+                        e.orbitPath.push({ phi: pPhi, r: pR });
+                    }
+                }
+            }
         }
     }
 
@@ -260,4 +262,7 @@ function calculateVariance(times: number[]) {
     return times.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / times.length;
 }
 
+
 runBenchmark();
+
+export { }; // Make this a module

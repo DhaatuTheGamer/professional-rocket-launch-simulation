@@ -29,7 +29,9 @@ export class FlightDataParser {
         const frames: FlightFrame[] = [];
 
         for (let i = 1; i < lines.length; i++) {
-            const values = lines[i].split(',');
+            const line = lines[i];
+            if (!line) continue;
+            const values = line.split(',');
             if (values.length !== headers.length) continue;
 
             const frame: any = {};

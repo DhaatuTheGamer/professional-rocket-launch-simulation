@@ -200,7 +200,10 @@ export class Particle implements IParticle {
             // Direct access is safe because ParticleType is exhausted in batches initialization
             const buckets = Particle.batches[p.type];
             if (buckets) {
-                buckets[lifeIndex].push(p);
+                const bucket = buckets[lifeIndex];
+                if (bucket) {
+                    bucket.push(p);
+                }
             } else {
                 // Fallback for unknown types (or if initialization failed)
                 p.draw(ctx);
@@ -213,10 +216,11 @@ export class Particle implements IParticle {
 
         for (const type of types) {
             const buckets = Particle.batches[type];
+            if (!buckets) continue;
 
             for (let i = 0; i < 20; i++) {
                 const group = buckets[i];
-                if (group.length === 0) continue;
+                if (!group || group.length === 0) continue;
 
                 // Use center of the quantization bucket for smoother visual transition
                 const life = (i + 0.5) / 20;
@@ -225,6 +229,7 @@ export class Particle implements IParticle {
                 // We use the first particle to get type-specific properties if needed (like color for smoke)
                 // But for smoke, color is constant (200), so we can just use defaults or look at the first one.
                 const sample = group[0];
+                if (!sample) continue;
 
                 switch (type) {
                     case 'smoke': {

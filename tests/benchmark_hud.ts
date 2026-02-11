@@ -1,10 +1,12 @@
+// import { performance } from 'perf_hooks'; // Removed for browser compatibility
+const perf = performance;
 
-import { performance } from 'perf_hooks';
+export { }; // Make this a module
 
 // Mock HTMLElement
 class MockHTMLElement {
     textContent: string = '';
-    style: { color: string; display: string; className: string } = { color: '', display: '', className: '' };
+    style: any = { color: '', display: '', className: '' }; // Relaxed type
     className: string = '';
 }
 
@@ -20,16 +22,16 @@ const mockDocument = {
 };
 
 // Global override (simulated for the test scope)
-(global as any).document = mockDocument;
+(globalThis as any).document = mockDocument;
 
 // Mock Game class subset
 class HUDUpdater {
     // Cache
-    hudWindSpeed: MockHTMLElement | null = null;
-    hudWindDir: MockHTMLElement | null = null;
-    hudTimeOfDay: MockHTMLElement | null = null;
-    hudLaunchStatus: MockHTMLElement | null = null;
-    hudMaxQ: MockHTMLElement | null = null;
+    hudWindSpeed: any = null; // Use any to bypass strict HTMLElement checks for benchmarks
+    hudWindDir: any = null;
+    hudTimeOfDay: any = null;
+    hudLaunchStatus: any = null;
+    hudMaxQ: any = null;
 
     lastHUDState = {
         windSpeed: -1,

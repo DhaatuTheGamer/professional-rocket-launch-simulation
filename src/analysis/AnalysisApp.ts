@@ -131,17 +131,21 @@ class AnalysisApp {
     }
 
     private onDataLoaded() {
+        if (this.frames.length === 0) return;
         this.currentIndex = 0;
         this.timeScrubber.value = "0";
         this.renderCharts(); // Draw static background charts
         this.renderFrame(0);
 
         // Update total duration label
-        const duration = this.frames[this.frames.length - 1].missionTime;
-        const m = Math.floor(duration / 60);
-        const s = Math.floor(duration % 60);
-        const label = document.getElementById('duration-label');
-        if (label) label.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        const lastFrame = this.frames[this.frames.length - 1];
+        if (lastFrame) {
+            const duration = lastFrame.missionTime;
+            const m = Math.floor(duration / 60);
+            const s = Math.floor(duration % 60);
+            const label = document.getElementById('duration-label');
+            if (label) label.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
     }
 
     private togglePlayback() {

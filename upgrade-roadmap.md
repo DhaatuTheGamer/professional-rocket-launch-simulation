@@ -54,16 +54,16 @@ This report outlines 10 critical improvements to transition the current simulati
 - Allow instructors to silently trigger specific failures (e.g., "Main Engine Valve Stuck Open @ T+10s").
 - Use this to train operators on emergency procedures and FTS reaction times.
 
-## UI/UX & Visualization
+## UI/UX & Visualization [DONE]
 
-### 8. Remote Telemetry & Multi-Monitor Support
+### 8. Remote Telemetry & Multi-Monitor Support [DONE]   
 **Problem:** The simulation runs in a single window. Real mission control has many screens.
 **Recommendation:** Decouple the View from the Simulation.
 - Use **WebSockets** to stream telemetry state.
 - Allow opening separate URL windows for "Map View", "Propulsion Telemetry", and "Guidance Plots".
 - This mimics a real Mission Control Center (MCC) environment.
 
-### 9. Post-Flight Analysis Tool
+### 9. Post-Flight Analysis Tool [DONE]
 **Problem:** Black Box exports CSVs, but requires external tools (Excel) to view.
 **Recommendation:** Build a web-based **Debriefing Room**:
 - Upload BlackBox JSON/CSV.
@@ -71,7 +71,7 @@ This report outlines 10 critical improvements to transition the current simulati
 - 3D Replay view scrubbable via timeline.
 - "Event Markers" on the timeline (Staging, Max-Q, Apogee).
 
-### 10. Advanced Environment Visualization
+### 10. Advanced Environment Visualization [DONE]
 **Problem:** Wind/Atmosphere is simulated but invisible until effects happen.
 **Recommendation:** Visual aids for environmental constraints:
 - **Wind Vectors**: Overlay wind arrows on the map view at different altitudes.

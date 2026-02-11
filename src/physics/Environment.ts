@@ -10,8 +10,8 @@
  * - Go/No-Go Launch Conditions: Wind limit evaluation
  */
 
-import { vec2, Vec2 } from '../types/index.ts';
-import type { Vector2D } from '../types/index.ts';
+import { vec2, Vec2 } from '../types/index';
+import type { Vector2D } from '../types/index';
 
 // ============================================================================
 // Interfaces
@@ -183,10 +183,13 @@ export class EnvironmentSystem {
         // Find the appropriate wind layer
         for (let i = 0; i < layers.length; i++) {
             const layer = layers[i];
+            if (!layer) continue;
+
             if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
                 // Interpolate within the layer for smooth transitions
-                const layerProgress = (safeAlt - layer.altitudeMin) /
-                    (layer.altitudeMax - layer.altitudeMin);
+                const layerProgress = (layer.altitudeMax === layer.altitudeMin)
+                    ? 0
+                    : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
 
                 // Find next layer for interpolation
                 // Since layers are sorted, the next layer is simply at index i + 1
