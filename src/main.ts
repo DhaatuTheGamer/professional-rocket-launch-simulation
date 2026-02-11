@@ -227,6 +227,12 @@ document.getElementById('fc-btn')?.addEventListener('click', () => {
     scriptEditor.open();
 });
 
+// --- Telemetry Pop-out Button ---
+document.getElementById('telemetry-btn')?.addEventListener('click', () => {
+    window.open('telemetry.html', 'Telemetry', 'width=800,height=600');
+    game.missionLog.log("Telemetry Link Established", "success");
+});
+
 // --- Flight Computer HUD Update ---
 function updateFCStatus(): void {
     const fcStatus = uiCache.fcStatus;

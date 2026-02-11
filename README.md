@@ -1,4 +1,4 @@
-# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v2.7.0)
+# 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v3.0.0)
 
 Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, environmental hazards, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
 
@@ -8,6 +8,12 @@ Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 in
 ![Tests](https://img.shields.io/badge/tests-vitest-green.svg)
 
 ## Features
+
+### Mission Operations & analysis (v3.0.0)
+- **Remote Telemetry** - Broadcast live flight data to a second monitor or device via `telemetry.html`.
+- **Post-Flight Analysis** - Replay missions with `analysis.html`, featuring synchronized data charts, time scrubbing, and 3D replay.
+- **Flight Data Recorder** - Import/Export flight logs in CSV/JSON formats for external analysis.
+- **Advanced Visualization** - Visual wind vectors, safe flight corridors, and thermal heatmaps.
 
 ### Safety Systems (v2.7.0)
 New professional-grade safety features for training and operations:

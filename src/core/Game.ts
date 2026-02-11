@@ -41,6 +41,7 @@ import { LaunchChecklist } from '../safety/LaunchChecklist';
 import { FaultInjector } from '../safety/FaultInjector';
 import { Vessel } from '../physics/Vessel';
 import { PhysicsProxy } from './PhysicsProxy';
+import { TelemetryTransmitter } from '../telemetry/TelemetryTransmitter';
 
 export class Game {
     // Canvas and rendering
@@ -66,6 +67,7 @@ export class Game {
     public fts: FlightTerminationSystem;
     public checklist: LaunchChecklist;
     public faultInjector: FaultInjector;
+    public transmitter: TelemetryTransmitter;
 
     // Game state
     public entities: IVessel[] = [];
@@ -97,7 +99,7 @@ export class Game {
     public missionTime: number = 0;
     private lastStageTime: number = 0;
 
-    // Bloom effect (for engine glow)
+
     private bloomCanvas: HTMLCanvasElement;
     private bloomCtx: CanvasRenderingContext2D;
 
@@ -190,6 +192,7 @@ export class Game {
         this.fts = new FlightTerminationSystem();
         this.checklist = new LaunchChecklist('checklist-panel');
         this.faultInjector = new FaultInjector('fis-panel');
+        this.transmitter = new TelemetryTransmitter();
 
         // Bloom canvas for glow effects
         this.bloomCanvas = document.createElement('canvas');
@@ -618,6 +621,98 @@ export class Game {
     }
 
     /**
+     * Draw environmental visuals (wind, corridors)
+     */
+    private drawEnvironment(camY: number): void {
+        const startAlt = Math.max(0, (this.groundY - (camY + this.height)) / PIXELS_PER_METER);
+        const endAlt = (this.groundY - camY) / PIXELS_PER_METER;
+
+        // 1. Draw Safe Flight Corridor (Launch corridor)
+        // Simple funnel: +/- 500m at pad, expanding to +/- 5km at 50km
+        this.ctx.save();
+        this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([20, 20]);
+
+        this.ctx.beginPath();
+        // Left boundary
+        for (let alt = startAlt; alt <= endAlt; alt += 1000) {
+            const width = 500 + (alt / 50000) * 4500;
+            const y = this.groundY - alt * PIXELS_PER_METER - camY;
+            const x = this.width / 2 - width * PIXELS_PER_METER;
+            if (alt === startAlt) this.ctx.moveTo(x, y);
+            else this.ctx.lineTo(x, y);
+        }
+        this.ctx.stroke();
+
+        this.ctx.beginPath();
+        // Right boundary
+        for (let alt = startAlt; alt <= endAlt; alt += 1000) {
+            const width = 500 + (alt / 50000) * 4500;
+            const y = this.groundY - alt * PIXELS_PER_METER - camY;
+            const x = this.width / 2 + width * PIXELS_PER_METER;
+            if (alt === startAlt) this.ctx.moveTo(x, y);
+            else this.ctx.lineTo(x, y);
+        }
+        this.ctx.stroke();
+        this.ctx.restore();
+
+        // 2. Draw Wind Vectors
+        // Draw every 100 pixels vertically
+        this.ctx.save();
+        const step = 200; // pixels
+        const startY = Math.floor(camY / step) * step;
+
+        for (let y = startY; y < camY + this.height; y += step) {
+            const alt = (this.groundY - y) / PIXELS_PER_METER;
+            if (alt < 0) continue;
+
+            const wind = this.environment.getWindAtAltitude(alt);
+            const speed = Math.sqrt(wind.x * wind.x + wind.y * wind.y);
+
+            if (speed > 1) {
+                const screenY = y - camY;
+                const screenX = 50; // Draw on left side
+
+                // Draw arrow
+                this.ctx.translate(screenX, screenY);
+                // Note: Wind vector points WHERE wind is going. 
+                // getWindAtAltitude returns force direction (negative of origin).
+                // So (1,0) means wind pushing RIGHT.
+                const angle = Math.atan2(wind.y, wind.x);
+
+                this.ctx.rotate(angle);
+
+                // Color based on speed
+                if (speed < 10) this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                else if (speed < 30) this.ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+                else this.ctx.fillStyle = 'rgba(255, 0, 0, 0.6)';
+
+                // Arrow shape
+                const len = Math.min(50, speed * 2);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, -2);
+                this.ctx.lineTo(len - 5, -2);
+                this.ctx.lineTo(len - 5, -5);
+                this.ctx.lineTo(len, 0);
+                this.ctx.lineTo(len - 5, 5);
+                this.ctx.lineTo(len - 5, 2);
+                this.ctx.lineTo(0, 2);
+                this.ctx.fill();
+
+                // Text
+                this.ctx.rotate(-angle); // Reset rotation for text
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                this.ctx.font = '10px monospace';
+                this.ctx.fillText(`${speed.toFixed(0)} m/s`, 10, 15);
+
+                this.ctx.translate(-screenX, -screenY);
+            }
+        }
+        this.ctx.restore();
+    }
+
+    /**
      * Draw the scene
      */
     private draw(): void {
@@ -744,6 +839,9 @@ export class Game {
         this.entities.forEach(e => e.draw(this.ctx, 0));
 
         this.ctx.restore();
+
+        // Draw environmental overlays
+        this.drawEnvironment(this.cameraY);
 
         // HUD
         this.drawHUD();
@@ -1043,6 +1141,24 @@ export class Game {
 
         if (this.cameraMode === 'MAP') {
             this.updateOrbitPaths(currentTime);
+        }
+
+        // Broadcast Telemetry
+        if (this.trackedEntity) {
+            this.transmitter.broadcast({
+                timestamp: Date.now(),
+                missionTime: this.missionTime,
+                altitude: (this.groundY - this.trackedEntity.y - this.trackedEntity.h) / PIXELS_PER_METER,
+                velocity: Math.sqrt(this.trackedEntity.vx ** 2 + this.trackedEntity.vy ** 2),
+                fuel: this.trackedEntity.fuel,
+                throttle: this.trackedEntity.throttle,
+                position: { x: this.trackedEntity.x, y: this.trackedEntity.y },
+                velocityVector: { x: this.trackedEntity.vx, y: this.trackedEntity.vy },
+                stage: 0, // Simplified for now
+                liftoff: this.missionState.liftoff,
+                apogee: 0, // Calculated in HUD usually, could move logic here
+                status: this.missionState.liftoff ? 'FLIGHT' : 'PRELAUNCH'
+            });
         }
 
         this.draw();

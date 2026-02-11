@@ -1,11 +1,11 @@
 {
     "name": "professional-rocket-simulation",
-    "version": "2.7.0",
+    "version": "3.0.0",
     "description": "Engineering-Grade Spaceflight Simulation",
     "type": "module",
     "scripts": {
-        "build": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=esm",
-        "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=esm --watch",
+        "build": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=esm && esbuild src/telemetry/TelemetryReceiver.ts --bundle --outfile=dist/telemetry.bundle.js --format=esm && esbuild src/analysis/AnalysisApp.ts --bundle --outfile=dist/analysis.bundle.js --format=esm",
+        "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=esm --watch & esbuild src/telemetry/TelemetryReceiver.ts --bundle --outfile=dist/telemetry.bundle.js --format=esm --watch & esbuild src/analysis/AnalysisApp.ts --bundle --outfile=dist/analysis.bundle.js --format=esm --watch",
         "serve": "npx http-server . -p 8080 -c-1",
         "dev": "npm run serve",
         "test": "vitest run",
