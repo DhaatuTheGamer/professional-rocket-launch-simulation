@@ -355,7 +355,7 @@ export class Game {
         }
 
         // Collect inputs
-        let controls: any = {};
+
 
         let throttle = 0;
         let gimbalAngle = 0;
@@ -409,7 +409,7 @@ export class Game {
             }
         }
 
-        controls = { throttle, gimbalAngle, stage, abort };
+        const controls = { throttle, gimbalAngle, stage, abort };
 
         // Step Physics logic in Worker
         this.physics.step(dt, { timeScale: this.timeScale, controls });

@@ -4,8 +4,8 @@
     "description": "Engineering-Grade Spaceflight Simulation",
     "type": "module",
     "scripts": {
-        "build": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife",
-        "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=iife --watch",
+        "build": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=esm",
+        "watch": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --format=esm --watch",
         "serve": "npx http-server . -p 8080 -c-1",
         "dev": "npm run serve",
         "test": "vitest run",

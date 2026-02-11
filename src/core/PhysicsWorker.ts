@@ -10,9 +10,9 @@ import { FaultInjector } from '../safety/FaultInjector';
 // State
 let entities: Vessel[] = [];
 let missionTime = 0;
-let fts = new FlightTerminationSystem();
-let environment = new EnvironmentSystem();
-let faultInjector = new FaultInjector();
+const fts = new FlightTerminationSystem();
+const environment = new EnvironmentSystem();
+const faultInjector = new FaultInjector();
 
 // Active vessel tracking (index or ref)
 // In worker, we can just track the "main" one by index or reference
