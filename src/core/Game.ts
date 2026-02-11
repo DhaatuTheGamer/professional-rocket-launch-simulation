@@ -296,12 +296,18 @@ export class Game {
             groundY: this.groundY
         });
 
-        // Verify init with a short delay or allow frame 1 to sync?
-        // We'll rely on frame 1 sync.
-
         // Legacy globals (will be synced next frame)
         (window as any).mainStack = null;
         (window as any).trackedEntity = null;
+    }
+
+    /**
+     * Spawn a new vessel from a blueprint
+     */
+    spawnVessel(blueprint: any): void {
+        console.log("Spawning blueprint:", blueprint?.name);
+        // For now, reset which triggers worker init to spawn default rocket
+        this.reset();
     }
 
     /**
@@ -1166,4 +1172,3 @@ export class Game {
         requestAnimationFrame((t) => this.animate(t));
     }
 }
-

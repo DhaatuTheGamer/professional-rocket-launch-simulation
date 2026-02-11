@@ -40,7 +40,10 @@
             "@core/*": [
                 "./core/*"
             ]
-        }
+        },
+        "types": [
+            "vitest/globals"
+        ]
     },
     "include": [
         "src/**/*.ts",

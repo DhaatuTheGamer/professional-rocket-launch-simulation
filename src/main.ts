@@ -51,7 +51,7 @@ const vabEditor = new VABEditor('vab-modal', (blueprint: VehicleBlueprint) => {
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) splashScreen.style.display = 'none';
 
-    game.reset();
+    game.spawnVessel(blueprint);
     game.missionLog.log(`${blueprint.name} configured - ΔV: ${stats.totalDeltaV.toFixed(0)} m/s`, "info");
     showOnboarding();
 });
