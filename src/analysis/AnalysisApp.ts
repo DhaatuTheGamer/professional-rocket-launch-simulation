@@ -167,7 +167,6 @@ class AnalysisApp {
         if (!this.isPlaying) return;
 
         const now = performance.now();
-        const dt = (now - this.lastFrameTime) / 1000;
         this.lastFrameTime = now;
 
         // Advance frames based on recording Hz (assumed 60Hz or use timestamp delta)
@@ -336,7 +335,7 @@ class AnalysisApp {
         ctx.clearRect(0, 0, w, h);
 
         // Find range
-        let dataMin = min ?? 0;
+        const dataMin = min ?? 0;
         let dataMax = max ?? -Infinity;
         if (max === undefined) {
             this.frames.forEach(f => {
