@@ -6,7 +6,8 @@
  */
 
 import { IVessel } from '../types';
-import { PIXELS_PER_METER, getAtmosphericDensity, getMachNumber } from '../constants';
+import { state } from '../core/State';
+import { CONFIG, PIXELS_PER_METER, getMachNumber } from '../config/Constants';
 
 // ============================================================================
 // Types

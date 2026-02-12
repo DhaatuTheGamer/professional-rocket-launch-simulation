@@ -12,21 +12,9 @@
  */
 
 import { IVessel, PhysicsState, Derivatives, OrbitalElements } from '../types';
-import {
-    CONFIG,
-    PIXELS_PER_METER,
-    RHO_SL,
-    SCALE_HEIGHT,
-    R_EARTH,
-    SPEED_OF_SOUND,
-    getAtmosphericDensity,
-    getGravity,
-    getDynamicPressure,
-    getTransonicDragMultiplier,
-    getMachNumber,
-    DT
-} from '../constants';
-import { state, addParticle, currentWindVelocity, currentDensityMultiplier } from '../state';
+import { CONFIG, PIXELS_PER_METER, getAtmosphericDensity, SPEED_OF_SOUND, RHO_SL, R_EARTH, getGravity, getDynamicPressure, getTransonicDragMultiplier, getMachNumber, DT } from '../config/Constants';
+import { state, currentWindVelocity, currentDensityMultiplier } from '../core/State';
+import { addParticle } from '../core/State';
 import { Particle } from './Particle';
 import {
     AerodynamicsConfig,

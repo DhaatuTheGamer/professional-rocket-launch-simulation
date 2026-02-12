@@ -5,8 +5,8 @@
  * Now backed by SimulationStore for strict state management.
  */
 
-import { GameState, IVessel, IParticle, IAudioEngine, IMissionLog, IAssetLoader, Vector2D, vec2 } from './types';
-import { SimulationStore } from './core/SimulationStore';
+import { GameState, IVessel, IParticle, IAudioEngine, IMissionLog, IAssetLoader, Vector2D, vec2 } from '../types';
+import { SimulationStore } from './SimulationStore';
 
 // Initialize the store
 export const store = new SimulationStore();

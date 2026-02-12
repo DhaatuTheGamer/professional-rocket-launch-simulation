@@ -6,9 +6,9 @@
  */
 
 import { CameraMode, MissionState, OrbitalElements, IVessel } from '../types';
-import { CONFIG, PIXELS_PER_METER, R_EARTH, getAtmosphericDensity } from '../constants';
+import { CONFIG, PIXELS_PER_METER, R_EARTH, getAtmosphericDensity } from '../config/Constants';
 import { MU } from '../physics/OrbitalMechanics';
-import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from '../state';
+import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from './State';
 import { InputManager } from './InputManager';
 import { AudioEngine } from '../utils/AudioEngine';
 import { AssetLoader } from '../utils/AssetLoader';
@@ -21,7 +21,7 @@ import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/Roc
 import { FlightComputer } from '../guidance/FlightComputer';
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
 import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
-import { setWindVelocity, setDensityMultiplier } from '../state';
+import { setWindVelocity, setDensityMultiplier } from './State';
 import { ManeuverPlanner } from '../ui/ManeuverPlanner';
 import { MissionControl } from '../ui/MissionControl';
 import { UI_COLORS } from '../ui/UIConstants';

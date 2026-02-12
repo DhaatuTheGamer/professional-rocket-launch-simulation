@@ -6,7 +6,7 @@
  * must confirm readiness before proceeding.
  */
 
-import { state } from '../state';
+import { state } from '../core/State';
 
 // ============================================================================
 // Types

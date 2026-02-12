@@ -7,8 +7,8 @@
 
 import { ReliabilitySystem, FailureType } from '../physics/Reliability';
 import { IVessel } from '../types';
-import { PIXELS_PER_METER } from '../constants';
-import { state } from '../state';
+import { PIXELS_PER_METER } from '../config/Constants';
+import { state } from '../core/State';
 
 // ============================================================================
 // Types

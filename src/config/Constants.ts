@@ -8,7 +8,7 @@
  * - Mass: kilograms (kg)
  */
 
-import type { PhysicsConfig } from './types';
+import type { PhysicsConfig } from '../types';
 
 // ============================================================================
 // Fundamental Physical Constants
