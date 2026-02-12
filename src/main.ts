@@ -15,6 +15,7 @@ import { exportFlightData } from './telemetry/TelemetryExporter';
 import { VABEditor } from './ui/VABEditor';
 import { VehicleBlueprint, calculateStats } from './vab/VehicleBlueprint';
 import { Vessel } from './physics/Vessel';
+import { updateFlightComputerHUD } from './ui/FlightComputerHUD';
 
 // Create and initialize game
 const game = new Game();
@@ -243,37 +244,8 @@ function updateFCStatus(): void {
     const fcStatus = uiCache.fcStatus;
     if (!fcStatus) return;
 
-    const isActive = game.flightComputer.isActive();
-    const isStandby = game.flightComputer.state.mode !== 'OFF';
-
-    if (isActive || isStandby) {
-        fcStatus.classList.add('active');
-
-        let modeDiv = fcStatus.querySelector('.fc-mode');
-        if (!modeDiv) {
-            modeDiv = document.createElement('div');
-            modeDiv.className = 'fc-mode';
-            fcStatus.appendChild(modeDiv);
-        }
-        modeDiv.textContent = game.flightComputer.getStatusString();
-
-        let commandDiv = fcStatus.querySelector('.fc-command');
-        if (isActive) {
-            if (!commandDiv) {
-                commandDiv = document.createElement('div');
-                commandDiv.className = 'fc-command';
-                fcStatus.appendChild(commandDiv);
-            }
-            commandDiv.textContent = game.flightComputer.getActiveCommandText();
-        } else {
-            if (commandDiv) {
-                commandDiv.remove();
-            }
-        }
-    } else {
-        fcStatus.classList.remove('active');
-        fcStatus.textContent = '';
-    }
+    // Use shared secure HUD updater
+    updateFlightComputerHUD(fcStatus, game.flightComputer);
 }
 
 // ========================================
