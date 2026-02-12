@@ -1,6 +1,6 @@
 /**
  * Interactive Launch Checklist System
- * 
+ *
  * Provides Go/No-Go polling for launch readiness.
  * Mimics real-world launch procedures where each station
  * must confirm readiness before proceeding.
@@ -19,15 +19,15 @@ export interface ChecklistItem {
     label: string;
     station: string;
     status: ChecklistStatus;
-    autoCheck?: () => boolean;  // Optional auto-evaluation function
+    autoCheck?: () => boolean; // Optional auto-evaluation function
 }
 
 export interface ChecklistAuditEntry {
-    timestamp: number;       // Mission time or wall clock
+    timestamp: number; // Mission time or wall clock
     itemId: string;
     previousStatus: ChecklistStatus;
     newStatus: ChecklistStatus;
-    operator: string;        // 'MANUAL' or 'AUTO'
+    operator: string; // 'MANUAL' or 'AUTO'
 }
 
 // ============================================================================
@@ -104,20 +104,20 @@ export class LaunchChecklist {
 
     /** Check if all items are GO */
     isReadyForLaunch(): boolean {
-        return this.items.every(item => item.status === 'go');
+        return this.items.every((item) => item.status === 'go');
     }
 
     /** Get count of completed items */
     getCompletionCount(): { go: number; noGo: number; pending: number; total: number } {
-        const go = this.items.filter(i => i.status === 'go').length;
-        const noGo = this.items.filter(i => i.status === 'no-go').length;
-        const pending = this.items.filter(i => i.status === 'pending').length;
+        const go = this.items.filter((i) => i.status === 'go').length;
+        const noGo = this.items.filter((i) => i.status === 'no-go').length;
+        const pending = this.items.filter((i) => i.status === 'pending').length;
         return { go, noGo, pending, total: this.items.length };
     }
 
     /** Set item status */
     setItemStatus(id: string, status: ChecklistStatus, operator: string = 'MANUAL'): void {
-        const item = this.items.find(i => i.id === id);
+        const item = this.items.find((i) => i.id === id);
         if (!item) return;
 
         const previous = item.status;
@@ -146,7 +146,7 @@ export class LaunchChecklist {
 
     /** Run auto-checks for items that have autoCheck functions */
     runAutoChecks(): void {
-        this.items.forEach(item => {
+        this.items.forEach((item) => {
             if (item.autoCheck && item.status === 'pending') {
                 const result = item.autoCheck();
                 if (result) {
@@ -192,7 +192,7 @@ export class LaunchChecklist {
 
     /** Reset all items to pending */
     reset(): void {
-        this.items.forEach(i => i.status = 'pending');
+        this.items.forEach((i) => (i.status = 'pending'));
         this.auditLog = [];
         this.render();
     }
@@ -243,7 +243,7 @@ export class LaunchChecklist {
         this.containerEl.innerHTML = html;
 
         // Wire up button events
-        this.containerEl.querySelectorAll('.cl-btn').forEach(btn => {
+        this.containerEl.querySelectorAll('.cl-btn').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const target = e.target as HTMLButtonElement;
                 const itemId = target.dataset.item;

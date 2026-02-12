@@ -1,91 +1,67 @@
 
+import { TelemetrySystem } from '../src/ui/Telemetry.ts';
+
 const perf = performance;
 
-interface TelemetryDataPoint {
-    t: number;
-    alt: number;
-    vel: number;
-}
+// Mock DOM
+global.document = {
+    getElementById: (id: string) => {
+        if (id === 'graph-canvas') {
+            return {
+                getContext: () => ({
+                    clearRect: () => {},
+                    beginPath: () => {},
+                    moveTo: () => {},
+                    lineTo: () => {},
+                    stroke: () => {},
+                }),
+                width: 800,
+                height: 600
+            };
+        }
+        return null;
+    }
+} as any;
 
 function runBenchmark() {
-    console.log("🚀 Benchmarking Telemetry Logic...");
+    console.log("🚀 Benchmarking TelemetrySystem Class...");
 
-    const dataSize = 5000;
     const iterations = 1000;
-    const data: TelemetryDataPoint[] = [];
+    const updatesPerIteration = 350; // Fill buffer and shift some
 
-    // Generate test data
-    for (let i = 0; i < dataSize; i++) {
-        data.push({
-            t: i * 0.1,
-            alt: Math.random() * 2000,
-            vel: Math.random() * 500
-        });
+    const telemetry = new TelemetrySystem();
+
+    // Warmup
+    for (let i = 0; i < 100; i++) {
+        telemetry.update(i * 0.2, 100, 100);
+        telemetry.draw();
     }
+    telemetry.clear();
 
-    console.log(`Test Data Size: ${dataSize} points`);
-    console.log(`Iterations: ${iterations}`);
-
-    // --- Baseline Implementation ---
-    const startBaseline = perf.now();
-    let baselineAlt = 0;
-    let baselineVel = 0;
+    const start = perf.now();
 
     for (let i = 0; i < iterations; i++) {
-        // Original logic from src/ui/Telemetry.ts
-        const maxAlt = Math.max(...data.map(d => d.alt), 100);
-        const maxVel = Math.max(...data.map(d => d.vel), 100);
+        telemetry.clear();
+        let time = 0;
+        // Simulate a flight
+        for (let j = 0; j < updatesPerIteration; j++) {
+            time += 0.2;
+            const alt = Math.sin(j * 0.1) * 1000 + 1000;
+            const vel = Math.cos(j * 0.1) * 500 + 500;
+            telemetry.update(time, alt, vel);
 
-        // Store just to ensure it's not optimized away
-        baselineAlt = maxAlt;
-        baselineVel = maxVel;
-    }
-    const endBaseline = perf.now();
-    const timeBaseline = endBaseline - startBaseline;
-
-    // --- Optimized Implementation ---
-    const startOptimized = perf.now();
-    let optimizedAlt = 0;
-    let optimizedVel = 0;
-
-    for (let i = 0; i < iterations; i++) {
-        // Single pass loop logic
-        let maxAlt = 100;
-        let maxVel = 100;
-
-        for (const d of data) {
-            if (d.alt > maxAlt) maxAlt = d.alt;
-            if (d.vel > maxVel) maxVel = d.vel;
+            // Draw every frame (simulated)
+            telemetry.draw();
         }
-
-        optimizedAlt = maxAlt;
-        optimizedVel = maxVel;
-    }
-    const endOptimized = perf.now();
-    const timeOptimized = endOptimized - startOptimized;
-
-    // Verify Correctness
-    if (baselineAlt !== optimizedAlt || baselineVel !== optimizedVel) {
-        console.error("❌ ERROR: Optimized logic produced different results!");
-        console.error(`Baseline: Alt=${baselineAlt}, Vel=${baselineVel}`);
-        console.error(`Optimized: Alt=${optimizedAlt}, Vel=${optimizedVel}`);
-        throw new Error("Verification Failed");
-    } else {
-        console.log("✅ Verification Passed: Results match.");
     }
 
-    console.log("\n--- Results ---");
-    console.log(`Baseline Time: ${timeBaseline.toFixed(2)}ms`);
-    console.log(`Optimized Time: ${timeOptimized.toFixed(2)}ms`);
-    const speedup = timeBaseline / timeOptimized;
-    console.log(`Speedup: ${speedup.toFixed(2)}x`);
+    const end = perf.now();
+    const totalTime = end - start;
+    const timePerIteration = totalTime / iterations;
 
-
-    if (timeOptimized >= timeBaseline) {
-        console.warn("⚠️ Warning: No significant speedup detected.");
-    }
+    console.log(`Total Time: ${totalTime.toFixed(2)}ms`);
+    console.log(`Time per Flight (350 updates + draws): ${timePerIteration.toFixed(2)}ms`);
+    console.log(`Avg time per frame: ${(timePerIteration / updatesPerIteration).toFixed(4)}ms`);
 }
 
 runBenchmark();
-
-export { }; // Make this a module

@@ -1,6 +1,6 @@
 /**
  * Thermal Protection System (TPS) & Ablation
- * 
+ *
  * Models aerodynamic heating, skin temperature, heat shield ablation,
  * and thermal damage for re-entry and high-speed flight.
  */
@@ -97,8 +97,8 @@ export const DEFAULT_TPS_CONFIG: TPSConfig = {
     noseRadius: 0.5,
     heatShieldMass: 0,
     ablationTemp: 1500,
-    maxTemp: 1800,      // Aluminum structural limit
-    emissivity: 0.3,    // Polished aluminum
+    maxTemp: 1800, // Aluminum structural limit
+    emissivity: 0.3, // Polished aluminum
     thermalMass: 50000, // High thermal inertia
     referenceArea: 2.0,
     ablationRate: 0.5
@@ -109,10 +109,10 @@ export const DEFAULT_TPS_CONFIG: TPSConfig = {
  */
 export const BOOSTER_TPS_CONFIG: TPSConfig = {
     noseRadius: 0.3,
-    heatShieldMass: 50,     // Some ablative coating
+    heatShieldMass: 50, // Some ablative coating
     ablationTemp: 1200,
     maxTemp: 1600,
-    emissivity: 0.8,        // Carbon-coated fins
+    emissivity: 0.8, // Carbon-coated fins
     thermalMass: 30000,
     referenceArea: 1.5,
     ablationRate: 0.4
@@ -137,13 +137,13 @@ export const UPPER_STAGE_TPS_CONFIG: TPSConfig = {
  */
 export const PAYLOAD_TPS_CONFIG: TPSConfig = {
     noseRadius: 0.2,
-    heatShieldMass: 100,    // Full ablative shield for re-entry
-    ablationTemp: 1000,     // Ablator activates early
-    maxTemp: 2500,          // High temp capable
-    emissivity: 0.9,        // Dark ablative material
-    thermalMass: 5000,      // Lower thermal inertia
+    heatShieldMass: 100, // Full ablative shield for re-entry
+    ablationTemp: 1000, // Ablator activates early
+    maxTemp: 2500, // High temp capable
+    emissivity: 0.9, // Dark ablative material
+    thermalMass: 5000, // Lower thermal inertia
     referenceArea: 0.5,
-    ablationRate: 0.8       // Efficient ablation
+    ablationRate: 0.8 // Efficient ablation
 };
 
 // ============================================================================
@@ -152,21 +152,16 @@ export const PAYLOAD_TPS_CONFIG: TPSConfig = {
 
 /**
  * Calculate stagnation point heat flux using Sutton-Graves approximation
- * 
+ *
  * q̇ = k × √(ρ/r_n) × V³
- * 
+ *
  * @param velocity - Vehicle velocity (m/s)
  * @param altitude - Altitude (m)
  * @param noseRadius - Nose radius (m)
  * @param aoa - Angle of attack (radians) - affects heating distribution
  * @returns Heat flux in W/m²
  */
-export function calculateHeatFlux(
-    velocity: number,
-    altitude: number,
-    noseRadius: number,
-    aoa: number = 0
-): number {
+export function calculateHeatFlux(velocity: number, altitude: number, noseRadius: number, aoa: number = 0): number {
     // Get atmospheric density
     const rho = getAtmosphericDensity(altitude);
 
@@ -191,9 +186,9 @@ export function calculateHeatFlux(
 
 /**
  * Calculate radiative cooling rate
- * 
+ *
  * q_rad = ε × σ × A × (T⁴ - T_amb⁴)
- * 
+ *
  * @param skinTemp - Current skin temperature (K)
  * @param emissivity - Surface emissivity (0-1)
  * @param area - Radiating surface area (m²)
@@ -209,9 +204,7 @@ export function calculateRadiativeCooling(
     // Ambient temperature decreases with altitude
     // At high altitude, we radiate to space (~3K)
     const altKm = altitude / 1000;
-    const ambientTemp = altKm > 100
-        ? SPACE_TEMP
-        : AMBIENT_TEMP - altKm * 2; // ~2K per km decrease
+    const ambientTemp = altKm > 100 ? SPACE_TEMP : AMBIENT_TEMP - altKm * 2; // ~2K per km decrease
 
     // Stefan-Boltzmann radiative cooling
     const t4_skin = skinTemp * skinTemp * skinTemp * skinTemp;
@@ -222,7 +215,7 @@ export function calculateRadiativeCooling(
 
 /**
  * Update thermal state for this timestep
- * 
+ *
  * @param config - TPS configuration
  * @param currentState - Current thermal state
  * @param velocity - Vehicle velocity (m/s)
@@ -240,12 +233,7 @@ export function updateThermalState(
     dt: number
 ): ThermalState {
     // Calculate heat flux
-    const heatFlux = calculateHeatFlux(
-        velocity,
-        altitude,
-        config.noseRadius,
-        aoa
-    );
+    const heatFlux = calculateHeatFlux(velocity, altitude, config.noseRadius, aoa);
 
     // Total heating power (W)
     const heatingPower = heatFlux * config.referenceArea;
@@ -265,10 +253,7 @@ export function updateThermalState(
     let isAblating = false;
     let heatShieldRemaining = currentState.heatShieldRemaining;
 
-    if (currentState.skinTemp > config.ablationTemp &&
-        heatShieldRemaining > 0 &&
-        config.heatShieldMass > 0) {
-
+    if (currentState.skinTemp > config.ablationTemp && heatShieldRemaining > 0 && config.heatShieldMass > 0) {
         isAblating = true;
 
         // Heat absorbed by ablation (prevents temperature rise)
@@ -276,14 +261,10 @@ export function updateThermalState(
         const ablationHeatAbsorption = excessTemp * config.thermalMass * 0.1;
 
         // Mass ablated this timestep
-        const massAblated = (ablationHeatAbsorption / ABLATION_HEAT) *
-            config.ablationRate * dt;
+        const massAblated = (ablationHeatAbsorption / ABLATION_HEAT) * config.ablationRate * dt;
 
         // Update shield remaining
-        const massLost = Math.min(
-            massAblated,
-            heatShieldRemaining * config.heatShieldMass
-        );
+        const massLost = Math.min(massAblated, heatShieldRemaining * config.heatShieldMass);
         heatShieldRemaining -= massLost / config.heatShieldMass;
         heatShieldRemaining = Math.max(0, heatShieldRemaining);
 
@@ -326,15 +307,12 @@ export function updateThermalState(
 
 /**
  * Get thermal damage rate for integration with vessel health
- * 
+ *
  * @param state - Current thermal state
  * @param config - TPS configuration
  * @returns Damage rate (health points per second)
  */
-export function getThermalDamageRate(
-    state: ThermalState,
-    config: TPSConfig
-): number {
+export function getThermalDamageRate(state: ThermalState, config: TPSConfig): number {
     if (state.skinTemp < config.maxTemp * 0.9) {
         return 0;
     }
@@ -381,8 +359,8 @@ export function tempToCelsius(tempK: number): number {
 export function getTempStatusColor(skinTemp: number, maxTemp: number): string {
     const ratio = skinTemp / maxTemp;
 
-    if (ratio > 0.9) return '#e74c3c';      // Red - critical
-    if (ratio > 0.7) return '#e67e22';      // Orange - warning
-    if (ratio > 0.5) return '#f1c40f';      // Yellow - elevated
-    return '#2ecc71';                        // Green - nominal
+    if (ratio > 0.9) return '#e74c3c'; // Red - critical
+    if (ratio > 0.7) return '#e67e22'; // Orange - warning
+    if (ratio > 0.5) return '#f1c40f'; // Yellow - elevated
+    return '#2ecc71'; // Green - nominal
 }

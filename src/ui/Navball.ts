@@ -1,6 +1,6 @@
 /**
  * Navball
- * 
+ *
  * Attitude indicator (artificial horizon) display.
  * Shows vessel orientation and prograde/retrograde markers.
  * Inspired by KSP's navball.
@@ -26,7 +26,7 @@ export class Navball {
 
     /**
      * Draw the navball
-     * 
+     *
      * @param angle - Vessel pitch angle (radians)
      * @param progradeAngle - Velocity vector angle (radians)
      */

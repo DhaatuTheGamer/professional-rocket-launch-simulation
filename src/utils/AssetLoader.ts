@@ -1,6 +1,6 @@
 /**
  * Asset Loader
- * 
+ *
  * Asynchronous image loader for rocket sprites and visual assets.
  * Handles graceful fallback when assets fail to load.
  */
@@ -29,7 +29,7 @@ export class AssetLoader implements IAssetLoader {
      * @returns Promise that resolves when all assets are loaded (or failed gracefully)
      */
     async loadAll(): Promise<void> {
-        const loadPromises = this.assets.map(asset => this.loadImage(asset));
+        const loadPromises = this.assets.map((asset) => this.loadImage(asset));
         await Promise.all(loadPromises);
     }
 

@@ -1,6 +1,6 @@
 /**
  * Maneuver Planner UI
- * 
+ *
  * Interface for planning orbital maneuvers.
  * Allows users to calculate burns for circularization and Hohmann transfers.
  */
@@ -187,16 +187,16 @@ export class ManeuverPlanner {
         // No, we need 2D orbital elements.
         // Let's use the local planet-centered frame:
         // Center = (0, 0)
-        // Vessel = (x / 10, -(groundY - y)/10 - R_EARTH) ?? 
-        // Actually, let's just use scalar magnitude for altitude and velocity since 
+        // Vessel = (x / 10, -(groundY - y)/10 - R_EARTH) ??
+        // Actually, let's just use scalar magnitude for altitude and velocity since
         // the game uses 2D flat earth approximation for "x" but "y" is radial gravity...
         // Wait, the game *does* use radial gravity:
-        // Game.ts: const pG = 9.8 * Math.pow(R_EARTH / pRad, 2); 
+        // Game.ts: const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
         // Vessel.ts: const dist = R_EARTH + (this.groundY - this.y - this.h) / PIXELS_PER_METER;
 
         // So 'y' is effectively the radial distance axis, and 'x' is tangential?
         // Let's verify Vessel.ts gravity application.
-        // Vessel.ts: 
+        // Vessel.ts:
         // const g = 9.8 * Math.pow(R_EARTH/dist, 2);
         // derivatives.dvy += g; (which implies g acts downwards in +y)
         // This is a "Flat Earth with Gravity Gradient" model, NOT a true spherical gravity model.
@@ -217,7 +217,7 @@ export class ManeuverPlanner {
         // Velocity (vx is horizontal/tangential, vy is vertical/radial)
         // define state vector relative to Earth center
         // Let's define Earth Center at (0, 0)
-        // Vessel Position: (0, r) 
+        // Vessel Position: (0, r)
         // Vessel Velocity: (vessel.vx, -vessel.vy)  (vy is positive down, so -vy is up/radial)
 
         // Position vector r (meters)
@@ -263,7 +263,7 @@ export class ManeuverPlanner {
 
         // Current vessel capabilities
         // Estimate thrust (use max thrust for now as we burn at 100%)
-        // We need to know which engine is active/available. 
+        // We need to know which engine is active/available.
         // Simplified: Use current max thrust.
         // For mass, use current mass.
         const thrust = vessel.maxThrust; // N
@@ -276,19 +276,18 @@ export class ManeuverPlanner {
             if (type === 'circularize-apo') {
                 plan = calculateCircularizationFromElements(elements, true, thrust, mass);
                 planText = this.formatPlan(plan);
-            }
-            else if (type === 'circularize-peri') {
+            } else if (type === 'circularize-peri') {
                 plan = calculateCircularizationFromElements(elements, false, thrust, mass);
                 planText = this.formatPlan(plan);
-            }
-            else if (type === 'hohmann') {
-                const targetAltKm = parseFloat((document.getElementById('target-alt-input') as HTMLInputElement).value) || 500;
+            } else if (type === 'hohmann') {
+                const targetAltKm =
+                    parseFloat((document.getElementById('target-alt-input') as HTMLInputElement).value) || 500;
                 const targetR = R_EARTH + targetAltKm * 1000;
 
                 // Assume starting from circular orbit at current altitude for simplicity of the planner?
                 // Or calculate from current circular orbit radius?
                 // Standard Hohmann starts from one circular to another.
-                // Let's use current semi-major axis as "r1" approx? 
+                // Let's use current semi-major axis as "r1" approx?
                 // No, Hohmann equations provided need r1, r2.
                 // Best approximation: r1 = current (r_apo + r_peri)/2, i.e., semi-major axis?
                 // Or just current altitude if roughly circular.
@@ -316,7 +315,6 @@ export class ManeuverPlanner {
             }
 
             resultDiv.innerHTML = planText;
-
         } catch (e: any) {
             resultDiv.innerHTML = `<span style="color: #e74c3c;">Error: ${e.message}</span>`;
         }

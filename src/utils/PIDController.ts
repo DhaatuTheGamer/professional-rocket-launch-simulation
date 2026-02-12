@@ -1,9 +1,9 @@
 /**
  * PID Controller
- * 
+ *
  * Proportional-Integral-Derivative controller for smooth control systems.
  * Used for booster landing, attitude control, and throttle management.
- * 
+ *
  * The controller outputs a correction value based on:
  * - Proportional: Current error magnitude
  * - Integral: Accumulated error over time (eliminates steady-state error)
@@ -31,7 +31,7 @@ export class PIDController {
 
     /**
      * Create a new PID controller
-     * 
+     *
      * @param kp - Proportional gain (response strength)
      * @param ki - Integral gain (steady-state error correction)
      * @param kd - Derivative gain (oscillation dampening)
@@ -48,7 +48,7 @@ export class PIDController {
 
     /**
      * Update the controller and get the output value
-     * 
+     *
      * @param measurement - Current measured value
      * @param dt - Time delta in seconds
      * @returns Control output value
@@ -66,7 +66,7 @@ export class PIDController {
         this.lastError = error;
 
         // PID formula
-        return (this.kp * error) + (this.ki * this.integral) + (this.kd * derivative);
+        return this.kp * error + this.ki * this.integral + this.kd * derivative;
     }
 
     /**
@@ -81,7 +81,7 @@ export class PIDController {
     /**
      * Anti-windup: Clamp the integral term
      * Prevents runaway integral when output is saturated
-     * 
+     *
      * @param min - Minimum integral value
      * @param max - Maximum integral value
      */

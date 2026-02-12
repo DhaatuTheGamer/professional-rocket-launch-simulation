@@ -1,6 +1,6 @@
 /**
  * Realistic Propulsion Physics
- * 
+ *
  * Models engine constraints including:
  * - Ullage simulation (fuel settling requirement)
  * - Spool-up/down times (turbo-machinery lag)
@@ -92,7 +92,7 @@ export const FULLSTACK_PROP_CONFIG: PropulsionConfig = {
 export const BOOSTER_PROP_CONFIG: PropulsionConfig = {
     spoolUpTime: 1.5,
     spoolDownTime: 0.3,
-    igniterCount: 5,      // Multiple landing burns
+    igniterCount: 5, // Multiple landing burns
     minUllageAccel: 0.1,
     ullageSettleTime: 0.3,
     hasEngine: true
@@ -102,7 +102,7 @@ export const BOOSTER_PROP_CONFIG: PropulsionConfig = {
  * Upper Stage propulsion config (vacuum Merlin)
  */
 export const UPPER_STAGE_PROP_CONFIG: PropulsionConfig = {
-    spoolUpTime: 3.0,     // Slower vacuum engine
+    spoolUpTime: 3.0, // Slower vacuum engine
     spoolDownTime: 1.0,
     igniterCount: 4,
     minUllageAccel: 0.05, // Lower requirement in space
@@ -135,7 +135,7 @@ export function createInitialPropulsionState(config: PropulsionConfig): Propulsi
         actualThrottle: 0,
         commandedThrottle: 0,
         ignitersRemaining: config.igniterCount,
-        ullageSettled: true,  // Settled on ground
+        ullageSettled: true, // Settled on ground
         ullageTimer: 0,
         spoolProgress: 0,
         totalBurnTime: 0,
@@ -176,11 +176,7 @@ export function updateUllageStatus(
  * Attempt to ignite the engine
  * Returns updated state with ignition result
  */
-export function attemptIgnition(
-    state: PropulsionState,
-    config: PropulsionConfig,
-    hasFuel: boolean
-): PropulsionState {
+export function attemptIgnition(state: PropulsionState, config: PropulsionConfig, hasFuel: boolean): PropulsionState {
     const newState = { ...state };
 
     // Already running or starting
@@ -347,10 +343,14 @@ export function getEffectiveThrustMultiplier(state: PropulsionState): number {
  */
 export function getEngineStateDisplay(state: PropulsionState): string {
     switch (state.engineState) {
-        case 'off': return 'OFF';
-        case 'starting': return `STARTING ${Math.round(state.spoolProgress * 100)}%`;
-        case 'running': return 'RUNNING';
-        case 'shutdown': return 'SHUTDOWN';
+        case 'off':
+            return 'OFF';
+        case 'starting':
+            return `STARTING ${Math.round(state.spoolProgress * 100)}%`;
+        case 'running':
+            return 'RUNNING';
+        case 'shutdown':
+            return 'SHUTDOWN';
     }
 }
 
@@ -359,10 +359,14 @@ export function getEngineStateDisplay(state: PropulsionState): string {
  */
 export function getEngineStateColor(state: PropulsionState): string {
     switch (state.engineState) {
-        case 'off': return '#95a5a6';      // Gray
-        case 'starting': return '#f1c40f'; // Yellow
-        case 'running': return '#2ecc71';  // Green
-        case 'shutdown': return '#e67e22'; // Orange
+        case 'off':
+            return '#95a5a6'; // Gray
+        case 'starting':
+            return '#f1c40f'; // Yellow
+        case 'running':
+            return '#2ecc71'; // Green
+        case 'shutdown':
+            return '#e67e22'; // Orange
     }
 }
 
@@ -371,9 +375,13 @@ export function getEngineStateColor(state: PropulsionState): string {
  */
 export function getIgnitionFailureMessage(state: PropulsionState): string | null {
     switch (state.lastIgnitionResult) {
-        case 'no_ullage': return 'IGNITION FAILED: Fuel not settled (need ullage thrust)';
-        case 'no_igniters': return 'IGNITION FAILED: No igniter cartridges remaining';
-        case 'no_fuel': return 'IGNITION FAILED: No fuel';
-        default: return null;
+        case 'no_ullage':
+            return 'IGNITION FAILED: Fuel not settled (need ullage thrust)';
+        case 'no_igniters':
+            return 'IGNITION FAILED: No igniter cartridges remaining';
+        case 'no_fuel':
+            return 'IGNITION FAILED: No fuel';
+        default:
+            return null;
     }
 }

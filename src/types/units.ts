@@ -1,14 +1,14 @@
 /**
  * Branded Unit Types for Physics Simulation
- * 
+ *
  * These types provide compile-time safety to prevent unit mixing errors.
  * For example, you cannot accidentally add Meters to Feet, or pass
  * a Newtons value where Kilograms is expected.
- * 
+ *
  * Usage:
  *   const altitude: Meters = 1000 as Meters;
  *   const force: Newtons = 2000000 as Newtons;
- * 
+ *
  * The compiler will catch:
  *   const wrong: Meters = force;  // Error!
  */
@@ -132,8 +132,8 @@ export const Units = {
     pixelsToMeters: (px: Pixels, scale: number): Meters => (px / scale) as Meters,
 
     // Angle conversions
-    radiansToDesgrees: (rad: Radians): Degrees => (rad * 180 / Math.PI) as Degrees,
-    degreesToRadians: (deg: Degrees): Radians => (deg * Math.PI / 180) as Radians,
+    radiansToDesgrees: (rad: Radians): Degrees => ((rad * 180) / Math.PI) as Degrees,
+    degreesToRadians: (deg: Degrees): Radians => ((deg * Math.PI) / 180) as Radians,
 
     // Time conversions
     secondsToMilliseconds: (s: Seconds): Milliseconds => (s * 1000) as Milliseconds,

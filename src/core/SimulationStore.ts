@@ -34,7 +34,7 @@ export type Action =
     | { type: 'ADD_ENTITY'; entity: IVessel }
     | { type: 'REMOVE_ENTITY'; entity: IVessel }
     | { type: 'SET_ACTIVE_VESSEL'; id: string }
-    | { type: 'UPDATE_PHYSICS'; time: number; entities: IVessel[] }  // Bulk update
+    | { type: 'UPDATE_PHYSICS'; time: number; entities: IVessel[] } // Bulk update
     | { type: 'SET_WIND'; velocity: Vector2D }
     | { type: 'SET_DENSITY_MULTIPLIER'; multiplier: number }
     | { type: 'SET_AUTOPILOT'; enabled: boolean }
@@ -95,14 +95,14 @@ export class SimulationStore {
                 this.state.entities.push(action.entity);
                 break;
             case 'REMOVE_ENTITY':
-                this.state.entities = this.state.entities.filter(e => e !== action.entity);
+                this.state.entities = this.state.entities.filter((e) => e !== action.entity);
                 break;
             case 'SET_ACTIVE_VESSEL':
                 this.state.activeVesselId = action.id;
                 break;
             case 'UPDATE_PHYSICS':
                 this.state.missionTime = action.time;
-                // Entities updated by reference usually in physics loop, 
+                // Entities updated by reference usually in physics loop,
                 // but if we were strictly immutable we'd replace them.
                 // For performance/hybrid approach, we might just trigger listeners.
                 break;
@@ -132,7 +132,9 @@ export class SimulationStore {
                 const { width, height, groundY } = this.state;
                 this.state = {
                     ...SimulationStore.INITIAL_STATE,
-                    width, height, groundY // Preserve window dimensions
+                    width,
+                    height,
+                    groundY // Preserve window dimensions
                 };
                 break;
             }
@@ -147,6 +149,6 @@ export class SimulationStore {
     }
 
     private notify(): void {
-        this.listeners.forEach(l => l());
+        this.listeners.forEach((l) => l());
     }
 }

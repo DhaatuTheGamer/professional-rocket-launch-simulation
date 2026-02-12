@@ -90,7 +90,7 @@ function step(inputs: any) {
     // 3. Physics Integration
     // groundY is module-level state set in init()
 
-    entities.forEach(e => {
+    entities.forEach((e) => {
         // Apply physics
         // We pass empty 'keys' because control is applied above via properties
         e.applyPhysics(simDt, {});
@@ -129,7 +129,7 @@ function performStaging() {
     // We need to differentiate types.
     if (tracked instanceof FullStack) {
         // Sep S1
-        entities = entities.filter(e => e !== tracked);
+        entities = entities.filter((e) => e !== tracked);
 
         const booster = new Booster(tracked.x, tracked.y, tracked.vx, tracked.vy);
         booster.angle = tracked.angle;
@@ -149,7 +149,6 @@ function performStaging() {
         trackedIndex = entities.length - 1;
 
         self.postMessage({ type: 'EVENT', payload: { name: 'STAGING_S1', x: tracked.x, y: tracked.y } });
-
     } else if (tracked instanceof UpperStage) {
         if (!tracked.fairingsDeployed) {
             tracked.fairingsDeployed = true;
@@ -187,7 +186,7 @@ function postState() {
     // More complex environment data can be sent if needed
     const envState = environment.getState(0);
 
-    const entitiesState = entities.map(e => ({
+    const entitiesState = entities.map((e) => ({
         type: e.constructor.name,
         x: e.x,
         y: e.y,

@@ -1,9 +1,9 @@
 /**
  * FlightComputer - Autonomous Guidance & Navigation System
- * 
+ *
  * Executes mission scripts to control the rocket autonomously.
  * Evaluates conditions against current telemetry and executes actions.
- * 
+ *
  * Usage:
  *   const fc = new FlightComputer();
  *   fc.loadScript(scriptText);
@@ -42,9 +42,9 @@ export interface FlightComputerState {
     mode: FlightComputerMode;
     script: MissionScript | null;
     activeCommandIndex: number;
-    elapsedTime: number;           // Seconds since activation
+    elapsedTime: number; // Seconds since activation
     lastTriggeredCommand: string | null;
-    targetPitch: number | null;    // Current pitch target (degrees)
+    targetPitch: number | null; // Current pitch target (degrees)
     targetThrottle: number | null; // Current throttle target (0-1)
 }
 
@@ -53,11 +53,11 @@ export interface FlightComputerState {
 // ============================================================================
 
 export interface FlightComputerOutput {
-    pitchAngle: number | null;     // Desired pitch in radians (from vertical)
-    throttle: number | null;       // Desired throttle (0-1)
-    stage: boolean;                // Should trigger staging
-    sasMode: SASMode | null;       // SAS mode to set
-    abort: boolean;                // Emergency abort
+    pitchAngle: number | null; // Desired pitch in radians (from vertical)
+    throttle: number | null; // Desired throttle (0-1)
+    stage: boolean; // Should trigger staging
+    sasMode: SASMode | null; // SAS mode to set
+    abort: boolean; // Emergency abort
 }
 
 // ============================================================================
@@ -114,7 +114,7 @@ export class FlightComputer {
             return { success: true, errors: [] };
         }
 
-        const errors = result.errors.map(e => `Line ${e.line}: ${e.error}`);
+        const errors = result.errors.map((e) => `Line ${e.line}: ${e.error}`);
         return { success: false, errors };
     }
 
@@ -183,12 +183,18 @@ export class FlightComputer {
      */
     getStatusString(): string {
         switch (this.state.mode) {
-            case 'OFF': return 'FC: OFF';
-            case 'STANDBY': return 'FC: READY';
-            case 'RUNNING': return 'FC: ACTIVE';
-            case 'PAUSED': return 'FC: PAUSED';
-            case 'COMPLETE': return 'FC: DONE';
-            default: return 'FC: ---';
+            case 'OFF':
+                return 'FC: OFF';
+            case 'STANDBY':
+                return 'FC: READY';
+            case 'RUNNING':
+                return 'FC: ACTIVE';
+            case 'PAUSED':
+                return 'FC: PAUSED';
+            case 'COMPLETE':
+                return 'FC: DONE';
+            default:
+                return 'FC: ---';
         }
     }
 
@@ -202,7 +208,7 @@ export class FlightComputer {
 
         // Find the most recently triggered command that isn't a one-shot
         const activeCommands = this.state.script.commands.filter(
-            cmd => cmd.state === 'active' || cmd.state === 'completed'
+            (cmd) => cmd.state === 'active' || cmd.state === 'completed'
         );
 
         if (activeCommands.length === 0) {
@@ -256,7 +262,7 @@ export class FlightComputer {
                 // Merge into output
                 if (actionResult.pitchAngle !== null) {
                     output.pitchAngle = actionResult.pitchAngle;
-                    this.state.targetPitch = actionResult.pitchAngle * 180 / Math.PI;
+                    this.state.targetPitch = (actionResult.pitchAngle * 180) / Math.PI;
                 }
                 if (actionResult.throttle !== null) {
                     output.throttle = actionResult.throttle;
@@ -281,7 +287,7 @@ export class FlightComputer {
 
         // Apply stored targets if no new commands
         if (output.pitchAngle === null && this.state.targetPitch !== null) {
-            output.pitchAngle = this.state.targetPitch * Math.PI / 180;
+            output.pitchAngle = (this.state.targetPitch * Math.PI) / 180;
         }
         if (output.throttle === null && this.state.targetThrottle !== null) {
             output.throttle = this.state.targetThrottle;
@@ -289,7 +295,7 @@ export class FlightComputer {
 
         // Check if all commands are complete
         const allComplete = this.state.script.commands.every(
-            cmd => cmd.state === 'completed' || (!cmd.oneShot && cmd.state !== 'pending')
+            (cmd) => cmd.state === 'completed' || (!cmd.oneShot && cmd.state !== 'pending')
         );
         if (allComplete && this.state.script.commands.length > 0) {
             // Keep running but mark as complete for display
@@ -317,15 +323,15 @@ export class FlightComputer {
         const q = getDynamicPressure(rho, speed) / 1000; // kPa
 
         return {
-            'ALTITUDE': alt,
-            'VELOCITY': speed,
-            'VERTICAL_VEL': -vy,  // Positive = up
-            'HORIZONTAL_VEL': Math.abs(vx),
-            'APOGEE': apogee,
-            'FUEL': vessel.fuel,
-            'TIME': this.state.elapsedTime,
-            'THROTTLE': vessel.throttle,
-            'DYNAMIC_PRESSURE': q
+            ALTITUDE: alt,
+            VELOCITY: speed,
+            VERTICAL_VEL: -vy, // Positive = up
+            HORIZONTAL_VEL: Math.abs(vx),
+            APOGEE: apogee,
+            FUEL: vessel.fuel,
+            TIME: this.state.elapsedTime,
+            THROTTLE: vessel.throttle,
+            DYNAMIC_PRESSURE: q
         };
     }
 
@@ -366,13 +372,20 @@ export class FlightComputer {
      */
     private evaluateComparison(actual: number, operator: ComparisonOperator, expected: number): boolean {
         switch (operator) {
-            case '>': return actual > expected;
-            case '<': return actual < expected;
-            case '>=': return actual >= expected;
-            case '<=': return actual <= expected;
-            case '==': return Math.abs(actual - expected) < 0.001;
-            case '!=': return Math.abs(actual - expected) >= 0.001;
-            default: return false;
+            case '>':
+                return actual > expected;
+            case '<':
+                return actual < expected;
+            case '>=':
+                return actual >= expected;
+            case '<=':
+                return actual <= expected;
+            case '==':
+                return Math.abs(actual - expected) < 0.001;
+            case '!=':
+                return Math.abs(actual - expected) >= 0.001;
+            default:
+                return false;
         }
     }
 
@@ -392,7 +405,7 @@ export class FlightComputer {
             case 'PITCH': {
                 // Convert degrees to radians
                 const pitchDeg = action.value as number;
-                output.pitchAngle = pitchDeg * Math.PI / 180;
+                output.pitchAngle = (pitchDeg * Math.PI) / 180;
                 break;
             }
 
@@ -433,7 +446,7 @@ export class FlightComputer {
      */
     getCompletedCount(): number {
         if (!this.state.script) return 0;
-        return this.state.script.commands.filter(c => c.state === 'completed').length;
+        return this.state.script.commands.filter((c) => c.state === 'completed').length;
     }
 }
 

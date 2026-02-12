@@ -1,6 +1,6 @@
 /**
  * Vehicle Factory
- * 
+ *
  * Converts VehicleBlueprint into playable ModularVessel instances.
  */
 
@@ -197,7 +197,10 @@ export function getInitialVesselState(spec: VehicleSpec): {
 /**
  * Get stage separation data
  */
-export function getStageSeparationData(spec: VehicleSpec, currentStage: number): {
+export function getStageSeparationData(
+    spec: VehicleSpec,
+    currentStage: number
+): {
     separatedMass: number;
     separatedHeight: number;
     nextStageThrust: number;

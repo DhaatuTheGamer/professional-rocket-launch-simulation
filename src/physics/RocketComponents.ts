@@ -1,6 +1,6 @@
 /**
  * Rocket Components
- * 
+ *
  * Concrete vessel implementations for different rocket stages.
  * Each extends the base Vessel class with specific properties and rendering.
  */
@@ -10,12 +10,7 @@ import { CONFIG, PIXELS_PER_METER } from '../constants';
 import { state } from '../state';
 import { PIDController } from '../utils/PIDController';
 import { StageSeparation } from '../types';
-import {
-    DEFAULT_AERO_CONFIG,
-    BOOSTER_AERO_CONFIG,
-    UPPER_STAGE_AERO_CONFIG,
-    PAYLOAD_AERO_CONFIG
-} from './Aerodynamics';
+import { DEFAULT_AERO_CONFIG, BOOSTER_AERO_CONFIG, UPPER_STAGE_AERO_CONFIG, PAYLOAD_AERO_CONFIG } from './Aerodynamics';
 import {
     DEFAULT_TPS_CONFIG,
     BOOSTER_TPS_CONFIG,
@@ -46,8 +41,8 @@ export class FullStack extends Vessel {
 
         // Reliability: Brand new engines, generally reliable but infant mortality risk
         this.reliabilityConfig = {
-            mtbfEngine: 1200,      // Good reliability
-            mtbfStructure: 10000,  // Sturdy
+            mtbfEngine: 1200, // Good reliability
+            mtbfStructure: 10000, // Sturdy
             mtbfElectronics: 3000,
             ignitionReliability: 0.98,
             wearFactor: 1.0
@@ -146,11 +141,11 @@ export class Booster extends Vessel {
 
         // Reliability: Reuse adds wear
         this.reliabilityConfig = {
-            mtbfEngine: 800,       // Slightly degraded from reuse/stress
+            mtbfEngine: 800, // Slightly degraded from reuse/stress
             mtbfStructure: 8000,
             mtbfElectronics: 2000,
             ignitionReliability: 0.95, // Relight is harder
-            wearFactor: 1.5        // Wears out faster
+            wearFactor: 1.5 // Wears out faster
         };
 
         // PID controllers for landing
@@ -190,7 +185,7 @@ export class Booster extends Vessel {
 
         // 2. Suicide burn calculation
         const g = 9.8;
-        const maxAccel = (this.maxThrust / this.mass) - g;
+        const maxAccel = this.maxThrust / this.mass - g;
         // v² = 2ad → d = v² / 2a
         const stopDist = (this.vy * this.vy) / (2 * maxAccel);
 
@@ -286,8 +281,8 @@ export class UpperStage extends Vessel {
 
         // Reliability: Vacuum engine
         this.reliabilityConfig = {
-            mtbfEngine: 2000,      // Very reliable vacuum engine
-            mtbfStructure: 5000,   // Lighter structure, more fragile
+            mtbfEngine: 2000, // Very reliable vacuum engine
+            mtbfStructure: 5000, // Lighter structure, more fragile
             mtbfElectronics: 3000,
             ignitionReliability: 0.99,
             wearFactor: 1.0
@@ -444,9 +439,9 @@ export class Fairing extends Vessel {
         this.vx = vx + side * 5; // Lateral separation velocity
         this.vy = vy;
         this.side = side;
-        this.active = false;  // No thrust
+        this.active = false; // No thrust
         this.h = 40;
-        this.cd = 2.0;  // High drag
+        this.cd = 2.0; // High drag
     }
 
     draw(ctx: CanvasRenderingContext2D, camY: number): void {

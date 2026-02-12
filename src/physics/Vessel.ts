@@ -1,9 +1,9 @@
 /**
  * Vessel Base Class
- * 
+ *
  * Abstract base for all rocket stages and debris.
  * Implements RK4 integration for accurate orbital mechanics.
- * 
+ *
  * Physics model includes:
  * - Thrust with pressure-dependent Isp
  * - Atmospheric drag with transonic effects
@@ -56,11 +56,7 @@ import {
     commandShutdown,
     getIgnitionFailureMessage
 } from './Propulsion';
-import {
-    ReliabilitySystem,
-    ReliabilityConfig,
-    DEFAULT_RELIABILITY_CONFIG
-} from './Reliability';
+import { ReliabilitySystem, ReliabilityConfig, DEFAULT_RELIABILITY_CONFIG } from './Reliability';
 
 export class Vessel implements IVessel {
     // Position (pixels)
@@ -77,27 +73,27 @@ export class Vessel implements IVessel {
 
     // Physical properties
     public mass: number = 1000;
-    public w: number = 40;        // Width (pixels)
-    public h: number = 100;       // Height (pixels)
+    public w: number = 40; // Width (pixels)
+    public h: number = 100; // Height (pixels)
 
     // Engine state
     public throttle: number = 0;
-    public fuel: number = 1.0;    // 0-1 normalized
+    public fuel: number = 1.0; // 0-1 normalized
     public active: boolean = true;
     public maxThrust: number = 100000;
 
     // Aerodynamics (legacy)
     public cd: number = CONFIG.DRAG_COEFF;
-    public q: number = 0;         // Dynamic pressure
+    public q: number = 0; // Dynamic pressure
 
     // Advanced Aerodynamics
     public aeroConfig: AerodynamicsConfig = DEFAULT_AERO_CONFIG;
     public aeroState: AerodynamicState | null = null;
-    public aoa: number = 0;                    // Angle of Attack (radians)
-    public stabilityMargin: number = 0;        // (CP - CoM) / length
-    public isAeroStable: boolean = true;       // CP behind CoM
-    public liftForce: number = 0;              // Current lift force (N)
-    public dragForce: number = 0;              // Current drag force (N)
+    public aoa: number = 0; // Angle of Attack (radians)
+    public stabilityMargin: number = 0; // (CP - CoM) / length
+    public isAeroStable: boolean = true; // CP behind CoM
+    public liftForce: number = 0; // Current lift force (N)
+    public dragForce: number = 0; // Current drag force (N)
 
     // Propulsion
     public ispVac: number = 300;
@@ -111,18 +107,18 @@ export class Vessel implements IVessel {
     // Thermal Protection System
     public tpsConfig: TPSConfig = DEFAULT_TPS_CONFIG;
     public thermalState: ThermalState = createInitialThermalState();
-    public skinTemp: number = 293;              // Skin temperature (K)
-    public heatShieldRemaining: number = 1.0;   // Heat shield fraction (0-1)
-    public isAblating: boolean = false;         // Currently ablating
-    public isThermalCritical: boolean = false;  // Temperature critical
+    public skinTemp: number = 293; // Skin temperature (K)
+    public heatShieldRemaining: number = 1.0; // Heat shield fraction (0-1)
+    public isAblating: boolean = false; // Currently ablating
+    public isThermalCritical: boolean = false; // Temperature critical
 
     // Propulsion State Machine
     public propConfig: PropulsionConfig = FULLSTACK_PROP_CONFIG;
     public propState: PropulsionState = createInitialPropulsionState(FULLSTACK_PROP_CONFIG);
-    public engineState: EngineState = 'off';    // Current engine state
-    public ignitersRemaining: number = 3;       // Remaining igniter cartridges
-    public ullageSettled: boolean = true;       // Fuel settled for ignition
-    public actualThrottle: number = 0;          // Lagged throttle output
+    public engineState: EngineState = 'off'; // Current engine state
+    public ignitersRemaining: number = 3; // Remaining igniter cartridges
+    public ullageSettled: boolean = true; // Fuel settled for ignition
+    public actualThrottle: number = 0; // Lagged throttle output
 
     // Reliability System
     public reliability: ReliabilitySystem = new ReliabilitySystem();
@@ -134,7 +130,7 @@ export class Vessel implements IVessel {
 
     /**
      * Create a new vessel
-     * 
+     *
      * @param x - Initial X position (pixels)
      * @param y - Initial Y position (pixels)
      */
@@ -145,7 +141,7 @@ export class Vessel implements IVessel {
 
     /**
      * Calculate physics derivatives for RK4 integration
-     * 
+     *
      * @param s - Current state
      * @param t - Current time (unused, for interface)
      * @param dt - Time step
@@ -168,7 +164,7 @@ export class Vessel implements IVessel {
 
         // Calculate aerodynamic state using relative velocity (AoA, CP, CoM, stability)
         const vehicleLengthM = this.h / PIXELS_PER_METER;
-        const fuelFraction = this.fuel;  // 0-1 normalized fuel level
+        const fuelFraction = this.fuel; // 0-1 normalized fuel level
 
         const aeroState = calculateAerodynamicState(
             this.aeroConfig,
@@ -181,14 +177,7 @@ export class Vessel implements IVessel {
         );
 
         // Calculate aerodynamic forces using relative velocity (lift and drag)
-        const aeroForces = calculateAerodynamicForces(
-            this.aeroConfig,
-            aeroState,
-            safeAlt,
-            v,
-            relVx,
-            relVy
-        );
+        const aeroForces = calculateAerodynamicForces(this.aeroConfig, aeroState, safeAlt, v, relVx, relVy);
 
         // Apply transonic drag multiplier to base drag
         const machMult = getTransonicDragMultiplier(mach);
@@ -201,7 +190,7 @@ export class Vessel implements IVessel {
 
         // Initialize forces
         let fx = 0;
-        let fy = s.mass * g;  // Weight (positive = downward in our coordinate system)
+        let fy = s.mass * g; // Weight (positive = downward in our coordinate system)
 
         // Centrifugal acceleration (for orbital motion)
         const f_cent = (s.mass * s.vx * s.vx) / realRad;
@@ -246,7 +235,7 @@ export class Vessel implements IVessel {
 
     /**
      * Apply physics update using RK4 integration
-     * 
+     *
      * @param dt - Time step (seconds)
      * @param keys - Input keys (legacy compatibility)
      */
@@ -366,14 +355,7 @@ export class Vessel implements IVessel {
      */
     private updateThermalState(velocity: number, altitude: number, dt: number): void {
         // Update thermal state using TPS module
-        this.thermalState = updateThermalState(
-            this.tpsConfig,
-            this.thermalState,
-            velocity,
-            altitude,
-            this.aoa,
-            dt
-        );
+        this.thermalState = updateThermalState(this.tpsConfig, this.thermalState, velocity, altitude, this.aoa, dt);
 
         // Update public properties for HUD display
         this.skinTemp = this.thermalState.skinTemp;
@@ -393,17 +375,14 @@ export class Vessel implements IVessel {
 
             // Log thermal warning
             if (this.isThermalCritical && state.missionLog) {
-                state.missionLog.log(
-                    `THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`,
-                    "warn"
-                );
+                state.missionLog.log(`THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`, 'warn');
             }
         }
 
         // Structural failure from thermal overload
         if (this.health <= 0 && this.thermalState.thermalDamage > 50) {
             if (state.missionLog) {
-                state.missionLog.log("STRUCTURAL FAILURE: THERMAL OVERLOAD", "warn");
+                state.missionLog.log('STRUCTURAL FAILURE: THERMAL OVERLOAD', 'warn');
             }
             this.explode();
         }
@@ -416,15 +395,13 @@ export class Vessel implements IVessel {
     private updatePropulsionState(velocity: number, altitude: number, dt: number): void {
         // Calculate current acceleration for ullage check
         const g = getGravity(Math.max(0, altitude));
-        const currentAccel = this.actualThrottle > 0
-            ? (this.actualThrottle * this.maxThrust / this.mass) - g
-            : g;  // On ground, gravity settles fuel
+        const currentAccel = this.actualThrottle > 0 ? (this.actualThrottle * this.maxThrust) / this.mass - g : g; // On ground, gravity settles fuel
 
         // Update propulsion state
         this.propState = updatePropulsionState(
             this.propState,
             this.propConfig,
-            this.throttle,  // commanded throttle
+            this.throttle, // commanded throttle
             this.fuel > 0,
             Math.abs(currentAccel),
             dt
@@ -439,7 +416,7 @@ export class Vessel implements IVessel {
         // Log ignition failures
         const failureMsg = getIgnitionFailureMessage(this.propState);
         if (failureMsg && state.missionLog) {
-            state.missionLog.log(failureMsg, "warn");
+            state.missionLog.log(failureMsg, 'warn');
             // Reset the failure message after logging
             this.propState.lastIgnitionResult = 'none';
         }
@@ -465,8 +442,8 @@ export class Vessel implements IVessel {
                 // Log instability warning once when stability margin goes negative
                 if (!this.isAeroStable && this.q > 5000 && state.missionLog) {
                     state.missionLog.log(
-                        `STABILITY WARNING: AoA=${(Math.abs(this.aoa) * 180 / Math.PI).toFixed(1)}° Margin=${(this.stabilityMargin * 100).toFixed(1)}%`,
-                        "warn"
+                        `STABILITY WARNING: AoA=${((Math.abs(this.aoa) * 180) / Math.PI).toFixed(1)}° Margin=${(this.stabilityMargin * 100).toFixed(1)}%`,
+                        'warn'
                     );
                 }
             }
@@ -489,7 +466,7 @@ export class Vessel implements IVessel {
 
         if (this.health <= 0) {
             if (state.missionLog) {
-                state.missionLog.log("STRUCTURAL FAILURE DUE TO AERO FORCES", "warn");
+                state.missionLog.log('STRUCTURAL FAILURE DUE TO AERO FORCES', 'warn');
             }
             this.explode();
         }
@@ -534,16 +511,8 @@ export class Vessel implements IVessel {
 
         // Spawn explosion particles
         for (let i = 0; i < 30; i++) {
-            addParticle(new Particle(
-                this.x + Math.random() * 20 - 10,
-                this.y + this.h - Math.random() * 20,
-                'fire'
-            ));
-            addParticle(new Particle(
-                this.x,
-                this.y + this.h / 2,
-                'debris'
-            ));
+            addParticle(new Particle(this.x + Math.random() * 20 - 10, this.y + this.h - Math.random() * 20, 'fire'));
+            addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
         }
     }
 
@@ -599,7 +568,7 @@ export class Vessel implements IVessel {
 
     /**
      * Spawn exhaust particles
-     * 
+     *
      * @param timeScale - Time warp multiplier
      */
     spawnExhaust(timeScale: number): void {
@@ -622,12 +591,12 @@ export class Vessel implements IVessel {
         const vacuumFactor = Math.min(Math.max(0, altitude) / 30000, 1.0);
 
         // Exhaust spreads more in vacuum
-        const spreadBase = 0.1 + (vacuumFactor * 1.5);
+        const spreadBase = 0.1 + vacuumFactor * 1.5;
 
         // Exhaust position (engine nozzle)
         const exX = this.x - Math.sin(this.angle) * this.h;
         const exY = this.y + Math.cos(this.angle) * this.h;
-        const ejectionSpeed = 30 + (this.throttle * 20);
+        const ejectionSpeed = 30 + this.throttle * 20;
 
         for (let i = 0; i < count; i++) {
             const particleAngle = this.angle + Math.PI + (Math.random() - 0.5) * spreadBase;
@@ -679,7 +648,7 @@ export class Vessel implements IVessel {
             // Color shifts from orange to white with temperature
             const r = 255;
             const g = Math.floor(100 + intensity * 155); // 100 -> 255
-            const b = Math.floor(50 + intensity * 200);  // 50 -> 250
+            const b = Math.floor(50 + intensity * 200); // 50 -> 250
 
             ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${intensity})`;
             ctx.beginPath();

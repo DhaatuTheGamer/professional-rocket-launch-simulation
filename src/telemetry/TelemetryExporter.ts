@@ -1,6 +1,6 @@
 /**
  * TelemetryExporter - Export Flight Data to CSV/JSON
- * 
+ *
  * Provides utilities to export recorded flight data in various formats
  * for post-flight analysis in spreadsheets or data analysis tools.
  */
@@ -92,10 +92,7 @@ export function framesToCSV(frames: readonly FlightDataFrame[]): string {
 /**
  * Export frames to CSV and trigger download
  */
-export function exportToCSV(
-    frames: readonly FlightDataFrame[],
-    summary: FlightSummary
-): void {
+export function exportToCSV(frames: readonly FlightDataFrame[], summary: FlightSummary): void {
     const csv = framesToCSV(frames);
     const filename = generateFilename(summary.missionName, 'csv');
     downloadFile(csv, filename, 'text/csv');
@@ -108,10 +105,7 @@ export function exportToCSV(
 /**
  * Convert frames to JSON export object
  */
-export function framesToJSON(
-    frames: readonly FlightDataFrame[],
-    summary: FlightSummary
-): FlightDataExport {
+export function framesToJSON(frames: readonly FlightDataFrame[], summary: FlightSummary): FlightDataExport {
     return {
         metadata: {
             version: '1.6.0',
@@ -125,10 +119,7 @@ export function framesToJSON(
 /**
  * Export frames to JSON and trigger download
  */
-export function exportToJSON(
-    frames: readonly FlightDataFrame[],
-    summary: FlightSummary
-): void {
+export function exportToJSON(frames: readonly FlightDataFrame[], summary: FlightSummary): void {
     const data = framesToJSON(frames, summary);
     const json = JSON.stringify(data, null, 2);
     const filename = generateFilename(summary.missionName, 'json');

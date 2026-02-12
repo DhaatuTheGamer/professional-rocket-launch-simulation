@@ -1,6 +1,6 @@
 /**
  * Input Manager
- * 
+ *
  * Centralized input handling for keyboard and touch controls.
  * Abstracts input sources to provide unified API for game logic.
  */

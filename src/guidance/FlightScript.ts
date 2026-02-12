@@ -1,9 +1,9 @@
 /**
  * FlightScript - Mission Script Types and Parser
- * 
+ *
  * Defines the domain-specific language (DSL) for autonomous rocket guidance.
  * Scripts use a WHEN <condition> THEN <action> syntax.
- * 
+ *
  * Example:
  *   WHEN ALTITUDE > 10000 THEN PITCH 80
  *   WHEN VELOCITY > 2000 AND ALTITUDE > 50000 THEN STAGE
@@ -22,14 +22,14 @@ export type ComparisonOperator = '>' | '<' | '>=' | '<=' | '==' | '!=';
  * Variables that can be used in conditions
  */
 export type ConditionVariable =
-    | 'ALTITUDE'      // meters above ground
-    | 'VELOCITY'      // m/s total speed
-    | 'VERTICAL_VEL'  // m/s vertical (negative = up)
-    | 'HORIZONTAL_VEL'// m/s horizontal
-    | 'APOGEE'        // meters predicted apogee
-    | 'FUEL'          // 0-1 fraction
-    | 'TIME'          // seconds since launch
-    | 'THROTTLE'      // 0-1 current throttle
+    | 'ALTITUDE' // meters above ground
+    | 'VELOCITY' // m/s total speed
+    | 'VERTICAL_VEL' // m/s vertical (negative = up)
+    | 'HORIZONTAL_VEL' // m/s horizontal
+    | 'APOGEE' // meters predicted apogee
+    | 'FUEL' // 0-1 fraction
+    | 'TIME' // seconds since launch
+    | 'THROTTLE' // 0-1 current throttle
     | 'DYNAMIC_PRESSURE'; // Q in kPa
 
 /**
@@ -62,11 +62,11 @@ export interface ScriptCondition {
  * Types of actions that can be executed
  */
 export type ActionType =
-    | 'PITCH'         // Set pitch angle (degrees from vertical)
-    | 'THROTTLE'      // Set throttle (0-100 or 0-1)
-    | 'STAGE'         // Trigger staging
-    | 'SAS'           // Set SAS mode
-    | 'ABORT';        // Emergency abort (cut engine)
+    | 'PITCH' // Set pitch angle (degrees from vertical)
+    | 'THROTTLE' // Set throttle (0-100 or 0-1)
+    | 'STAGE' // Trigger staging
+    | 'SAS' // Set SAS mode
+    | 'ABORT'; // Emergency abort (cut engine)
 
 /**
  * SAS mode values for SAS action
@@ -78,7 +78,7 @@ export type SASModeValue = 'OFF' | 'STABILITY' | 'PROGRADE' | 'RETROGRADE';
  */
 export interface ScriptAction {
     type: ActionType;
-    value?: number | SASModeValue;  // Value for PITCH, THROTTLE, SAS
+    value?: number | SASModeValue; // Value for PITCH, THROTTLE, SAS
 }
 
 // ============================================================================
@@ -89,8 +89,8 @@ export interface ScriptAction {
  * Execution state of a command
  */
 export type CommandState =
-    | 'pending'    // Not yet triggered
-    | 'active'     // Currently executing
+    | 'pending' // Not yet triggered
+    | 'active' // Currently executing
     | 'completed'; // Already triggered (one-shot commands)
 
 /**
@@ -101,8 +101,8 @@ export interface ScriptCommand {
     condition: ScriptCondition;
     action: ScriptAction;
     state: CommandState;
-    oneShot: boolean;        // If true, only executes once
-    rawText: string;         // Original script line
+    oneShot: boolean; // If true, only executes once
+    rawText: string; // Original script line
 }
 
 /**
@@ -146,11 +146,18 @@ export interface ScriptParseResult {
  */
 function parseVariable(str: string): ConditionVariable | null {
     const valid: ConditionVariable[] = [
-        'ALTITUDE', 'VELOCITY', 'VERTICAL_VEL', 'HORIZONTAL_VEL',
-        'APOGEE', 'FUEL', 'TIME', 'THROTTLE', 'DYNAMIC_PRESSURE'
+        'ALTITUDE',
+        'VELOCITY',
+        'VERTICAL_VEL',
+        'HORIZONTAL_VEL',
+        'APOGEE',
+        'FUEL',
+        'TIME',
+        'THROTTLE',
+        'DYNAMIC_PRESSURE'
     ];
     const upper = str.toUpperCase().trim();
-    return valid.includes(upper as ConditionVariable) ? upper as ConditionVariable : null;
+    return valid.includes(upper as ConditionVariable) ? (upper as ConditionVariable) : null;
 }
 
 /**
@@ -159,7 +166,7 @@ function parseVariable(str: string): ConditionVariable | null {
 function parseOperator(str: string): ComparisonOperator | null {
     const operators: ComparisonOperator[] = ['>=', '<=', '==', '!=', '>', '<'];
     const trimmed = str.trim();
-    return operators.includes(trimmed as ComparisonOperator) ? trimmed as ComparisonOperator : null;
+    return operators.includes(trimmed as ComparisonOperator) ? (trimmed as ComparisonOperator) : null;
 }
 
 /**
@@ -352,7 +359,7 @@ export function parseMissionScript(scriptText: string, name: string = 'Unnamed S
  * Reset all commands in a script to pending state
  */
 export function resetScript(script: MissionScript): void {
-    script.commands.forEach(cmd => {
+    script.commands.forEach((cmd) => {
         cmd.state = 'pending';
     });
 }

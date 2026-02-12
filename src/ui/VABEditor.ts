@@ -1,15 +1,10 @@
 /**
  * VAB Editor
- * 
+ *
  * Visual vehicle builder UI with parts catalog, stacking area, and stage manager.
  */
 
-import {
-    RocketPart,
-    PartCategory,
-    PARTS_CATALOG,
-    getPartsByCategory
-} from '../vab/PartsCatalog';
+import { RocketPart, PartCategory, PARTS_CATALOG, getPartsByCategory } from '../vab/PartsCatalog';
 import {
     VehicleBlueprint,
     VehicleStats,
@@ -150,12 +145,16 @@ export class VABEditor {
             { id: 'srb', icon: '🚀', label: 'SRBs' }
         ];
 
-        return categories.map(cat => `
+        return categories
+            .map(
+                (cat) => `
             <button class="vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}"
                     data-category="${cat.id}">
                 ${cat.icon} ${cat.label}
             </button>
-        `).join('');
+        `
+            )
+            .join('');
     }
 
     /**
@@ -168,7 +167,9 @@ export class VABEditor {
             return '<div class="vab-no-parts">No parts in this category</div>';
         }
 
-        return parts.map(part => `
+        return parts
+            .map(
+                (part) => `
             <div class="vab-part-item" data-part-id="${part.id}">
                 <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
@@ -180,7 +181,9 @@ export class VABEditor {
                 </div>
                 <div class="vab-part-cost">$${part.cost}</div>
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
 
     /**
@@ -188,13 +191,20 @@ export class VABEditor {
      */
     private getPartIcon(part: RocketPart): string {
         switch (part.category) {
-            case 'engine': return '🔥';
-            case 'tank': return '⛽';
-            case 'avionics': return '🎛️';
-            case 'fairing': return '🛡️';
-            case 'decoupler': return '⚡';
-            case 'srb': return '🚀';
-            default: return '📦';
+            case 'engine':
+                return '🔥';
+            case 'tank':
+                return '⛽';
+            case 'avionics':
+                return '🎛️';
+            case 'fairing':
+                return '🛡️';
+            case 'decoupler':
+                return '⚡';
+            case 'srb':
+                return '🚀';
+            default:
+                return '📦';
         }
     }
 
@@ -266,9 +276,10 @@ export class VABEditor {
             return '<div class="vab-no-stages">No stages yet. Click "Add Stage" to begin.</div>';
         }
 
-        return this.blueprint.stages.map((stage, i) => {
-            const stageStats = this.getStageStats(stage);
-            return `
+        return this.blueprint.stages
+            .map((stage, i) => {
+                const stageStats = this.getStageStats(stage);
+                return `
                 <div class="vab-stage-item ${i === 0 ? 'first-stage' : ''}" data-stage="${i}">
                     <div class="vab-stage-header">
                         <span class="stage-number">Stage ${i + 1}</span>
@@ -282,7 +293,8 @@ export class VABEditor {
                     <button class="vab-add-to-stage" data-stage="${i}">+ Add Selected Part</button>
                 </div>
             `;
-        }).join('');
+            })
+            .join('');
     }
 
     /**
@@ -310,9 +322,7 @@ export class VABEditor {
 
         const m0 = mass;
         const mf = mass - fuel;
-        const deltaV = (isp > 0 && mf > 0 && m0 > mf)
-            ? isp * 9.81 * Math.log(m0 / mf)
-            : 0;
+        const deltaV = isp > 0 && mf > 0 && m0 > mf ? isp * 9.81 * Math.log(m0 / mf) : 0;
 
         return { mass, deltaV };
     }
@@ -367,7 +377,7 @@ export class VABEditor {
      */
     private attachEventListeners(): void {
         // Category tabs
-        this.container.querySelectorAll('.vab-cat-tab').forEach(btn => {
+        this.container.querySelectorAll('.vab-cat-tab').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const target = e.currentTarget as HTMLElement;
                 this.selectedCategory = target.dataset.category as PartCategory;
@@ -376,22 +386,22 @@ export class VABEditor {
         });
 
         // Part items (select part)
-        this.container.querySelectorAll('.vab-part-item').forEach(item => {
+        this.container.querySelectorAll('.vab-part-item').forEach((item) => {
             item.addEventListener('click', (e) => {
                 // Toggle selection
-                this.container.querySelectorAll('.vab-part-item').forEach(i => i.classList.remove('selected'));
+                this.container.querySelectorAll('.vab-part-item').forEach((i) => i.classList.remove('selected'));
                 (e.currentTarget as HTMLElement).classList.add('selected');
             });
         });
 
         // Add to stage buttons
-        this.container.querySelectorAll('.vab-add-to-stage').forEach(btn => {
+        this.container.querySelectorAll('.vab-add-to-stage').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const stageIndex = parseInt((e.currentTarget as HTMLElement).dataset.stage || '0');
                 const selectedPart = this.container.querySelector('.vab-part-item.selected');
                 if (selectedPart) {
                     const partId = (selectedPart as HTMLElement).dataset.partId;
-                    const part = PARTS_CATALOG.find(p => p.id === partId);
+                    const part = PARTS_CATALOG.find((p) => p.id === partId);
                     if (part) {
                         this.blueprint = addPartToStage(this.blueprint, stageIndex, part);
                         this.render();
@@ -401,7 +411,7 @@ export class VABEditor {
         });
 
         // Remove part buttons
-        this.container.querySelectorAll('.remove-part').forEach(btn => {
+        this.container.querySelectorAll('.remove-part').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const target = e.currentTarget as HTMLElement;
@@ -419,7 +429,7 @@ export class VABEditor {
         });
 
         // Remove stage buttons
-        this.container.querySelectorAll('.remove-stage').forEach(btn => {
+        this.container.querySelectorAll('.remove-stage').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const stageIndex = parseInt((e.currentTarget as HTMLElement).dataset.stage || '0');
@@ -429,7 +439,7 @@ export class VABEditor {
         });
 
         // Preset buttons
-        this.container.querySelectorAll('.vab-preset-btn').forEach(btn => {
+        this.container.querySelectorAll('.vab-preset-btn').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const preset = (e.currentTarget as HTMLElement).dataset.preset;
                 switch (preset) {
@@ -456,7 +466,7 @@ export class VABEditor {
         // Save button
         this.container.querySelector('.vab-save-btn')?.addEventListener('click', () => {
             // Update or add to saved blueprints
-            const existing = this.savedBlueprints.findIndex(b => b.id === this.blueprint.id);
+            const existing = this.savedBlueprints.findIndex((b) => b.id === this.blueprint.id);
             if (existing >= 0) {
                 this.savedBlueprints[existing] = this.blueprint;
             } else {
