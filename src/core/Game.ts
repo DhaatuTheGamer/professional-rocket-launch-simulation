@@ -407,8 +407,8 @@ export class Game {
         // Collect inputs
         let throttle = this.commandThrottle;
         let gimbalAngle = 0;
-        let stage = this.stagingCommand;
-        let abort = false;
+        const stage = this.stagingCommand;
+        const abort = false;
         this.stagingCommand = false; // Reset one-shot command
 
         if (this.mainStack) {

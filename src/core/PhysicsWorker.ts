@@ -162,7 +162,7 @@ function handleCommand(cmd: any) {
         case 'STAGE':
             performStaging();
             break;
-        case 'FC_LOAD_SCRIPT':
+        case 'FC_LOAD_SCRIPT': {
             const result = flightComputer.loadScript(cmd.script);
             self.postMessage({
                 type: 'EVENT',
@@ -173,6 +173,7 @@ function handleCommand(cmd: any) {
                 }
             });
             break;
+        }
         case 'FC_START':
             flightComputer.activate();
             break;
