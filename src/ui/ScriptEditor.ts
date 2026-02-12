@@ -59,9 +59,6 @@ export class ScriptEditor {
                     <div class="script-toolbar">
                         <select id="script-preset-select" class="script-select">
                             <option value="">-- Load Preset --</option>
-                            ${Object.keys(PRESET_SCRIPTS).map(name =>
-            `<option value="${name}">${name}</option>`
-        ).join('')}
                         </select>
                         
                         <select id="script-save-select" class="script-select">
@@ -110,6 +107,17 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
         this.textarea = document.getElementById('script-textarea') as HTMLTextAreaElement;
         this.errorDisplay = document.getElementById('script-errors');
         this.saveSelect = document.getElementById('script-save-select') as HTMLSelectElement;
+
+        // Safely populate preset scripts
+        const presetSelect = document.getElementById('script-preset-select') as HTMLSelectElement;
+        if (presetSelect) {
+            Object.keys(PRESET_SCRIPTS).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                presetSelect.appendChild(option);
+            });
+        }
 
         this.updateSavedScriptsList();
     }
