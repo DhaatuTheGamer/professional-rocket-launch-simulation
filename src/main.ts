@@ -61,6 +61,16 @@ const vabEditor = new VABEditor('vab-modal', (blueprint: VehicleBlueprint) => {
 // UI/UX IMPROVEMENTS - Event Listeners
 // ========================================
 
+// --- Mission Log Toggle ---
+document.querySelector('#mission-log h3')?.addEventListener('click', () => {
+    document.getElementById('mission-log')?.classList.toggle('collapsed');
+});
+
+// --- Reset Button ---
+document.getElementById('reset-btn')?.addEventListener('click', () => {
+    location.reload();
+});
+
 // Track flight phase for dynamic buttons
 let flightPhase: 'prelaunch' | 'ascending' | 'descending' | 'landed' = 'prelaunch';
 

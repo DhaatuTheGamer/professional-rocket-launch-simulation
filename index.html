@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeltaV Lab</title>
     <link rel="stylesheet" href="style.css">
@@ -176,7 +177,7 @@
 
         <!-- IMPROVEMENT #5: Collapsible Mission Log -->
         <div id="mission-log">
-            <h3 onclick="document.getElementById('mission-log').classList.toggle('collapsed')">
+            <h3>
                 MISSION LOG
                 <button id="log-toggle" title="Toggle Mission Log" aria-label="Toggle Mission Log">−</button>
             </h3>
@@ -212,7 +213,7 @@
         <button id="export-btn" title="Export Flight Data [E]">💾 Export Data</button>
         <button id="autopilot-btn" title="Toggle Auto-Land [A]">🤖 Auto-Land: OFF</button>
         <button id="audio-btn" class="disabled">🔇 Enable Audio</button>
-        <button id="reset-btn" onclick="location.reload()">🔄 Reset</button>
+        <button id="reset-btn">🔄 Reset</button>
     </div>
 
     <div id="mobile-controls">
