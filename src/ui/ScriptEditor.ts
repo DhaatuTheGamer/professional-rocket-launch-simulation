@@ -1,6 +1,6 @@
 /**
  * ScriptEditor - Flight Computer Script Editor UI
- * 
+ *
  * Modal editor for creating and editing mission scripts.
  * Features syntax validation, preset loading, and localStorage persistence.
  */
@@ -52,19 +52,19 @@ export class ScriptEditor {
             <div class="script-editor-content">
                 <div class="script-editor-header">
                     <h2>✈️ Flight Computer - Script Editor</h2>
-                    <button id="script-editor-close" class="script-close-btn">×</button>
+                    <button id="script-editor-close" class="script-close-btn" aria-label="Close script editor" title="Close">×</button>
                 </div>
                 
                 <div class="script-editor-body">
                     <div class="script-toolbar">
-                        <select id="script-preset-select" class="script-select">
+                        <select id="script-preset-select" class="script-select" aria-label="Load preset script">
                             <option value="">-- Load Preset --</option>
-                            ${Object.keys(PRESET_SCRIPTS).map(name =>
-            `<option value="${name}">${name}</option>`
-        ).join('')}
+                            ${Object.keys(PRESET_SCRIPTS)
+                                .map((name) => `<option value="${name}">${name}</option>`)
+                                .join('')}
                         </select>
                         
-                        <select id="script-save-select" class="script-select">
+                        <select id="script-save-select" class="script-select" aria-label="Load saved script">
                             <option value="">-- Saved Scripts --</option>
                         </select>
                         
@@ -81,7 +81,7 @@ export class ScriptEditor {
                         </span>
                     </div>
                     
-                    <textarea id="script-textarea" class="script-textarea" 
+                    <textarea id="script-textarea" class="script-textarea" aria-label="Script editor content"
                         placeholder="# Mission Script
 # Example:
 WHEN ALTITUDE > 1000 THEN PITCH 80
@@ -93,7 +93,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
                 
                 <div class="script-editor-footer">
                     <div class="script-footer-left">
-                        <input type="text" id="script-name-input" class="script-name-input" 
+                        <input type="text" id="script-name-input" class="script-name-input" aria-label="Script name"
                             placeholder="Script name..." value="My Mission">
                         <button id="script-save-btn" class="script-btn script-btn-secondary">💾 Save</button>
                         <button id="script-delete-btn" class="script-btn script-btn-danger">🗑️ Delete</button>
@@ -255,7 +255,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
             this.showSuccess(`✓ Valid script with ${result.script?.commands.length} commands`);
             return true;
         } else {
-            const errorMessages = result.errors.map(e => `Line ${e.line}: ${e.error}`).join('\n');
+            const errorMessages = result.errors.map((e) => `Line ${e.line}: ${e.error}`).join('\n');
             this.showErrors(errorMessages);
             return false;
         }
@@ -374,7 +374,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
         }
 
         // Add saved scripts
-        names.forEach(name => {
+        names.forEach((name) => {
             const option = document.createElement('option');
             option.value = name;
             option.textContent = name;
