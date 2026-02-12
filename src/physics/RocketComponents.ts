@@ -386,9 +386,6 @@ export class Payload extends Vessel {
     /** Visual color */
     public color: string = '#bdc3c7';
 
-    /** Stage separation config (for debugging/testing) */
-    public nextStage: StageSeparation;
-
     constructor(x: number, y: number, vx: number = 0, vy: number = 0) {
         super(x, y);
         this.vx = vx;
@@ -406,12 +403,6 @@ export class Payload extends Vessel {
         this.propConfig = PAYLOAD_PROP_CONFIG;
         this.propState = createInitialPropulsionState(PAYLOAD_PROP_CONFIG);
         this.ignitersRemaining = 0;
-
-        this.nextStage = {
-            type: 'Booster',
-            separationVelocity: 5,
-            offsetY: -30
-        };
     }
 
     draw(ctx: CanvasRenderingContext2D, camY: number): void {
