@@ -5,6 +5,8 @@
 const R_EARTH = 6371000;
 const PIXELS_PER_METER = 10;
 const GROUND_Y = 1000;
+const GRAVITY = 9.8;
+const MU = GRAVITY * R_EARTH * R_EARTH;
 
 interface OrbitalElements {
     phi: number;
@@ -158,15 +160,16 @@ function updateOrbitPathsOptimized(entities: MockVessel[], now: number) {
                     };
 
                     const dtPred = 10;
+                    const centerY = (GROUND_Y - e.h) / 10 + R_EARTH;
+
                     const startPhi = simState.x / R_EARTH;
-                    const startR = R_EARTH + (GROUND_Y / 10 - simState.y - e.h / 10);
+                    const startR = centerY - simState.y;
                     e.orbitPath.push({ phi: startPhi, r: startR });
 
                     for (let k = 0; k < 200; k++) {
-                        const pAlt = GROUND_Y / 10 - simState.y - e.h / 10;
-                        const pRad = pAlt + R_EARTH;
-                        const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
-                        const pFy = pG - (simState.vx ** 2) / pRad;
+                        const pRad = centerY - simState.y;
+                        const pG = MU / (pRad * pRad);
+                        const pFy = pG - (simState.vx * simState.vx) / pRad;
 
                         simState.vy += pFy * dtPred;
                         simState.x += simState.vx * dtPred;
@@ -175,7 +178,7 @@ function updateOrbitPathsOptimized(entities: MockVessel[], now: number) {
                         if (simState.y * 10 > GROUND_Y) break;
 
                         const pPhi = (simState.x * 10) / R_EARTH;
-                        const pR = R_EARTH + (GROUND_Y / 10 - simState.y - e.h / 10);
+                        const pR = centerY - simState.y;
                         e.orbitPath.push({ phi: pPhi, r: pR });
                     }
                 }
