@@ -173,12 +173,12 @@ export class Vessel implements IVessel {
         );
 
         // Calculate aerodynamic forces using relative velocity (lift and drag)
-        const aeroForces = calculateAerodynamicForces(this.aeroConfig, aeroState, safeAlt, v, relVx, relVy);
+        const aeroForces = calculateAerodynamicForces(this.aeroConfig, aeroState, safeAlt, v, relVx, relVy, mach);
 
-        // Apply transonic drag multiplier to base drag
-        const machMult = getTransonicDragMultiplier(mach);
-        const adjustedDragX = aeroForces.forceX * machMult;
-        const adjustedDragY = aeroForces.forceY * machMult;
+        // Apply aerodynamic forces (now including transonic effects)
+        // const machMult = getTransonicDragMultiplier(mach); // Removed: handled in Aerodynamics.ts
+        const adjustedDragX = aeroForces.forceX; // * machMult;
+        const adjustedDragY = aeroForces.forceY; // * machMult;
 
         // Gravity (inverse square law)
         const realRad = safeAlt + R_EARTH;

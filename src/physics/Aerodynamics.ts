@@ -212,12 +212,14 @@ export function calculateCenterOfPressure(config: AerodynamicsConfig, vehicleLen
     // Basic CP position from configuration
     let cpFraction = config.cpPositionFraction;
 
-    // Supersonic CP shift: CP moves AFT (toward tail) at supersonic speeds
-    // This makes the rocket MORE stable at high Mach (margin increases)
-    // Aft direction is towards 0 (bottom)
-    if (mach > 1.0) {
-        const supersonicShift = Math.min(0.1, (mach - 1.0) * 0.05);
-        cpFraction = Math.max(0.05, cpFraction - supersonicShift);
+    // Transonic & Supersonic CP shift
+    // CP moves AFT (toward tail) as shockwaves form, starting around Mach 0.8
+    // This makes the rocket MORE stable at high Mach
+    if (mach > 0.8) {
+        // Smooth transition from 0.8 to 1.2
+        // Shift amount increases with Mach, capping around Mach 2.0
+        const shiftFactor = Math.min(0.15, (mach - 0.8) * 0.1);
+        cpFraction = Math.max(0.05, cpFraction - shiftFactor);
     }
 
     return cpFraction * vehicleLength;
@@ -269,21 +271,49 @@ export function calculateLiftCoefficient(aoa: number, cnAlpha: number): number {
 }
 
 /**
- * Calculate drag coefficient including induced drag from lift
+ * Calculate transonic drag multiplier (Drag Divergence)
  *
- * Total drag = Zero-lift drag + Induced drag
- * CD = CD0 + CL² / (π * e * AR)
- * where e ≈ 0.8 (Oswald efficiency factor)
+ * Simulates the dramatic increase in drag near Mach 1.0 due to shockwave formation.
+ * Peak drag is typically at Mach 1.05 - 1.1.
+ */
+export function getTransonicDragFactor(mach: number): number {
+    if (mach < 0.8) return 0;
+    if (mach > 2.0) return 0.5; // Supersonic drag usually stays higher than subsonic
+
+    // Gaussian-like peak centered at Mach 1.05
+    // Width of about 0.2 Mach
+    const peakMach = 1.05;
+    const width = 0.15;
+    const delta = mach - peakMach;
+    const rise = 2.0 * Math.exp(-(delta * delta) / (2 * width * width));
+
+    // Blend with supersonic plateau
+    if (mach > 1.2) {
+        return Math.max(0.5, rise); // Decay to 0.5 instead of 0
+    }
+
+    return rise;
+}
+
+/**
+ * Calculate drag coefficient including induced drag and wave drag
+ *
+ * Total drag = Zero-lift drag + Induced drag + Wave drag
  *
  * @param cl - Lift coefficient
- * @param cd0 - Zero-lift drag coefficient
+ * @param cd0 - Zero-lift drag coefficient (subsonic)
  * @param aspectRatio - Aspect ratio
+ * @param mach - Mach number
  * @returns Total drag coefficient (dimensionless)
  */
-export function calculateDragCoefficient(cl: number, cd0: number, aspectRatio: number): number {
+export function calculateDragCoefficient(cl: number, cd0: number, aspectRatio: number, mach: number = 0): number {
     const oswaldEfficiency = 0.8;
     const inducedDrag = (cl * cl) / (Math.PI * oswaldEfficiency * aspectRatio);
-    return cd0 + inducedDrag;
+
+    // Wave drag from transonic effects
+    const waveDrag = cd0 * getTransonicDragFactor(mach);
+
+    return cd0 + inducedDrag + waveDrag;
 }
 
 /**
@@ -306,7 +336,8 @@ export function calculateAerodynamicForces(
     altitude: number,
     velocity: number,
     vx: number,
-    vy: number
+    vy: number,
+    mach: number = 0
 ): AerodynamicForces {
     // Get atmospheric density
     const rho = getAtmosphericDensity(altitude);
@@ -316,7 +347,7 @@ export function calculateAerodynamicForces(
 
     // Calculate coefficients
     const cl = calculateLiftCoefficient(aeroState.aoa, config.cnAlpha);
-    const cd = calculateDragCoefficient(cl, config.cd0, config.aspectRatio);
+    const cd = calculateDragCoefficient(cl, config.cd0, config.aspectRatio, mach);
 
     // Calculate force magnitudes
     // L = q * S * CL, D = q * S * CD
