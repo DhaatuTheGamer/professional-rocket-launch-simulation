@@ -596,12 +596,16 @@ export class Game {
             }
 
             // Add Max-Q warning
-            if (envState.maxQWindWarning && !last.maxQWarning) {
-                last.maxQWarning = true;
+            if (envState.maxQWindWarning !== last.maxQWarning) {
+                last.maxQWarning = envState.maxQWindWarning;
                 const hudMaxQ = this.hudMaxQ;
                 if (hudMaxQ) {
-                    hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
-                    hudMaxQ.style.display = 'block';
+                    if (envState.maxQWindWarning) {
+                        hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
+                        hudMaxQ.style.display = 'block';
+                    } else {
+                        hudMaxQ.style.display = 'none';
+                    }
                 }
             }
         }
