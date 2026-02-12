@@ -221,7 +221,6 @@ export class Game {
         (window as any).navball = this.navball;
         (window as any).missionLog = this.missionLog;
         (window as any).audio = this.audio;
-        (window as any).game = this;
 
         this.initHUDCache();
     }
