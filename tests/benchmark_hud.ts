@@ -53,12 +53,16 @@ class HUDUpdater {
         this.hudMaxQ = document.getElementById('hud-maxq-warning');
     }
 
-    // Inefficient method (Current implementation)
+    // Inefficient method (Simulating unoptimized behavior)
     updateInefficient(envState: any) {
         const hudWindSpeed = document.getElementById('hud-wind-speed');
         const hudWindDir = document.getElementById('hud-wind-dir');
         const hudTimeOfDay = document.getElementById('hud-time-of-day');
         const hudLaunchStatus = document.getElementById('hud-launch-status');
+
+        // Simulating the bug (or correct behavior, but inefficiently)
+        const hudMaxQ = document.getElementById('hud-maxq-warning');
+
         const last = this.lastHUDState;
 
         if (hudWindSpeed) {
@@ -68,10 +72,22 @@ class HUDUpdater {
                 hudWindSpeed.textContent = speed + ' m/s';
             }
         }
-        // ... (simplified logic for benchmark)
+
+        // Logic for MaxQ (inefficient)
+        if (envState.maxQWindWarning !== last.maxQWarning) {
+             last.maxQWarning = envState.maxQWindWarning;
+             if (hudMaxQ) {
+                 if (envState.maxQWindWarning) {
+                     hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
+                     hudMaxQ.style.display = 'block';
+                 } else {
+                     hudMaxQ.style.display = 'none';
+                 }
+             }
+        }
     }
 
-    // Optimized method (Proposed implementation)
+    // Optimized method (Proposed implementation with fix)
     updateOptimized(envState: any) {
         const hudWindSpeed = this.hudWindSpeed;
         const hudWindDir = this.hudWindDir;
@@ -84,6 +100,20 @@ class HUDUpdater {
             if (last.windSpeed !== speed) {
                 last.windSpeed = speed;
                 hudWindSpeed.textContent = speed + ' m/s';
+            }
+        }
+
+        // Logic for MaxQ (optimized)
+        if (envState.maxQWindWarning !== last.maxQWarning) {
+            last.maxQWarning = envState.maxQWindWarning;
+            const hudMaxQ = this.hudMaxQ;
+            if (hudMaxQ) {
+                if (envState.maxQWindWarning) {
+                    hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
+                    hudMaxQ.style.display = 'block';
+                } else {
+                    hudMaxQ.style.display = 'none';
+                }
             }
         }
     }
@@ -101,16 +131,21 @@ const startInefficient = performance.now();
 for (let i = 0; i < iterations; i++) {
     // Toggle value to force update
     envState.surfaceWindSpeed = i % 20;
+    envState.maxQWindWarning = (i % 100) < 50; // Toggle periodically
     updater.updateInefficient(envState);
 }
 const endInefficient = performance.now();
 const timeInefficient = endInefficient - startInefficient;
+
+// Reset state
+updater.lastHUDState.maxQWarning = false;
 
 // Test Optimized
 const startOptimized = performance.now();
 for (let i = 0; i < iterations; i++) {
     // Toggle value to force update
     envState.surfaceWindSpeed = i % 20;
+    envState.maxQWindWarning = (i % 100) < 50; // Toggle periodically
     updater.updateOptimized(envState);
 }
 const endOptimized = performance.now();
