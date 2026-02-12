@@ -13,6 +13,7 @@ let missionTime = 0;
 const fts = new FlightTerminationSystem();
 const environment = new EnvironmentSystem();
 const faultInjector = new FaultInjector();
+let groundY = 1000;
 
 // Active vessel tracking (index or ref)
 // In worker, we can just track the "main" one by index or reference
@@ -44,7 +45,7 @@ function init(config: any) {
     trackedIndex = 0;
 
     const width = config.width || 1920;
-    const groundY = config.groundY || 1000;
+    groundY = config.groundY || 1000;
 
     // Create initial rocket
     const rocket = new FullStack(width / 2, groundY - 160);
@@ -73,12 +74,21 @@ function step(inputs: any) {
     if (v && inputs.controls) {
         v.throttle = inputs.controls.throttle;
         v.gimbalAngle = inputs.controls.gimbalAngle;
-        // engine cut, etc.
+
+        if (inputs.controls.ignition) {
+            v.active = true;
+            // Force reset safety cutoff if re-igniting
+            if ((v as any).engineState === 'off') {
+                (v as any).engineState = 'starting';
+            }
+        }
+        if (inputs.controls.cutoff) {
+            v.active = false;
+        }
     }
 
     // 3. Physics Integration
-    // Ground Y needed for checking collision/altitude
-    const groundY = 1000; // Should be in config or state
+    // groundY is module-level state set in init()
 
     entities.forEach(e => {
         // Apply physics

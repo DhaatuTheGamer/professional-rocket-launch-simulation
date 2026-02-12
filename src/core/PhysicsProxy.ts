@@ -49,7 +49,8 @@ export class PhysicsProxy {
 
     constructor() {
         // Use ES module worker syntax (supported by modern bundlers)
-        this.worker = new Worker(new URL('./PhysicsWorker.ts', import.meta.url), { type: 'module' });
+        // Use bundled worker
+        this.worker = new Worker(new URL('./physics.worker.js', import.meta.url), { type: 'module' });
 
         this.worker.onmessage = (e) => {
             const { type, payload } = e.data;

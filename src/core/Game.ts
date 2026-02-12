@@ -86,6 +86,11 @@ export class Game {
     public booster: Booster | null = null;
     public upperStage: UpperStage | null = null;
 
+    // Command state (User Input)
+    public commandThrottle: number = 0;
+    public stagingCommand: boolean = false;
+    private readonly ZOOM: number = 2.5;
+
     // Mission state
     private missionState: MissionState = {
         liftoff: false,
@@ -216,6 +221,7 @@ export class Game {
         (window as any).navball = this.navball;
         (window as any).missionLog = this.missionLog;
         (window as any).audio = this.audio;
+        (window as any).game = this;
 
         this.initHUDCache();
     }
@@ -284,6 +290,8 @@ export class Game {
         this.cameraY = 0;
         this.timeScale = 1;
         this.missionState = { liftoff: false, supersonic: false, maxq: false };
+        this.commandThrottle = 0;
+        this.stagingCommand = false;
 
         // Reset safety systems
         // FTS reset handled by worker init
@@ -309,6 +317,34 @@ export class Game {
         console.log("Spawning blueprint:", blueprint?.name);
         // For now, reset which triggers worker init to spawn default rocket
         this.reset();
+    }
+
+    /**
+     * Launch logic
+     */
+    public launch(): void {
+        if (this.missionState.liftoff) {
+            this.missionLog.log("Already launched!", "info");
+            return;
+        }
+
+        this.commandThrottle = 1.0;
+
+        // Optimistic update for immediate feedback
+        if (this.mainStack) {
+            this.mainStack.active = true;
+            this.mainStack.throttle = 1.0;
+        }
+
+        this.missionLog.log("IGNITION SEQUENCE START", "warn");
+        this.audio.speak("Ignition");
+    }
+
+    /**
+     * Set explicit throttle command (0.0 to 1.0)
+     */
+    public setThrottle(val: number): void {
+        this.commandThrottle = Math.max(0, Math.min(1, val));
     }
 
     /**
@@ -341,6 +377,7 @@ export class Game {
     public performStaging(): void {
         if (Date.now() - this.lastStageTime < 1000) return;
         this.lastStageTime = Date.now();
+        this.stagingCommand = true;
 
         // Send command to worker
         this.physics.command('STAGE', {});
@@ -365,15 +402,13 @@ export class Game {
         }
 
         // Collect inputs
-
-
-        let throttle = 0;
+        let throttle = this.commandThrottle;
         let gimbalAngle = 0;
-        let stage = false;
+        let stage = this.stagingCommand;
         let abort = false;
+        this.stagingCommand = false; // Reset one-shot command
 
-        if (this.mainStack && this.mainStack.active) {
-            throttle = this.mainStack.throttle; // Start with current
+        if (this.mainStack) {
             gimbalAngle = this.mainStack.gimbalAngle;
 
             if (this.flightComputer.isActive()) {
@@ -413,13 +448,25 @@ export class Game {
                     gimbalAngle = 0;
                 }
 
-                if (this.input.actions.THROTTLE_UP) throttle = Math.min(1, throttle + 0.02);
-                if (this.input.actions.THROTTLE_DOWN) throttle = Math.max(0, throttle - 0.02);
-                if (this.input.actions.CUT_ENGINE) throttle = 0;
+                // Manual Throttle Overrides (updates command state)
+                if (this.input.actions.THROTTLE_UP) this.setThrottle(this.commandThrottle + 0.02);
+                if (this.input.actions.THROTTLE_DOWN) this.setThrottle(this.commandThrottle - 0.02);
+                if (this.input.actions.CUT_ENGINE) this.setThrottle(0);
+
+                // Re-read throttle in case it changed
+                throttle = this.commandThrottle;
             }
         }
 
-        const controls = { throttle, gimbalAngle, stage, abort };
+        const controls = {
+            throttle,
+            gimbalAngle,
+            stage,
+            abort,
+            // Explicitly signal active state change
+            ignition: this.commandThrottle > 0,
+            cutoff: this.commandThrottle === 0
+        };
 
         // Step Physics logic in Worker
         this.physics.step(dt, { timeScale: this.timeScale, controls });
@@ -639,21 +686,21 @@ export class Game {
      * Draw environmental visuals (wind, corridors)
      */
     private drawEnvironment(camY: number): void {
-        const startAlt = Math.max(0, (this.groundY - (camY + this.height)) / PIXELS_PER_METER);
+        const startAlt = Math.max(0, (this.groundY - (camY + this.height / this.ZOOM)) / PIXELS_PER_METER);
         const endAlt = (this.groundY - camY) / PIXELS_PER_METER;
 
         // 1. Draw Safe Flight Corridor (Launch corridor)
         // Simple funnel: +/- 500m at pad, expanding to +/- 5km at 50km
         this.ctx.save();
         this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.1)';
-        this.ctx.lineWidth = 2;
-        this.ctx.setLineDash([20, 20]);
+        this.ctx.lineWidth = 2 / this.ZOOM; // Maintain line width
+        this.ctx.setLineDash([20 / this.ZOOM, 20 / this.ZOOM]);
 
         this.ctx.beginPath();
         // Left boundary
         for (let alt = startAlt; alt <= endAlt; alt += 1000) {
             const width = 500 + (alt / 50000) * 4500;
-            const y = this.groundY - alt * PIXELS_PER_METER - camY;
+            const y = this.groundY - alt * PIXELS_PER_METER;
             const x = this.width / 2 - width * PIXELS_PER_METER;
             if (alt === startAlt) this.ctx.moveTo(x, y);
             else this.ctx.lineTo(x, y);
@@ -664,7 +711,7 @@ export class Game {
         // Right boundary
         for (let alt = startAlt; alt <= endAlt; alt += 1000) {
             const width = 500 + (alt / 50000) * 4500;
-            const y = this.groundY - alt * PIXELS_PER_METER - camY;
+            const y = this.groundY - alt * PIXELS_PER_METER;
             const x = this.width / 2 + width * PIXELS_PER_METER;
             if (alt === startAlt) this.ctx.moveTo(x, y);
             else this.ctx.lineTo(x, y);
@@ -678,7 +725,7 @@ export class Game {
         const step = 200; // pixels
         const startY = Math.floor(camY / step) * step;
 
-        for (let y = startY; y < camY + this.height; y += step) {
+        for (let y = startY; y < camY + this.height / this.ZOOM; y += step) {
             const alt = (this.groundY - y) / PIXELS_PER_METER;
             if (alt < 0) continue;
 
@@ -686,14 +733,12 @@ export class Game {
             const speed = Math.sqrt(wind.x * wind.x + wind.y * wind.y);
 
             if (speed > 1) {
-                const screenY = y - camY;
-                const screenX = 50; // Draw on left side
+                const screenY = y;
+                const screenX = 50 / this.ZOOM; // Draw on left side (scaled)
 
                 // Draw arrow
                 this.ctx.translate(screenX, screenY);
                 // Note: Wind vector points WHERE wind is going. 
-                // getWindAtAltitude returns force direction (negative of origin).
-                // So (1,0) means wind pushing RIGHT.
                 const angle = Math.atan2(wind.y, wind.x);
 
                 this.ctx.rotate(angle);
@@ -718,7 +763,7 @@ export class Game {
                 // Text
                 this.ctx.rotate(-angle); // Reset rotation for text
                 this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                this.ctx.font = '10px monospace';
+                this.ctx.font = `${10 / this.ZOOM}px monospace`;
                 this.ctx.fillText(`${speed.toFixed(0)} m/s`, 10, 15);
 
                 this.ctx.translate(-screenX, -screenY);
@@ -822,9 +867,14 @@ export class Game {
 
         // Camera follow
         if (this.trackedEntity) {
-            let targetY = this.trackedEntity.y - this.height * 0.6;
+            // DEBUG: Log coordinates occasionally
+            if (Math.random() < 0.01) {
+                console.log(`Tracked Pos: ${this.trackedEntity.x.toFixed(2)}, ${this.trackedEntity.y.toFixed(2)} | CamY: ${this.cameraY.toFixed(2)} | Zoom: ${this.ZOOM}`);
+            }
+
+            let targetY = this.trackedEntity.y - (this.height * 0.6) / this.ZOOM;
             if (this.cameraMode === 'ROCKET') {
-                targetY = this.trackedEntity.y - this.height / 2;
+                targetY = this.trackedEntity.y - (this.height / 2) / this.ZOOM;
             }
 
             if (targetY < 0) {
@@ -841,7 +891,51 @@ export class Game {
         }
 
         this.ctx.save();
-        this.ctx.translate(this.cameraShakeX, -this.cameraY + this.cameraShakeY);
+
+        // Simplified Camera Transform
+        // 1. Scale everything
+        this.ctx.scale(this.ZOOM, this.ZOOM);
+
+        // 2. Translate "Camera"
+        // We want the rocket to be at:
+        // Screen X: width/2
+        // Screen Y: height * 0.6 (slightly below center)
+        // 
+        // Logic: ScreenPos = (WorldPos - CamPos) * Zoom
+        // width/2 = (RocketX - CamX) * Zoom  =>  CamX = RocketX - (width/2)/Zoom
+        // height*0.6 = (RocketY - CamY) * Zoom => CamY = RocketY - (height*0.6)/Zoom
+
+        let camX = 0; // Default center
+        if (this.trackedEntity) {
+            // Calculate desired camera position to keep rocket centered
+            camX = this.trackedEntity.x - (this.width / 2) / this.ZOOM;
+
+            // Smoothly update cameraY (altitude tracking)
+            // We want RocketY - CamY to be constant-ish
+            const targetCamY = this.trackedEntity.y - (this.height * 0.7) / this.ZOOM;
+
+            // Clamp camera: Don't show below ground too much
+            // Ground is at this.groundY. 
+            // If we want ground at bottom of screen: CamY = groundY - height/Zoom
+            const minCamY = this.groundY - (this.height - 50) / this.ZOOM;
+
+            // Interpolate
+            const diff = targetCamY - this.cameraY;
+            this.cameraY += diff * 0.1;
+
+            // Hard clamp to not show under-ground void
+            // Actually, allowed for crash debris, but let's keep it reasonable
+        }
+
+        // Apply shake
+        const shakeX = this.cameraShakeX / this.ZOOM;
+        const shakeY = this.cameraShakeY / this.ZOOM;
+
+        // Apply translation
+        // Note: this.cameraY is already being tracked in the class
+        this.ctx.translate(-camX + shakeX, -this.cameraY + shakeY);
+
+
 
         // Ground
         this.ctx.fillStyle = '#2ecc71';
@@ -853,10 +947,10 @@ export class Game {
         // Entities
         this.entities.forEach(e => e.draw(this.ctx, 0));
 
-        this.ctx.restore();
-
         // Draw environmental overlays
         this.drawEnvironment(this.cameraY);
+
+        this.ctx.restore();
 
         // HUD
         this.drawHUD();

@@ -116,14 +116,19 @@ function updateActionButton(): void {
 
 // Launch/Abort/Deploy button
 document.getElementById('launch-btn')?.addEventListener('click', () => {
-    if (flightPhase === 'prelaunch' && game.mainStack?.throttle === 0) {
-        game.mainStack.active = true;
-        game.mainStack.throttle = 1.0;
-        game.missionLog.log("IGNITION SEQUENCE START", "warn");
+    if (flightPhase === 'prelaunch') {
+        // Gate launch on checklist
+        if (!game.checklist.isReadyForLaunch()) {
+            game.missionLog.log('LAUNCH HOLD — Complete checklist first (press C)', 'warn');
+            game.checklist.show();
+            return;
+        }
+        game.launch();
+        game.checklist.hide();
         updateActionButton();
     } else if (flightPhase === 'ascending') {
         // Abort - cut engines
-        if (game.mainStack) game.mainStack.throttle = 0;
+        game.setThrottle(0);
         game.missionLog.log("ABORT INITIATED", "warn");
     } else if (flightPhase === 'descending') {
         game.missionLog.log("LANDING LEGS DEPLOYED", "info");
@@ -290,9 +295,7 @@ window.addEventListener('keydown', (e) => {
                 return;
             }
             // Initial ignition
-            game.mainStack.active = true;
-            game.mainStack.throttle = 1.0;
-            game.missionLog.log("IGNITION SEQUENCE START", "warn");
+            game.launch();
             game.checklist.hide();
             updateActionButton();
         } else if (flightPhase !== 'prelaunch') {
