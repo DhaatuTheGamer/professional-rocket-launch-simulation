@@ -74,7 +74,7 @@ export class VABEditor {
             <div class="vab-editor">
                 <div class="vab-header">
                     <h2>⚙️ Vehicle Assembly Building</h2>
-                    <input type="text" class="vab-name-input" value="${this.blueprint.name}" placeholder="Rocket Name">
+                    <input type="text" class="vab-name-input" placeholder="Rocket Name">
                 </div>
                 
                 <div class="vab-main">
@@ -127,6 +127,12 @@ export class VABEditor {
                 </div>
             </div>
         `;
+
+        // Safely set user input value to prevent XSS
+        const nameInput = this.container.querySelector('.vab-name-input') as HTMLInputElement;
+        if (nameInput) {
+            nameInput.value = this.blueprint.name;
+        }
 
         this.attachEventListeners();
     }
