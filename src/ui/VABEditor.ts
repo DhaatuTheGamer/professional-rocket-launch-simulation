@@ -69,7 +69,7 @@ export class VABEditor {
             <div class="vab-editor">
                 <div class="vab-header">
                     <h2>⚙️ Vehicle Assembly Building</h2>
-                    <input type="text" class="vab-name-input" placeholder="Rocket Name">
+                    <input type="text" class="vab-name-input" placeholder="Rocket Name" value="">
                 </div>
                 
                 <div class="vab-main">
@@ -124,12 +124,26 @@ export class VABEditor {
         `;
 
         // Safely set user input value to prevent XSS
+        // We use the DOM property assignment instead of the value attribute
+        // to prevent stored XSS from malicious blueprint names.
         const nameInput = this.container.querySelector('.vab-name-input') as HTMLInputElement;
         if (nameInput) {
             nameInput.value = this.blueprint.name;
         }
 
         this.attachEventListeners();
+    }
+
+    /**
+     * Escape HTML special characters to prevent XSS
+     */
+    private escapeHTML(text: string): string {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     /**
@@ -173,8 +187,8 @@ export class VABEditor {
             <div class="vab-part-item" data-part-id="${part.id}">
                 <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
-                    <div class="vab-part-name">${part.name}</div>
-                    <div class="vab-part-desc">${part.description}</div>
+                    <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
+                    <div class="vab-part-desc">${this.escapeHTML(part.description)}</div>
                     <div class="vab-part-stats">
                         ${this.formatPartStats(part)}
                     </div>
@@ -251,7 +265,7 @@ export class VABEditor {
                     <div class="vab-part-preview" 
                          data-instance="${inst.instanceId}"
                          style="height: ${inst.part.height}px; width: ${inst.part.width}px;">
-                        <span class="part-label">${inst.part.name}</span>
+                        <span class="part-label">${this.escapeHTML(inst.part.name)}</span>
                         <button class="remove-part" data-stage="${i}" data-instance="${inst.instanceId}">×</button>
                     </div>
                 `;
