@@ -40,6 +40,8 @@ export class FullStack extends Vessel {
         super(x, y);
         this.h = 160;
         this.mass = CONFIG.MASS_BOOSTER + CONFIG.MASS_UPPER + CONFIG.FUEL_MASS;
+        this.fuelCapacity = CONFIG.FUEL_MASS;
+        this.currentFuelMass = CONFIG.FUEL_MASS;
         this.maxThrust = CONFIG.MAX_THRUST_BOOSTER;
         this.ispVac = CONFIG.ISP_VAC_BOOSTER;
         this.ispSL = CONFIG.ISP_SL_BOOSTER;
@@ -139,6 +141,8 @@ export class Booster extends Vessel {
         this.h = 100;
         this.mass = CONFIG.MASS_BOOSTER;
         this.maxThrust = CONFIG.MAX_THRUST_BOOSTER;
+        this.fuelCapacity = CONFIG.FUEL_MASS;
+        this.currentFuelMass = CONFIG.FUEL_MASS * 0.3; // 30% fuel
         this.fuel = 0.3; // Remaining fuel after staging
         this.ispVac = CONFIG.ISP_VAC_BOOSTER;
         this.ispSL = CONFIG.ISP_SL_BOOSTER;
@@ -280,6 +284,8 @@ export class UpperStage extends Vessel {
         this.h = 60;
         this.mass = CONFIG.MASS_UPPER;
         this.maxThrust = CONFIG.MAX_THRUST_UPPER;
+        this.fuelCapacity = CONFIG.FUEL_MASS; // Use full capacity reference
+        this.currentFuelMass = CONFIG.FUEL_MASS; // Starts full
         this.active = true;
         this.ispVac = CONFIG.ISP_VAC_UPPER;
         this.ispSL = CONFIG.ISP_SL_UPPER;
@@ -394,6 +400,8 @@ export class Payload extends Vessel {
         this.vx = vx;
         this.vy = vy;
         this.mass = 1000;
+        this.fuelCapacity = 0;
+        this.currentFuelMass = 0;
         this.w = 20;
         this.h = 20;
         this.active = true;
@@ -445,6 +453,8 @@ export class Fairing extends Vessel {
         this.vy = vy;
         this.side = side;
         this.active = false;  // No thrust
+        this.fuelCapacity = 0;
+        this.currentFuelMass = 0;
         this.h = 40;
         this.cd = 2.0;  // High drag
     }

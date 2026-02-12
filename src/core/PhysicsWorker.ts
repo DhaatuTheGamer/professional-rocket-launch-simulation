@@ -2,6 +2,7 @@
 // Handles the physics simulation loop
 
 import { FullStack, Booster, UpperStage, Fairing, Payload } from '../physics/RocketComponents';
+import { ModularVessel } from '../physics/ModularVessel';
 import { Vessel } from '../physics/Vessel';
 import { EnvironmentSystem } from '../physics/Environment';
 import { FlightTerminationSystem } from '../safety/FlightTermination';
@@ -47,8 +48,17 @@ function init(config: any) {
     const width = config.width || 1920;
     groundY = config.groundY || 1000;
 
-    // Create initial rocket
-    const rocket = new FullStack(width / 2, groundY - 160);
+    let rocket: Vessel;
+
+    if (config.blueprint) {
+        // Create modular vessel from blueprint
+        rocket = new ModularVessel(width / 2, groundY, config.blueprint);
+        rocket.y = groundY - rocket.h;
+    } else {
+        // Legacy fallback
+        rocket = new FullStack(width / 2, groundY - 160);
+    }
+
     entities.push(rocket);
 
     fts.reset();
@@ -127,12 +137,71 @@ function performStaging() {
 
     // Logic copied from Game.performStaging
     // We need to differentiate types.
-    if (tracked instanceof FullStack) {
+    if (tracked instanceof ModularVessel) {
+        const stages = tracked.blueprint.stages;
+        if (stages.length <= 1) return; // Cannot stage further
+
+        // Remove old vessel
+        entities = entities.filter(e => e !== tracked);
+
+        // Split stages
+        // Bottom stage (0) becomes spent booster
+        const boosterStages = [stages[0]];
+        const upperStages = stages.slice(1);
+
+        // Create Upper Stage (Top part)
+        // Re-index stages for the new blueprint
+        const upperBlueprint = {
+            ...tracked.blueprint,
+            stages: upperStages.map((s, i) => ({...s, stageNumber: i}))
+        };
+        const upper = new ModularVessel(tracked.x, tracked.y, upperBlueprint);
+        upper.vx = tracked.vx;
+        upper.vy = tracked.vy; // Start with same velocity
+        upper.angle = tracked.angle;
+        upper.active = true;
+        upper.throttle = 1.0;
+        // Upper stage assumes full fuel
+        upper.currentFuelMass = upper.fuelCapacity;
+
+        // Create Booster (Bottom part)
+        const boosterBlueprint = {
+            ...tracked.blueprint,
+            stages: boosterStages
+        };
+        // Booster top is at upper stage bottom
+        const boosterY = tracked.y + upper.h;
+
+        const booster = new ModularVessel(tracked.x, boosterY, boosterBlueprint);
+        booster.vx = tracked.vx;
+        booster.vy = tracked.vy;
+        booster.angle = tracked.angle;
+        booster.active = true;
+        booster.throttle = 0;
+        // Booster is mostly spent
+        booster.currentFuelMass = booster.fuelCapacity * 0.05;
+
+        // Apply separation kick
+        const sepVel = 2.0; // m/s
+        upper.vy -= Math.cos(tracked.angle) * sepVel;
+        upper.vx += Math.sin(tracked.angle) * sepVel;
+
+        entities.push(booster);
+        entities.push(upper);
+
+        trackedIndex = entities.length - 1; // Track upper stage
+
+        self.postMessage({ type: 'EVENT', payload: { name: 'STAGING_S1', x: tracked.x, y: tracked.y } });
+
+    } else if (tracked instanceof FullStack) {
         // Sep S1
         entities = entities.filter(e => e !== tracked);
 
         const booster = new Booster(tracked.x, tracked.y, tracked.vx, tracked.vy);
         booster.angle = tracked.angle;
+        // Legacy booster setup
+        booster.fuelCapacity = (booster as any).fuelCapacity || 30000;
+        booster.currentFuelMass = booster.fuelCapacity * 0.05;
         booster.fuel = 0.05;
         booster.active = true;
 

@@ -6,10 +6,9 @@
  */
 
 import { Game } from './core/Game';
-import { CONFIG, PIXELS_PER_METER } from './constants';
+import { PIXELS_PER_METER } from './constants';
 import { state } from './state';
 import { SASModes } from './utils/SAS';
-import { FullStack } from './physics/RocketComponents';
 import { ScriptEditor } from './ui/ScriptEditor';
 import { exportFlightData } from './telemetry/TelemetryExporter';
 import { VABEditor } from './ui/VABEditor';
@@ -45,7 +44,7 @@ const scriptEditor = new ScriptEditor(game.flightComputer);
 const vabEditor = new VABEditor('vab-modal', (blueprint: VehicleBlueprint) => {
     // Apply blueprint stats to CONFIG for now (future: ModularVessel)
     const stats = calculateStats(blueprint);
-    CONFIG.FUEL_MASS = stats.fuelMass;
+    // CONFIG.FUEL_MASS is no longer used for vessel physics as we use ModularVessel
 
     // Hide splash and reset
     const splashScreen = document.getElementById('splash-screen');

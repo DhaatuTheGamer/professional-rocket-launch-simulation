@@ -284,7 +284,7 @@ export class Game {
     /**
      * Reset to initial state
      */
-    reset(): void {
+    reset(blueprint?: any): void {
         this.entities = [];
         this.particles = [];
         this.cameraY = 0;
@@ -302,7 +302,8 @@ export class Game {
         this.physics.init({
             width: this.width,
             height: this.height,
-            groundY: this.groundY
+            groundY: this.groundY,
+            blueprint: blueprint
         });
 
         // Legacy globals (will be synced next frame)
@@ -315,8 +316,7 @@ export class Game {
      */
     spawnVessel(blueprint: any): void {
         console.log("Spawning blueprint:", blueprint?.name);
-        // For now, reset which triggers worker init to spawn default rocket
-        this.reset();
+        this.reset(blueprint);
     }
 
     /**

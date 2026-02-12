@@ -16,9 +16,7 @@ import {
     CONFIG,
     PIXELS_PER_METER,
     RHO_SL,
-    SCALE_HEIGHT,
     R_EARTH,
-    SPEED_OF_SOUND,
     getAtmosphericDensity,
     getGravity,
     getDynamicPressure,
@@ -31,7 +29,6 @@ import { Particle } from './Particle';
 import {
     AerodynamicsConfig,
     AerodynamicState,
-    AerodynamicForces,
     DEFAULT_AERO_CONFIG,
     calculateAerodynamicState,
     calculateAerodynamicForces,
@@ -52,8 +49,6 @@ import {
     FULLSTACK_PROP_CONFIG,
     createInitialPropulsionState,
     updatePropulsionState,
-    attemptIgnition,
-    commandShutdown,
     getIgnitionFailureMessage
 } from './Propulsion';
 import {
@@ -82,7 +77,9 @@ export class Vessel implements IVessel {
 
     // Engine state
     public throttle: number = 0;
-    public fuel: number = 1.0;    // 0-1 normalized
+    public fuel: number = 1.0;    // 0-1 normalized (Legacy compatibility)
+    public fuelCapacity: number = CONFIG.FUEL_MASS; // Total fuel mass capacity (kg)
+    public currentFuelMass: number = CONFIG.FUEL_MASS; // Current fuel mass (kg)
     public active: boolean = true;
     public maxThrust: number = 100000;
 
@@ -151,7 +148,7 @@ export class Vessel implements IVessel {
      * @param dt - Time step
      * @returns Derivatives for integration
      */
-    protected getDerivatives(s: PhysicsState, t: number, dt: number): Derivatives {
+    protected getDerivatives(s: PhysicsState, _t: number, _dt: number): Derivatives {
         const altitude = (state.groundY - s.y * PIXELS_PER_METER - this.h) / PIXELS_PER_METER;
         const safeAlt = Math.max(0, altitude);
 
@@ -163,7 +160,6 @@ export class Vessel implements IVessel {
         const relVy = s.vy - currentWindVelocity.y;
         const vSq = relVx * relVx + relVy * relVy;
         const v = Math.sqrt(vSq);
-        const q = getDynamicPressure(rho * currentDensityMultiplier, v);
         const mach = getMachNumber(v);
 
         // Calculate aerodynamic state using relative velocity (AoA, CP, CoM, stability)
@@ -333,10 +329,15 @@ export class Vessel implements IVessel {
         this.y += dydt * dt * PIXELS_PER_METER;
 
         // Fuel consumption (uses actual throttle, not commanded)
-        if (this.actualThrottle > 0 && this.fuel > 0) {
+        if (this.actualThrottle > 0 && this.currentFuelMass > 0) {
             const flowRate = (this.actualThrottle * this.maxThrust) / (9.8 * this.ispVac);
-            this.fuel -= (flowRate / CONFIG.FUEL_MASS) * dt;
-            this.mass -= flowRate * dt;
+            const fuelConsumed = flowRate * dt;
+
+            this.currentFuelMass = Math.max(0, this.currentFuelMass - fuelConsumed);
+            this.mass -= fuelConsumed;
+
+            // Sync legacy normalized fuel value (0-1)
+            this.fuel = this.fuelCapacity > 0 ? this.currentFuelMass / this.fuelCapacity : 0;
         }
 
         // Update dynamic pressure
@@ -425,7 +426,7 @@ export class Vessel implements IVessel {
             this.propState,
             this.propConfig,
             this.throttle,  // commanded throttle
-            this.fuel > 0,
+            this.currentFuelMass > 0,
             Math.abs(currentAccel),
             dt
         );
@@ -734,7 +735,7 @@ export class Vessel implements IVessel {
     /**
      * Draw the vessel (to be overridden by subclasses)
      */
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(_ctx: CanvasRenderingContext2D, _camY: number): void {
         // Base implementation does nothing
         // Subclasses implement specific rendering
     }
