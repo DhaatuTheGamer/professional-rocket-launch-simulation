@@ -18,8 +18,18 @@ import { Vessel } from './physics/Vessel';
 import { updateFlightComputerHUD } from './ui/FlightComputerHUD';
 
 // Create and initialize game
-const game = new Game();
-game.init();
+let game: Game;
+try {
+    game = new Game();
+    game.init().catch(e => {
+        console.error("Game initialization failed:", e);
+        alert(`Game Init Error: ${e.message}`);
+    });
+} catch (e: any) {
+    console.error("Game constructor failed:", e);
+    alert(`Critical Error: ${e.message}\n\nThis application looks for SharedArrayBuffer support. Please ensure you are running with COOP/COEP headers.`);
+    throw e;
+}
 
 // UI Cache for optimized updates
 const uiCache = {
