@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self';">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeltaV Lab</title>
     <link rel="stylesheet" href="style.css">
@@ -17,12 +18,12 @@
     <div id="splash-screen">
         <div class="content">
             <h1>Delta-V Lab <span
-                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v2.7.0</span>
+                    style="font-size: 0.4em; vertical-align: text-top; opacity: 0.6; font-weight: normal;">v3.1.0</span>
             </h1>
             <p class="subtitle">Engineering-Grade Spaceflight Simulation</p>
 
             <div class="mission-guide">
-                <h2>📋 Full Mission Profile Guide</h2>
+                <h2>Full Mission Profile Guide</h2>
                 <ol>
                     <li><strong>LIFTOFF:</strong> Press <span class="key">SPACE</span>. Engines ignite at T-0.</li>
                     <li><strong>GRAVITY TURN:</strong> At <strong>2.0 km</strong>, tap <span class="key">RIGHT
@@ -147,9 +148,9 @@
 
         <!-- IMPROVEMENT #10: Camera Panel -->
         <div id="camera-panel">
-            <button data-cam="1" class="active" title="Follow Camera [1]">👁 Follow</button>
-            <button data-cam="2" title="Orbit Camera [2]">🔄 Orbit</button>
-            <button data-cam="3" title="Cinema Camera [3]">🎬 Cinema</button>
+            <button data-cam="1" class="active" title="Follow Camera [1]">Follow</button>
+            <button data-cam="2" title="Orbit Camera [2]">Orbit</button>
+            <button data-cam="3" title="Cinema Camera [3]">Cinema</button>
         </div>
 
         <!-- SAS Controls - Enhanced -->
@@ -157,14 +158,14 @@
             <div class="sas-title">SAS CONTROL</div>
             <div class="sas-group">
                 <button id="sas-off" class="sas-btn active">OFF</button>
-                <button id="sas-stability" class="sas-btn">⚡ STABILITY</button>
+                <button id="sas-stability" class="sas-btn">STABILITY</button>
             </div>
             <div class="sas-group">
-                <button id="sas-prograde" class="sas-btn">⬆ PROGRADE</button>
-                <button id="sas-retrograde" class="sas-btn">⬇ RETROGRADE</button>
+                <button id="sas-prograde" class="sas-btn">PROGRADE</button>
+                <button id="sas-retrograde" class="sas-btn">RETROGRADE</button>
             </div>
             <div id="sas-mode-indicator">
-                <span class="icon">🎯</span>
+                <span class="icon"></span>
                 <span id="sas-mode-text">OFF</span>
             </div>
         </div>
@@ -195,7 +196,7 @@
     <!-- IMPROVEMENT #7: Onboarding Tooltip Overlay -->
     <div id="tooltip-overlay" class="tooltip-overlay">
         <div class="tooltip-box">
-            <h3>🚀 Welcome to Mission Control!</h3>
+            <h3>Welcome to Mission Control!</h3>
             <p>Ready for your first launch? Press <span class="key-hint">SPACE</span> to ignite the engines!</p>
             <p style="font-size: 0.8rem; color: #888;">Use arrow keys to steer, SHIFT/CTRL for throttle.</p>
             <button id="tooltip-dismiss">GOT IT!</button>
@@ -203,17 +204,17 @@
     </div>
 
     <div id="controls">
-        <button id="launch-btn" class="primary state-launch" title="Launch [SPACE]">🚀 INITIATE LAUNCH</button>
-        <button id="checklist-btn" title="Launch Checklist [C]">📋 Checklist</button>
-        <button id="fts-destruct-btn" class="fts-destruct" title="FTS Destruct [T to arm]">💥 FTS DESTRUCT</button>
-        <button id="maneuver-btn" title="Maneuver Planner [O]">📐 Maneuver</button>
-        <button id="mission-control-btn" title="Mission Control">🌍 CAPCOM</button>
-        <button id="fc-btn" title="Open Flight Computer Script Editor [F]">✈️ Flight PC</button>
-        <button id="telemetry-btn" title="Pop Out Telemetry [P]">📡 Telemetry</button>
-        <button id="export-btn" title="Export Flight Data [E]">💾 Export Data</button>
-        <button id="autopilot-btn" title="Toggle Auto-Land [A]">🤖 Auto-Land: OFF</button>
-        <button id="audio-btn" class="disabled">🔇 Enable Audio</button>
-        <button id="reset-btn">🔄 Reset</button>
+        <button id="launch-btn" class="primary state-launch" title="Launch [SPACE]">INITIATE LAUNCH</button>
+        <button id="checklist-btn" title="Launch Checklist [C]">Checklist</button>
+        <button id="fts-destruct-btn" class="fts-destruct" title="FTS Destruct [T to arm]">FTS DESTRUCT</button>
+        <button id="maneuver-btn" title="Maneuver Planner [O]">Maneuver</button>
+        <button id="mission-control-btn" title="Mission Control">CAPCOM</button>
+        <button id="fc-btn" title="Open Flight Computer Script Editor [F]">Flight PC</button>
+        <button id="telemetry-btn" title="Pop Out Telemetry [P]">Telemetry</button>
+        <button id="export-btn" title="Export Flight Data [E]">Export Data</button>
+        <button id="autopilot-btn" title="Toggle Auto-Land [A]">Auto-Land: OFF</button>
+        <button id="audio-btn" class="disabled">Enable Audio</button>
+        <button id="reset-btn">Reset</button>
     </div>
 
     <div id="mobile-controls">

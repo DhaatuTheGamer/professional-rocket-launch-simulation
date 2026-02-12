@@ -109,17 +109,17 @@ function updateActionButton(): void {
 
     if (game.trackedEntity.throttle === 0 && alt < 100) {
         // Pre-launch
-        btn.textContent = '🚀 INITIATE LAUNCH';
+        btn.textContent = 'INITIATE LAUNCH';
         btn.className = 'primary state-launch';
         flightPhase = 'prelaunch';
     } else if (vy < 0) {
         // Ascending
-        btn.textContent = '🛑 ABORT MISSION';
+        btn.textContent = 'ABORT MISSION';
         btn.className = 'primary state-abort';
         flightPhase = 'ascending';
     } else if (vy > 0 && alt > 1000) {
         // Descending from high altitude
-        btn.textContent = '🦿 DEPLOY LEGS';
+        btn.textContent = 'DEPLOY LEGS';
         btn.className = 'primary state-deploy';
         flightPhase = 'descending';
     }
@@ -150,14 +150,14 @@ document.getElementById('launch-btn')?.addEventListener('click', () => {
 document.getElementById('autopilot-btn')?.addEventListener('click', (e) => {
     const btn = e.target as HTMLButtonElement;
     state.autopilotEnabled = !state.autopilotEnabled;
-    btn.textContent = state.autopilotEnabled ? '🤖 Auto-Land: ON' : '🤖 Auto-Land: OFF';
+    btn.textContent = state.autopilotEnabled ? 'Auto-Land: ON' : 'Auto-Land: OFF';
     btn.classList.toggle('enabled', state.autopilotEnabled);
 });
 
 document.getElementById('audio-btn')?.addEventListener('click', (e) => {
     const btn = e.target as HTMLButtonElement;
     const muted = game.audio.toggleMute();
-    btn.textContent = muted ? '🔇 Enable Audio' : '🔊 Disable Audio';
+    btn.textContent = muted ? 'Enable Audio' : 'Disable Audio';
     btn.classList.remove('enabled', 'disabled');
     btn.classList.add(muted ? 'disabled' : 'enabled');
 });
@@ -175,16 +175,16 @@ document.querySelectorAll('.sas-btn').forEach((btn) => {
         // Update SAS mode indicator
         const modeText = uiCache.sasModeText;
         const modeIcons: Record<string, string> = {
-            OFF: '⭕',
-            STABILITY: '⚡',
-            PROGRADE: '⬆️',
-            RETROGRADE: '⬇️'
+            OFF: '',
+            STABILITY: '',
+            PROGRADE: '',
+            RETROGRADE: ''
         };
 
         if (modeText) {
             modeText.textContent = mode;
             const iconEl = modeText.previousElementSibling;
-            if (iconEl) iconEl.textContent = modeIcons[mode] ?? '🎯';
+            if (iconEl) iconEl.textContent = '';
         }
     });
 });

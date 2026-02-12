@@ -68,7 +68,7 @@ export class VABEditor {
         this.container.innerHTML = `
             <div class="vab-editor">
                 <div class="vab-header">
-                    <h2>⚙️ Vehicle Assembly Building</h2>
+                    <h2>Vehicle Assembly Building</h2>
                     <input type="text" class="vab-name-input" placeholder="Rocket Name" value="">
                 </div>
                 
@@ -115,9 +115,9 @@ export class VABEditor {
                         <button class="vab-preset-btn" data-preset="new">New Rocket</button>
                     </div>
                     <div class="vab-main-actions">
-                        <button class="vab-save-btn">💾 Save</button>
+                        <button class="vab-save-btn">Save</button>
                         <button class="vab-cancel-btn">Cancel</button>
-                        <button class="vab-launch-btn primary large">🚀 GO FOR LAUNCH</button>
+                        <button class="vab-launch-btn primary large">GO FOR LAUNCH</button>
                     </div>
                 </div>
             </div>
@@ -151,12 +151,12 @@ export class VABEditor {
      */
     private renderCategoryTabs(): string {
         const categories: { id: PartCategory; icon: string; label: string }[] = [
-            { id: 'engine', icon: '🔥', label: 'Engines' },
-            { id: 'tank', icon: '⛽', label: 'Tanks' },
-            { id: 'avionics', icon: '🎛️', label: 'Avionics' },
-            { id: 'fairing', icon: '🛡️', label: 'Fairings' },
-            { id: 'decoupler', icon: '⚡', label: 'Decouplers' },
-            { id: 'srb', icon: '🚀', label: 'SRBs' }
+            { id: 'engine', icon: '', label: 'Engines' },
+            { id: 'tank', icon: '', label: 'Tanks' },
+            { id: 'avionics', icon: '', label: 'Avionics' },
+            { id: 'fairing', icon: '', label: 'Fairings' },
+            { id: 'decoupler', icon: '', label: 'Decouplers' },
+            { id: 'srb', icon: '', label: 'SRBs' }
         ];
 
         return categories
@@ -164,7 +164,7 @@ export class VABEditor {
                 (cat) => `
             <button class="vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}"
                     data-category="${cat.id}">
-                ${cat.icon} ${cat.label}
+                ${cat.label}
             </button>
         `
             )
@@ -185,7 +185,7 @@ export class VABEditor {
             .map(
                 (part) => `
             <div class="vab-part-item" data-part-id="${part.id}">
-                <div class="vab-part-icon">${this.getPartIcon(part)}</div>
+                <div class="vab-part-icon"></div>
                 <div class="vab-part-info">
                     <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
                     <div class="vab-part-desc">${this.escapeHTML(part.description)}</div>
@@ -273,7 +273,7 @@ export class VABEditor {
 
             // Show decoupler if present
             if (stage.hasDecoupler && i > 0) {
-                html += '<div class="vab-decoupler-marker">⚡ STAGE SEP</div>';
+                html += '<div class="vab-decoupler-marker">STAGE SEP</div>';
             }
 
             html += '</div>';
@@ -298,7 +298,7 @@ export class VABEditor {
                     <div class="vab-stage-header">
                         <span class="stage-number">Stage ${i + 1}</span>
                         <span class="stage-info">${stage.parts.length} parts</span>
-                        ${i > 0 ? '<button class="remove-stage" data-stage="' + i + '">🗑️</button>' : ''}
+                        ${i > 0 ? '<button class="remove-stage" data-stage="' + i + '">REMOVE</button>' : ''}
                     </div>
                     <div class="vab-stage-stats">
                         <span>Mass: ${(stageStats.mass / 1000).toFixed(1)}t</span>
@@ -377,10 +377,10 @@ export class VABEditor {
             </div>
             <div class="vab-stat">
                 <div class="vab-stat-indicator ${stats.hasAvionics ? 'ok' : 'warn'}">
-                    ${stats.hasAvionics ? '✓' : '⚠'} Avionics
+                    ${stats.hasAvionics ? '[OK]' : '[MISSING]'} Avionics
                 </div>
                 <div class="vab-stat-indicator ${stats.hasFairing ? 'ok' : 'warn'}">
-                    ${stats.hasFairing ? '✓' : '⚠'} Fairing
+                    ${stats.hasFairing ? '[OK]' : '[MISSING]'} Fairing
                 </div>
             </div>
         `;

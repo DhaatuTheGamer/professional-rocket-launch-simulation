@@ -3,7 +3,6 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
     test: {
         include: ['tests/**/*.test.ts'],
-        environment: 'node',
         globals: true,
         coverage: {
             provider: 'v8',
@@ -11,6 +10,7 @@ export default defineConfig({
             exclude: ['src/main.ts', 'src/ui/**'],
             reporter: ['text', 'html'],
         },
+        environment: 'jsdom',
         alias: {
             '@/': new URL('./src/', import.meta.url).pathname,
             '@types/': new URL('./src/types/', import.meta.url).pathname,

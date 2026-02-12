@@ -43,7 +43,7 @@ export class ManeuverPlanner {
         modal.innerHTML = `
             <div class="script-editor-content" style="max-width: 500px;">
                 <div class="script-editor-header">
-                    <h2>📐 Orbital Maneuver Planner</h2>
+                    <h2>Orbital Maneuver Planner</h2>
                     <button id="planner-close-btn" class="script-close-btn">×</button>
                 </div>
                 
@@ -79,7 +79,7 @@ export class ManeuverPlanner {
                 </div>
                 
                 <div class="script-editor-footer">
-                    <button id="planner-refresh-btn" class="script-btn">🔄 Refresh</button>
+                    <button id="planner-refresh-btn" class="script-btn">Refresh</button>
                     <!-- Future: Load to flight computer -->
                     <!-- <button id="planner-program-btn" class="script-btn script-btn-primary">Program Flight Computer</button> -->
                 </div>

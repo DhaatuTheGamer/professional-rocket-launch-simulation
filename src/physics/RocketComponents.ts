@@ -24,7 +24,6 @@ import {
     PAYLOAD_PROP_CONFIG,
     createInitialPropulsionState
 } from './Propulsion';
-import { ReliabilityConfig } from './Reliability';
 
 /**
  * Full Stack - Complete rocket before staging

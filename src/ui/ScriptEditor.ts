@@ -51,7 +51,7 @@ export class ScriptEditor {
         modal.innerHTML = `
             <div class="script-editor-content">
                 <div class="script-editor-header">
-                    <h2>✈️ Flight Computer - Script Editor</h2>
+                    <h2>Flight Computer - Script Editor</h2>
                     <button id="script-editor-close" class="script-close-btn" aria-label="Close script editor" title="Close">×</button>
                 </div>
                 
@@ -60,15 +60,15 @@ export class ScriptEditor {
                         <select id="script-preset-select" class="script-select" aria-label="Load preset script">
                             <option value="">-- Load Preset --</option>
                             ${Object.keys(PRESET_SCRIPTS)
-                                .map((name) => `<option value="${name}">${name}</option>`)
-                                .join('')}
+                .map((name) => `<option value="${name}">${name}</option>`)
+                .join('')}
                         </select>
                         
                         <select id="script-save-select" class="script-select" aria-label="Load saved script">
                             <option value="">-- Saved Scripts --</option>
                         </select>
                         
-                        <button id="script-validate-btn" class="script-btn">✓ Validate</button>
+                        <button id="script-validate-btn" class="script-btn">Validate</button>
                         <button id="script-clear-btn" class="script-btn script-btn-danger">Clear</button>
                     </div>
                     
@@ -95,11 +95,11 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
                     <div class="script-footer-left">
                         <input type="text" id="script-name-input" class="script-name-input" aria-label="Script name"
                             placeholder="Script name..." value="My Mission">
-                        <button id="script-save-btn" class="script-btn script-btn-secondary">💾 Save</button>
-                        <button id="script-delete-btn" class="script-btn script-btn-danger">🗑️ Delete</button>
+                        <button id="script-save-btn" class="script-btn script-btn-secondary">Save</button>
+                        <button id="script-delete-btn" class="script-btn script-btn-danger">Delete</button>
                     </div>
                     <div class="script-footer-right">
-                        <button id="script-load-btn" class="script-btn script-btn-primary">📥 Load to FC</button>
+                        <button id="script-load-btn" class="script-btn script-btn-primary">Load to FC</button>
                     </div>
                 </div>
             </div>
@@ -263,7 +263,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
         const result = parseMissionScript(scriptText, name);
 
         if (result.success) {
-            this.showSuccess(`✓ Valid script with ${result.script?.commands.length} commands`);
+            this.showSuccess(`Valid script with ${result.script?.commands.length} commands`);
             return true;
         } else {
             const errorMessages = result.errors.map((e) => `Line ${e.line}: ${e.error}`).join('\n');
@@ -326,7 +326,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(scripts));
         this.updateSavedScriptsList();
-        this.showSuccess(`✓ Saved "${name}"`);
+        this.showSuccess(`Saved "${name}"`);
     }
 
     /**
@@ -405,7 +405,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
         const result = this.flightComputer.loadScript(scriptText, name);
 
         if (result.success) {
-            this.showSuccess(`✓ Loaded to Flight Computer! Press G to activate.`);
+            this.showSuccess(`Loaded to Flight Computer! Press G to activate.`);
 
             if (this.onScriptLoaded && this.flightComputer.state.script) {
                 this.onScriptLoaded(this.flightComputer.state.script);

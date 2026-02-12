@@ -216,8 +216,8 @@ button {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
-    padding: 12px 30px;
-    font-size: 1rem;
+    padding: 8px 16px;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
@@ -949,13 +949,13 @@ button.primary:hover {
 /* HUD Styles - Top Telemetry Bar */
 #hud-top-bar {
     position: absolute;
-    top: 20px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    gap: 40px;
-    padding: 15px 30px;
+    gap: 20px;
+    padding: 8px 20px;
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     border-radius: var(--radius-lg);
@@ -970,7 +970,7 @@ button.primary:hover {
 }
 
 .hud-label {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 2px;
@@ -978,14 +978,14 @@ button.primary:hover {
 
 .hud-value-large {
     font-family: monospace;
-    font-size: 2rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: #fff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 .hud-value-large .unit {
-    font-size: 1rem;
+    font-size: 0.7rem;
     color: #aaa;
 }
 

@@ -93,9 +93,6 @@ export class Game {
     public missionTime: number = 0;
     private lastStageTime: number = 0;
 
-    private bloomCanvas: HTMLCanvasElement;
-    private bloomCtx: CanvasRenderingContext2D;
-
     // HUD state cache for minimizing DOM updates
     private lastHUDState = {
         // Environment
@@ -187,22 +184,6 @@ export class Game {
         this.faultInjector = new FaultInjector('fis-panel');
         this.transmitter = new TelemetryTransmitter();
 
-        // Bloom canvas for glow effects
-        this.bloomCanvas = document.createElement('canvas');
-        this.bloomCanvas.width = this.width / 4;
-        this.bloomCanvas.height = this.height / 4;
-        const bloomCtx = this.bloomCanvas.getContext('2d');
-        if (!bloomCtx) throw new Error('Could not get bloom context');
-        this.bloomCtx = bloomCtx;
-
-        // Update global state
-        updateDimensions(this.width, this.height, this.groundY);
-        setAudioEngine(this.audio);
-        setMissionLog(this.missionLog);
-        setAssetLoader(this.assets);
-
-        // Expose to window for legacy compatibility
-        (window as any).state = state;
         (window as any).PIXELS_PER_METER = PIXELS_PER_METER;
         (window as any).R_EARTH = R_EARTH;
         (window as any).navball = this.navball;
@@ -869,11 +850,11 @@ export class Game {
         // Camera follow
         if (this.trackedEntity) {
             // DEBUG: Log coordinates occasionally
-            if (Math.random() < 0.01) {
-                console.log(
-                    `Tracked Pos: ${this.trackedEntity.x.toFixed(2)}, ${this.trackedEntity.y.toFixed(2)} | CamY: ${this.cameraY.toFixed(2)} | Zoom: ${this.ZOOM}`
-                );
-            }
+            // if (Math.random() < 0.01) {
+            //     console.log(
+            //         `Tracked Pos: ${this.trackedEntity.x.toFixed(2)}, ${this.trackedEntity.y.toFixed(2)} | CamY: ${this.cameraY.toFixed(2)} | Zoom: ${this.ZOOM}`
+            //     );
+            // }
 
             let targetY = this.trackedEntity.y - (this.height * 0.6) / this.ZOOM;
             if (this.cameraMode === 'ROCKET') {
