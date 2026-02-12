@@ -636,44 +636,46 @@ export class Game {
             if (!e.orbitPath) needsUpdate = true;
 
             if (needsUpdate) {
-                e.orbitPath = [];
+                if (!e.orbitPath) {
+                    e.orbitPath = [];
+                } else {
+                    e.orbitPath.length = 0;
+                }
                 e.lastOrbitUpdate = now;
 
-                // Simple orbit prediction
-                const simState = {
-                    x: e.x / 10,
-                    y: e.y / 10,
-                    vx: e.vx,
-                    vy: e.vy
-                };
+                // Simple orbit prediction - use primitives to avoid allocation
+                let simX = e.x / 10;
+                let simY = e.y / 10;
+                const simVx = e.vx;
+                let simVy = e.vy;
 
                 const dtPred = 10;
                 // Precompute constant offset for radius calculation
                 // (groundY - h) / 10 + R_EARTH
                 const centerY = (this.groundY - e.h) / 10 + R_EARTH;
 
-                const startPhi = simState.x / R_EARTH;
-                const startR = centerY - simState.y;
+                const startPhi = simX / R_EARTH;
+                const startR = centerY - simY;
                 e.orbitPath.push({ phi: startPhi, r: startR });
 
                 for (let j = 0; j < 200; j++) {
                     // Optimized radius calculation
-                    const pRad = centerY - simState.y;
+                    const pRad = centerY - simY;
 
                     // Optimized gravity: MU / r^2 (avoids Math.pow and division inside pow)
                     const pG = MU / (pRad * pRad);
 
                     // Optimized centrifugal force (avoids ** operator)
-                    const pFy = pG - (simState.vx * simState.vx) / pRad;
+                    const pFy = pG - (simVx * simVx) / pRad;
 
-                    simState.vy += pFy * dtPred;
-                    simState.x += simState.vx * dtPred;
-                    simState.y += simState.vy * dtPred;
+                    simVy += pFy * dtPred;
+                    simX += simVx * dtPred;
+                    simY += simVy * dtPred;
 
-                    if (simState.y * 10 > this.groundY) break;
+                    if (simY * 10 > this.groundY) break;
 
-                    const pPhi = (simState.x * 10) / R_EARTH;
-                    const pR = centerY - simState.y;
+                    const pPhi = (simX * 10) / R_EARTH;
+                    const pR = centerY - simY;
                     e.orbitPath.push({ phi: pPhi, r: pR });
                 }
             }
