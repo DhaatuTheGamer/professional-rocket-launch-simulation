@@ -4,8 +4,8 @@ import { JSDOM } from 'jsdom';
 import { VABEditor } from '../src/ui/VABEditor';
 
 describe('VABEditor Security', () => {
-    let dom: JSDOM;
-    let container: HTMLElement;
+    let dom: any;
+    let container: any;
 
     beforeEach(() => {
         // Setup JSDOM
@@ -14,30 +14,30 @@ describe('VABEditor Security', () => {
             runScripts: "dangerously",
             resources: "usable"
         });
-        global.document = dom.window.document;
-        global.window = dom.window as any;
-        global.HTMLElement = dom.window.HTMLElement;
-        global.HTMLInputElement = dom.window.HTMLInputElement;
+        (globalThis as any).document = dom.window.document;
+        (globalThis as any).window = dom.window;
+        (globalThis as any).HTMLElement = dom.window.HTMLElement;
+        (globalThis as any).HTMLInputElement = dom.window.HTMLInputElement;
 
         // Mock localStorage
-        const localStorageMock = (function() {
-            let store = {};
+        const localStorageMock = (function () {
+            let store: Record<string, string> = {};
             return {
-                getItem: function(key) {
+                getItem: function (key: string) {
                     return store[key] || null;
                 },
-                setItem: function(key, value) {
+                setItem: function (key: string, value: string) {
                     store[key] = value.toString();
                 },
-                clear: function() {
+                clear: function () {
                     store = {};
                 },
-                removeItem: function(key) {
+                removeItem: function (key: string) {
                     delete store[key];
                 }
             };
         })();
-        global.localStorage = localStorageMock as any;
+        (globalThis as any).localStorage = localStorageMock;
 
         container = document.getElementById('vab-container')!;
     });

@@ -102,6 +102,7 @@ export class TelemetrySystem {
 
         for (let i = 0; i < len; i++) {
             const d = this.data[i];
+            if (!d) continue;
             const x = i * xStep;
             const y = h - d.alt * yAltScale;
 
@@ -122,6 +123,7 @@ export class TelemetrySystem {
 
         for (let i = 0; i < len; i++) {
             const d = this.data[i];
+            if (!d) continue;
             const x = i * xStep;
             const y = h - d.vel * yVelScale;
 

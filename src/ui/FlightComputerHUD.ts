@@ -1,19 +1,18 @@
-import { FlightComputer } from '../guidance/FlightComputer';
-
 /**
  * Updates the Flight Computer HUD element with current status and commands.
  * Uses secure DOM methods to prevent XSS vulnerabilities.
  *
  * @param fcStatus The container element for the HUD
- * @param flightComputer The FlightComputer instance
+ * @param status The FlightComputer status object from Worker
  */
-export function updateFlightComputerHUD(fcStatus: HTMLElement, flightComputer: FlightComputer): void {
+export function updateFlightComputerHUD(fcStatus: HTMLElement, status: { status: string; command: string }): void {
     if (!fcStatus) return;
 
-    const isActive = flightComputer.isActive();
-    const isStandby = flightComputer.state.mode !== 'OFF';
+    const statusStr = status.status || 'FC: ---';
+    const isActive = statusStr === 'FC: ACTIVE';
+    const isVisible = statusStr !== 'FC: OFF' && statusStr !== 'FC: ---';
 
-    if (isActive || isStandby) {
+    if (isVisible) {
         fcStatus.classList.add('active');
 
         let modeDiv = fcStatus.querySelector('.fc-mode');
@@ -22,7 +21,7 @@ export function updateFlightComputerHUD(fcStatus: HTMLElement, flightComputer: F
             modeDiv.className = 'fc-mode';
             fcStatus.appendChild(modeDiv);
         }
-        modeDiv.textContent = flightComputer.getStatusString();
+        modeDiv.textContent = statusStr;
 
         let commandDiv = fcStatus.querySelector('.fc-command');
         if (isActive) {
@@ -31,7 +30,7 @@ export function updateFlightComputerHUD(fcStatus: HTMLElement, flightComputer: F
                 commandDiv.className = 'fc-command';
                 fcStatus.appendChild(commandDiv);
             }
-            commandDiv.textContent = flightComputer.getActiveCommandText();
+            commandDiv.textContent = status.command || '';
         } else {
             if (commandDiv) {
                 commandDiv.remove();
@@ -41,4 +40,5 @@ export function updateFlightComputerHUD(fcStatus: HTMLElement, flightComputer: F
         fcStatus.classList.remove('active');
         fcStatus.textContent = '';
     }
+    // console.log('HUD Updated:', { statusStr, isActive, isVisible, modeText: modeDiv?.textContent, cmdText: commandDiv?.textContent });
 }

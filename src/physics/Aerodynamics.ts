@@ -12,7 +12,7 @@
  * - Stability Margin = (CoM - CP) / Length (positive = stable)
  */
 
-import { getAtmosphericDensity, getDynamicPressure } from '../constants';
+import { getAtmosphericDensity, getDynamicPressure } from '../config/Constants';
 
 // ============================================================================
 // Interfaces
@@ -95,15 +95,18 @@ export interface AerodynamicForces {
 /**
  * Default aerodynamic configuration for a full rocket stack
  */
+/**
+ * Default aerodynamic configuration for a full rocket stack
+ */
 export const DEFAULT_AERO_CONFIG: AerodynamicsConfig = {
-    referenceArea: 10.0, // 10 m² reference area
-    referenceLength: 50.0, // 50 m reference length
-    cpPositionFraction: 0.75, // CP at 75% from bottom (near nose)
-    comPositionFullFraction: 0.45, // CoM at 45% when full (lower, more stable)
-    comPositionEmptyFraction: 0.55, // CoM at 55% when empty (higher, less stable)
-    cnAlpha: 2 * Math.PI, // Slender body theory
-    cd0: 0.3, // Base drag coefficient
-    aspectRatio: 0.5 // Typical rocket fineness ratio
+    referenceArea: 10.0,
+    referenceLength: 50.0,
+    cpPositionFraction: 0.25, // CP at 25% from bottom (fins/tail)
+    comPositionFullFraction: 0.45, // CoM at 45% (ahead of CP = stable)
+    comPositionEmptyFraction: 0.55, // CoM at 55%
+    cnAlpha: 2 * Math.PI,
+    cd0: 0.3,
+    aspectRatio: 0.5
 };
 
 /**
@@ -112,7 +115,7 @@ export const DEFAULT_AERO_CONFIG: AerodynamicsConfig = {
 export const BOOSTER_AERO_CONFIG: AerodynamicsConfig = {
     referenceArea: 8.0,
     referenceLength: 40.0,
-    cpPositionFraction: 0.7,
+    cpPositionFraction: 0.2, // Fins dominate CP
     comPositionFullFraction: 0.4,
     comPositionEmptyFraction: 0.5,
     cnAlpha: 2 * Math.PI,
@@ -126,7 +129,7 @@ export const BOOSTER_AERO_CONFIG: AerodynamicsConfig = {
 export const UPPER_STAGE_AERO_CONFIG: AerodynamicsConfig = {
     referenceArea: 5.0,
     referenceLength: 20.0,
-    cpPositionFraction: 0.6,
+    cpPositionFraction: 0.2, // Engine bell/skirt acts as fin
     comPositionFullFraction: 0.45,
     comPositionEmptyFraction: 0.5,
     cnAlpha: 2 * Math.PI,
@@ -140,10 +143,10 @@ export const UPPER_STAGE_AERO_CONFIG: AerodynamicsConfig = {
 export const PAYLOAD_AERO_CONFIG: AerodynamicsConfig = {
     referenceArea: 2.0,
     referenceLength: 5.0,
-    cpPositionFraction: 0.5, // Neutral stability
+    cpPositionFraction: 0.5, // Neutral/Unstable
     comPositionFullFraction: 0.5,
     comPositionEmptyFraction: 0.5,
-    cnAlpha: Math.PI, // Less lift due to blunt shape
+    cnAlpha: Math.PI,
     cd0: 0.4,
     aspectRatio: 1.0
 };
@@ -205,44 +208,21 @@ export function calculateCenterOfMass(config: AerodynamicsConfig, fuelFraction: 
     return comFraction * vehicleLength;
 }
 
-/**
- * Calculate Center of Pressure position
- *
- * CP position varies with Mach number and angle of attack, but for simplicity
- * we use a fixed position based on vehicle configuration. In a more advanced
- * model, CP would shift forward at supersonic speeds.
- *
- * @param config - Aerodynamic configuration
- * @param vehicleLength - Total vehicle length (meters)
- * @param mach - Mach number (for future supersonic CP shift)
- * @returns CP position from bottom (meters)
- */
 export function calculateCenterOfPressure(config: AerodynamicsConfig, vehicleLength: number, mach: number = 0): number {
     // Basic CP position from configuration
     let cpFraction = config.cpPositionFraction;
 
-    // Supersonic CP shift: CP moves forward (toward nose) at supersonic speeds
-    // This makes the rocket less stable at high Mach
+    // Supersonic CP shift: CP moves AFT (toward tail) at supersonic speeds
+    // This makes the rocket MORE stable at high Mach (margin increases)
+    // Aft direction is towards 0 (bottom)
     if (mach > 1.0) {
         const supersonicShift = Math.min(0.1, (mach - 1.0) * 0.05);
-        cpFraction = Math.min(0.95, cpFraction + supersonicShift);
+        cpFraction = Math.max(0.05, cpFraction - supersonicShift);
     }
 
     return cpFraction * vehicleLength;
 }
 
-/**
- * Calculate the complete aerodynamic state
- *
- * @param config - Aerodynamic configuration
- * @param vx - Horizontal velocity (m/s)
- * @param vy - Vertical velocity (m/s)
- * @param bodyAngle - Body orientation (radians)
- * @param fuelFraction - Fuel level (0-1)
- * @param vehicleLength - Vehicle length (meters)
- * @param mach - Mach number
- * @returns Complete aerodynamic state
- */
 export function calculateAerodynamicState(
     config: AerodynamicsConfig,
     vx: number,
@@ -256,14 +236,14 @@ export function calculateAerodynamicState(
     const com = calculateCenterOfMass(config, fuelFraction, vehicleLength);
     const cp = calculateCenterOfPressure(config, vehicleLength, mach);
 
-    // Stability margin: positive when CoM is ahead of (below) CP
-    // We measure from bottom, so stable when com < cp
-    const stabilityMargin = (cp - com) / vehicleLength;
+    // Stability margin: positive when CoM is ahead of (above) CP
+    // We measure from bottom, so stable when com > cp
+    const stabilityMargin = (com - cp) / vehicleLength;
     const isStable = stabilityMargin > 0;
 
     return {
         aoa,
-        sideslip: 0, // 2D simulation, no sideslip
+        sideslip: 0,
         cp,
         com,
         stabilityMargin,

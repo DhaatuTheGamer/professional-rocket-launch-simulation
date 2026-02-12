@@ -15,7 +15,7 @@ import {
     MU
 } from '../physics/OrbitalMechanics';
 import { vec2 } from '../types';
-import { R_EARTH } from '../constants';
+import { PIXELS_PER_METER, R_EARTH } from '../config/Constants';
 
 export class ManeuverPlanner {
     private game: Game;

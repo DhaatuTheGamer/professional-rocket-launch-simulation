@@ -53,17 +53,19 @@ describe('Aerodynamics Module', () => {
     });
 
     describe('Center of Pressure (CP)', () => {
-        const config = DEFAULT_AERO_CONFIG; // cpPositionFraction 0.75
+        const config = DEFAULT_AERO_CONFIG; // cpPositionFraction 0.25 (Fins)
         const len = 50;
 
         it('should return static CP at subsonic speeds', () => {
-            expect(calculateCenterOfPressure(config, len, 0.5)).toBeCloseTo(0.75 * 50, 3);
+            // Default 0.25 * 50 = 12.5
+            expect(calculateCenterOfPressure(config, len, 0.5)).toBeCloseTo(0.25 * 50, 3);
         });
 
-        it('should shift CP forward at supersonic speeds', () => {
+        it('should shift CP AFT (Lower) at supersonic speeds', () => {
             // Mach 2.0. Shift = min(0.1, 1.0 * 0.05) = 0.05.
-            // New fraction = 0.75 + 0.05 = 0.80.
-            expect(calculateCenterOfPressure(config, len, 2.0)).toBeCloseTo(0.80 * 50, 3);
+            // Aft shift means REDUCING the fraction (towards bottom 0)
+            // New fraction = 0.25 - 0.05 = 0.20.
+            expect(calculateCenterOfPressure(config, len, 2.0)).toBeCloseTo(0.20 * 50, 3);
         });
     });
 

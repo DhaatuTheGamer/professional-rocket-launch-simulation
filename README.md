@@ -1,6 +1,6 @@
 # 🚀 DeltaV Lab - Professional Rocket Launch Simulation (v3.1.0)
 
-Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modeling, environmental hazards, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
+Engineering-Grade Spaceflight Simulation. Features accurate physics using RK4 integration, atmospheric modelling, environmental hazards, autonomous guidance, telemetry recording, modular vehicle assembly, and Kerbal Space Program-inspired controls.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)

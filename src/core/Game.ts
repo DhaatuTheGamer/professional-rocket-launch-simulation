@@ -18,7 +18,7 @@ import { Navball } from '../ui/Navball';
 import { TelemetrySystem } from '../ui/Telemetry';
 import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
-import { FlightComputer } from '../guidance/FlightComputer';
+// FlightComputer logic moved to PhysicsWorker
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
 import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
 import { setWindVelocity, setDensityMultiplier } from './State';
@@ -48,7 +48,7 @@ export class Game {
     public telemetry: TelemetrySystem;
     public missionLog: MissionLog;
     public sas: SAS;
-    public flightComputer: FlightComputer;
+    // FlightComputer logic moved to PhysicsWorker
     public blackBox: BlackBoxRecorder;
     public environment: EnvironmentSystem;
     public maneuverPlanner: ManeuverPlanner;
@@ -174,7 +174,7 @@ export class Game {
         this.telemetry = new TelemetrySystem();
         this.missionLog = new MissionLog();
         this.sas = new SAS();
-        this.flightComputer = new FlightComputer(this.groundY);
+        // this.flightComputer = new FlightComputer(this.groundY);
         this.blackBox = new BlackBoxRecorder(this.groundY);
         this.environment = new EnvironmentSystem();
         this.maneuverPlanner = new ManeuverPlanner(this);
@@ -323,9 +323,35 @@ export class Game {
     }
 
     /**
+     * Physics Event Listeners
+     */
+    private physicsEventListeners: ((e: any) => void)[] = [];
+
+    public addPhysicsEventListener(callback: (e: any) => void): void {
+        this.physicsEventListeners.push(callback);
+    }
+
+    /**
+     * Send a command to the physics worker (e.g. Flight Computer)
+     */
+    public command(type: string, payload: any): void {
+        this.physics.command(type, payload);
+    }
+
+    /**
+     * Get Flight Computer status from Physics Worker
+     */
+    public getFlightComputerStatus(): any {
+        return this.physics.getFlightComputerStatus();
+    }
+
+    /**
      * Handle events from physics worker
      */
     private handlePhysicsEvent(e: any): void {
+        // Dispatch to listeners
+        this.physicsEventListeners.forEach(cb => cb(e));
+
         if (e.name === 'STAGING_S1') {
             this.missionLog.log('STAGING: S1 SEP', 'warn');
             this.audio.playStaging();
@@ -388,51 +414,30 @@ export class Game {
         if (this.mainStack) {
             gimbalAngle = this.mainStack.gimbalAngle;
 
-            if (this.flightComputer.isActive()) {
-                const fcOutput = this.flightComputer.update(this.mainStack, dt * this.timeScale);
+            // Flight Computer logic is now handled in PhysicsWorker
+            // We just handle manual override or SAS here if FC is not active in worker
+            // But since worker applies FC overrides, we can just send manual inputs.
+            // If FC is active in worker, it will override these.
 
-                // Apply inputs
-                if (fcOutput.pitchAngle !== null) {
-                    const targetAngle = fcOutput.pitchAngle;
-                    const angleError = targetAngle - this.mainStack.angle;
-                    gimbalAngle = Math.max(-0.5, Math.min(0.5, angleError * 2));
-                }
+            // Manual steering
+            const steer = this.input.getSteering();
 
-                if (fcOutput.throttle !== null) {
-                    throttle = fcOutput.throttle;
-                }
-
-                if (fcOutput.abort) {
-                    throttle = 0;
-                    abort = true;
-                    this.missionLog.log('FC: ABORT COMMAND', 'warn');
-                }
-
-                // Staging command from FC?
-                if (fcOutput.stage) {
-                    stage = true;
-                }
+            if (Math.abs(steer) > 0.1) {
+                gimbalAngle = steer * 0.4;
+            } else if (this.sas.isActive()) {
+                const sasOut = this.sas.update(this.mainStack, dt * this.timeScale);
+                gimbalAngle = sasOut;
             } else {
-                // Manual steering
-                const steer = this.input.getSteering();
-
-                if (Math.abs(steer) > 0.1) {
-                    gimbalAngle = steer * 0.4;
-                } else if (this.sas.isActive()) {
-                    const sasOut = this.sas.update(this.mainStack, dt * this.timeScale);
-                    gimbalAngle = sasOut;
-                } else {
-                    gimbalAngle = 0;
-                }
-
-                // Manual Throttle Overrides (updates command state)
-                if (this.input.actions.THROTTLE_UP) this.setThrottle(this.commandThrottle + 0.02);
-                if (this.input.actions.THROTTLE_DOWN) this.setThrottle(this.commandThrottle - 0.02);
-                if (this.input.actions.CUT_ENGINE) this.setThrottle(0);
-
-                // Re-read throttle in case it changed
-                throttle = this.commandThrottle;
+                gimbalAngle = 0;
             }
+
+            // Manual Throttle Overrides (updates command state)
+            if (this.input.actions.THROTTLE_UP) this.setThrottle(this.commandThrottle + 0.02);
+            if (this.input.actions.THROTTLE_DOWN) this.setThrottle(this.commandThrottle - 0.02);
+            if (this.input.actions.CUT_ENGINE) this.setThrottle(0);
+
+            // Re-read throttle in case it changed
+            throttle = this.commandThrottle;
         }
 
         const controls = {
@@ -590,6 +595,7 @@ export class Game {
 
     /**
      * Update orbit prediction paths
+     * Uses RK4 integration for accurate trajectory prediction
      */
     private updateOrbitPaths(now: number): void {
         const totalEntities = this.entities.length;
@@ -623,46 +629,101 @@ export class Game {
                 }
                 e.lastOrbitUpdate = now;
 
-                // Simple orbit prediction - use primitives to avoid allocation
-                let simX = e.x / 10;
-                let simY = e.y / 10;
-                const simVx = e.vx;
-                let simVy = e.vy;
+                // Initial State for RK4
+                const r0 = R_EARTH + alt;
+                // phi is x / R_EARTH (radians around earth)
+                const phi0 = e.x / R_EARTH;
 
-                const dtPred = 10;
-                // Precompute constant offset for radius calculation
-                // (groundY - h) / 10 + R_EARTH
-                const centerY = (this.groundY - e.h) / 10 + R_EARTH;
+                // State vector: [r, phi, vr, vphi]
+                // vr = radial velocity (positive up) = -e.vy
+                // vphi = tangential velocity = e.vx
+                let state = {
+                    r: r0,
+                    phi: phi0,
+                    vr: -e.vy,
+                    vphi: e.vx
+                };
 
-                const startPhi = simX / R_EARTH;
-                const startR = centerY - simY;
-                e.orbitPath.push({ phi: startPhi, r: startR });
+                const dtPred = 1.0; // 1s steps
+                const maxSteps = 2000; // 2000s prediction horizon
 
-                for (let j = 0; j < 200; j++) {
-                    // Optimized radius calculation
-                    const pRad = centerY - simY;
+                // Store start point
+                e.orbitPath.push({ phi: state.phi, r: state.r });
 
-                    // Optimized gravity: MU / r^2 (avoids Math.pow and division inside pow)
-                    const pG = MU / (pRad * pRad);
+                // RK4 Integrator Types
+                type SimState = typeof state;
+                type Derivatives = { dr: number; dphi: number; dvr: number; dvphi: number };
 
-                    // Optimized centrifugal force (avoids ** operator)
-                    const pFy = pG - (simVx * simVx) / pRad;
+                const getDerivatives = (s: SimState): Derivatives => {
+                    const r = s.r;
+                    const vphi = s.vphi;
+                    const vr = s.vr;
 
-                    simVy += pFy * dtPred;
-                    simX += simVx * dtPred;
-                    simY += simVy * dtPred;
+                    // Gravity: g = MU / r^2
+                    const g = MU / (r * r);
 
-                    if (simY * 10 > this.groundY) break;
+                    // Equations of motion in polar coordinates (2-body)
+                    // Radial acceleration: r'' = vphi^2 / r - g
+                    // Tangential acceleration: vphi' = -vr * vphi / r (conservation of interaction)
 
-                    const pPhi = (simX * 10) / R_EARTH;
-                    const pR = centerY - simY;
-                    e.orbitPath.push({ phi: pPhi, r: pR });
+                    const dvr = (vphi * vphi) / r - g;
+                    const dvphi = -(vr * vphi) / r;
+                    const dr = vr;
+                    const dphi = vphi / r;
+
+                    return { dr, dphi, dvr, dvphi };
+                };
+
+                const integrate = (s: SimState, dt: number): SimState => {
+                    const k1 = getDerivatives(s);
+                    const k2 = getDerivatives({
+                        r: s.r + k1.dr * dt * 0.5,
+                        phi: s.phi + k1.dphi * dt * 0.5,
+                        vr: s.vr + k1.dvr * dt * 0.5,
+                        vphi: s.vphi + k1.dvphi * dt * 0.5
+                    });
+                    const k3 = getDerivatives({
+                        r: s.r + k2.dr * dt * 0.5,
+                        phi: s.phi + k2.dphi * dt * 0.5,
+                        vr: s.vr + k2.dvr * dt * 0.5,
+                        vphi: s.vphi + k2.dvphi * dt * 0.5
+                    });
+                    const k4 = getDerivatives({
+                        r: s.r + k3.dr * dt,
+                        phi: s.phi + k3.dphi * dt,
+                        vr: s.vr + k3.dvr * dt,
+                        vphi: s.vphi + k3.dvphi * dt
+                    });
+
+                    return {
+                        r: s.r + (k1.dr + 2 * k2.dr + 2 * k3.dr + k4.dr) * dt / 6,
+                        phi: s.phi + (k1.dphi + 2 * k2.dphi + 2 * k3.dphi + k4.dphi) * dt / 6,
+                        vr: s.vr + (k1.dvr + 2 * k2.dvr + 2 * k3.dvr + k4.dvr) * dt / 6,
+                        vphi: s.vphi + (k1.dvphi + 2 * k2.dvphi + 2 * k3.dvphi + k4.dvphi) * dt / 6
+                    };
+                };
+
+                for (let j = 0; j < maxSteps; j++) {
+                    state = integrate(state, dtPred);
+
+                    // Stop if hit ground
+                    if (state.r <= R_EARTH) {
+                        break;
+                    }
+
+                    // Store point (sparse)
+                    if (j % 10 === 0) {
+                        e.orbitPath.push({ phi: state.phi, r: state.r });
+                    }
                 }
+                // Ensure final point is added
+                e.orbitPath.push({ phi: state.phi, r: state.r });
             }
         }
 
         this.nextOrbitUpdateIndex = (this.nextOrbitUpdateIndex + updateBudget) % totalEntities;
     }
+
 
     /**
      * Draw environmental visuals (wind, corridors)

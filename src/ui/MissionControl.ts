@@ -7,7 +7,7 @@
 
 import { Game } from '../core/Game';
 import { calculateGroundTrack, LAUNCH_SITE } from '../physics/OrbitalMechanics';
-import { R_EARTH } from '../constants';
+import { PIXELS_PER_METER } from '../config/Constants';
 
 export class MissionControl {
     private game: Game;

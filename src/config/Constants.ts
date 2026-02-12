@@ -17,6 +17,12 @@ import type { PhysicsConfig } from '../types';
 /** Standard gravitational acceleration at Earth's surface (m/s²) */
 export const GRAVITY = 9.8;
 
+/** Standard gravitational parameter for Earth (m³/s²) */
+export const MU = 3.986004418e14;
+
+/** Standard gravity for Isp conversion (m/s²) */
+export const ISP_TO_VELOCITY = 9.80665;
+
 /** Pixels per meter for screen rendering */
 export const PIXELS_PER_METER = 10;
 
@@ -136,10 +142,16 @@ export function getMachNumber(velocity: number): number {
  * @returns Drag multiplier (1.0 to 2.5)
  */
 export function getTransonicDragMultiplier(mach: number): number {
-    if (mach > 0.8 && mach < 1.2) {
-        return 2.5; // Transonic drag rise
-    } else if (mach >= 1.2) {
-        return 1.5; // Supersonic
-    }
-    return 1.0; // Subsonic
+    // Baseline drag: 1.0 Subsonic, 1.5 Supersonic
+    // Smooth transition using sigmoid-like function
+    const baseline = (mach < 1.0)
+        ? 1.0
+        : 1.5 - 0.5 * Math.exp(-(mach - 1.0) * 5.0);
+
+    // Transonic drag rise (Wave drag)
+    // Gaussian peak centered at Mach 1.1, width ~0.15
+    // Peak intensity adds ~1.2 to the multiplier
+    const divergence = 1.2 * Math.exp(-Math.pow((mach - 1.1) / 0.15, 2));
+
+    return baseline + divergence;
 }

@@ -6,8 +6,8 @@
  */
 
 import { Game } from './core/Game';
-import { CONFIG, PIXELS_PER_METER } from './constants';
-import { state } from './state';
+import { CONFIG, PIXELS_PER_METER } from './config/Constants';
+import { state } from './core/State';
 import { SASModes } from './utils/SAS';
 import { FullStack } from './physics/RocketComponents';
 import { ScriptEditor } from './ui/ScriptEditor';
@@ -40,7 +40,7 @@ function initUI() {
 initUI();
 
 // Create Script Editor UI for Flight Computer
-const scriptEditor = new ScriptEditor(game.flightComputer);
+const scriptEditor = new ScriptEditor(game);
 
 // Create VAB Editor with launch callback
 const vabEditor = new VABEditor('vab-modal', (blueprint: VehicleBlueprint) => {
@@ -251,7 +251,7 @@ function updateFCStatus(): void {
     if (!fcStatus) return;
 
     // Use shared secure HUD updater
-    updateFlightComputerHUD(fcStatus, game.flightComputer);
+    updateFlightComputerHUD(fcStatus, game.getFlightComputerStatus());
 }
 
 // ========================================
@@ -303,13 +303,22 @@ window.addEventListener('keydown', (e) => {
 
     // G - Toggle Flight Computer
     if (e.key === 'g' || e.key === 'G') {
-        game.flightComputer.toggle();
-        game.missionLog.log(`Flight Computer: ${game.flightComputer.getStatusString()}`, 'info');
+        const fcStatus = game.getFlightComputerStatus();
+        const statusStr = fcStatus.status;
+
+        if (statusStr === 'FC: OFF' || statusStr === 'FC: READY' || statusStr === 'FC: ---') {
+            game.command('FC_START', {});
+            game.missionLog.log('FC: Activating...', 'info');
+        } else {
+            game.command('FC_STOP', {});
+            game.missionLog.log('FC: Deactivating...', 'info');
+        }
 
         // Update FC button state
         const fcBtn = document.getElementById('fc-btn');
         if (fcBtn) {
-            fcBtn.classList.toggle('enabled', game.flightComputer.isActive());
+            // Optimistic update
+            fcBtn.classList.toggle('enabled', statusStr === 'FC: OFF');
         }
     }
 

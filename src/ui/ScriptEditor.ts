@@ -5,8 +5,9 @@
  * Features syntax validation, preset loading, and localStorage persistence.
  */
 
-import { parseMissionScript, MissionScript, deserializeScript, serializeScript } from '../guidance/FlightScript';
-import { FlightComputer, PRESET_SCRIPTS } from '../guidance/FlightComputer';
+import { parseMissionScript, MissionScript } from '../guidance/FlightScript';
+import { PRESET_SCRIPTS } from '../guidance/FlightComputer';
+import { Game } from '../core/Game';
 
 const STORAGE_KEY = 'rocket-sim-scripts';
 
@@ -15,13 +16,40 @@ export class ScriptEditor {
     private textarea: HTMLTextAreaElement | null = null;
     private errorDisplay: HTMLElement | null = null;
     private saveSelect: HTMLSelectElement | null = null;
-    private flightComputer: FlightComputer;
-    private onScriptLoaded: ((script: MissionScript) => void) | null = null;
+    private game: Game;
+    private onScriptLoaded: ((script: MissionScript) => void) | null = null; // Legacy callback, maybe unused now
 
-    constructor(flightComputer: FlightComputer) {
-        this.flightComputer = flightComputer;
+    constructor(game: Game) {
+        this.game = game;
         this.createModal();
         this.attachEventListeners();
+
+        // Listen for worker response
+        this.game.addPhysicsEventListener((e) => {
+            if (e.name === 'FC_SCRIPT_LOADED') {
+                if (e.success) {
+                    this.showSuccess(`Loaded to Flight Computer! Press G to activate.`);
+
+                    // Allow UI to update if needed
+                    if (this.onScriptLoaded) {
+                        // We don't have the parsed script object here easily unless we parse it again
+                        // or just ignore this callback if it's not critical. 
+                        // The original used `this.flightComputer.state.script`.
+                        // For now, we can skip passing the script object or parse locally.
+                        const val = this.textarea?.value || '';
+                        const res = parseMissionScript(val, 'Loaded Script');
+                        if (res.script) this.onScriptLoaded(res.script);
+                    }
+
+                    // Auto-close
+                    setTimeout(() => {
+                        this.hide();
+                    }, 1500);
+                } else {
+                    this.showErrors(e.errors ? e.errors.join('\n') : 'Unknown error loading script');
+                }
+            }
+        });
     }
 
     /**
@@ -400,24 +428,12 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
         if (!this.textarea) return;
 
         const scriptText = this.textarea.value;
-        const name = (document.getElementById('script-name-input') as HTMLInputElement)?.value || 'Mission Script';
+        // Validate locally first
+        if (!this.validate()) return;
 
-        const result = this.flightComputer.loadScript(scriptText, name);
-
-        if (result.success) {
-            this.showSuccess(`Loaded to Flight Computer! Press G to activate.`);
-
-            if (this.onScriptLoaded && this.flightComputer.state.script) {
-                this.onScriptLoaded(this.flightComputer.state.script);
-            }
-
-            // Auto-close after short delay
-            setTimeout(() => {
-                this.hide();
-            }, 1500);
-        } else {
-            this.showErrors(result.errors.join('\n'));
-        }
+        // Send to Worker
+        this.game.command('FC_LOAD_SCRIPT', { script: scriptText });
+        this.showSuccess('Sending to Flight Computer...');
     }
 
     /**

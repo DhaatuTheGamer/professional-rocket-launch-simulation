@@ -4,7 +4,7 @@
  * Implements probabilistic failure logic using "Bathtub Curve" reliability engineering principles.
  */
 
-import { state } from '../state';
+import { state } from '../core/State';
 
 export type FailureType =
     | 'ENGINE_FLAME_OUT' // Engine shuts down unexpectedly

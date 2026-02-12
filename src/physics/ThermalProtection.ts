@@ -5,7 +5,7 @@
  * and thermal damage for re-entry and high-speed flight.
  */
 
-import { getAtmosphericDensity } from '../constants';
+import { getAtmosphericDensity, DT } from '../config/Constants';
 
 // ============================================================================
 // Constants

@@ -13,7 +13,7 @@
  */
 
 import { type IVessel, SASMode } from '../types/index';
-import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../constants';
+import { CONFIG, PIXELS_PER_METER, GRAVITY, getAtmosphericDensity, getDynamicPressure } from '../config/Constants';
 import { SAS } from '../utils/SAS';
 import {
     type MissionScript,

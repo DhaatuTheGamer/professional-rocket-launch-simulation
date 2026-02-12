@@ -1,5 +1,5 @@
 
-import { TelemetrySystem } from '../src/ui/Telemetry.ts';
+import { TelemetrySystem } from '../src/ui/Telemetry';
 
 const perf = performance;
 
@@ -9,11 +9,11 @@ global.document = {
         if (id === 'graph-canvas') {
             return {
                 getContext: () => ({
-                    clearRect: () => {},
-                    beginPath: () => {},
-                    moveTo: () => {},
-                    lineTo: () => {},
-                    stroke: () => {},
+                    clearRect: () => { },
+                    beginPath: () => { },
+                    moveTo: () => { },
+                    lineTo: () => { },
+                    stroke: () => { },
                 }),
                 width: 800,
                 height: 600

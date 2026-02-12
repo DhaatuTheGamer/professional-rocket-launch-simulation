@@ -7,7 +7,7 @@
 
 import type { Vector2D, PhysicsState } from '../types/index';
 import { Vec2 } from '../types/index';
-import { R_EARTH, GRAVITY } from '../constants';
+import { R_EARTH, GRAVITY } from '../config/Constants';
 
 // Standard gravitational parameter for Earth (mu = GM)
 // G = 6.67430e-11, M = 5.972e24 => mu ≈ 3.986e14 m^3/s^2

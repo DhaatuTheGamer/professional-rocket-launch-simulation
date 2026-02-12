@@ -6,6 +6,15 @@ import { Vessel } from '../physics/Vessel';
 import { EnvironmentSystem } from '../physics/Environment';
 import { FlightTerminationSystem } from '../safety/FlightTermination';
 import { FaultInjector } from '../safety/FaultInjector';
+import { FlightComputer } from '../guidance/FlightComputer';
+import {
+    HEADER_SIZE,
+    ENTITY_STRIDE,
+    HeaderOffset,
+    EntityOffset,
+    EntityType,
+    EngineStateCode
+} from './PhysicsBuffer';
 
 // State
 let entities: Vessel[] = [];
@@ -13,12 +22,14 @@ let missionTime = 0;
 const fts = new FlightTerminationSystem();
 const environment = new EnvironmentSystem();
 const faultInjector = new FaultInjector();
+let flightComputer: FlightComputer;
 let groundY = 1000;
 
 // Active vessel tracking (index or ref)
-// In worker, we can just track the "main" one by index or reference
-// Initial: entities[0] (FullStack)
 let trackedIndex = 0;
+
+// Shared Memory
+let sharedView: Float64Array | null = null;
 
 // Constants
 const FIXED_DT = 0.02;
@@ -47,6 +58,21 @@ function init(config: any) {
     const width = config.width || 1920;
     groundY = config.groundY || 1000;
 
+    // Initialize Shared Buffer View
+    if (config.sharedBuffer) {
+        sharedView = new Float64Array(config.sharedBuffer);
+    } else {
+        console.warn('Worker received no SharedArrayBuffer!');
+    }
+
+    // Init Logic Systems
+    flightComputer = new FlightComputer(groundY);
+
+    // Hook up FC callbacks
+    flightComputer.onStage = () => {
+        performStaging();
+    };
+
     // Create initial rocket
     const rocket = new FullStack(width / 2, groundY - 160);
     entities.push(rocket);
@@ -68,47 +94,66 @@ function step(inputs: any) {
     environment.update(simDt);
 
     // 2. Apply Controls
-    // Input payload: { controls: { throttle, gimbal, ... }, activeId? }
-    // We assume 'trackedIndex' is the one being controlled
     const v = entities[trackedIndex];
-    if (v && inputs.controls) {
-        v.throttle = inputs.controls.throttle;
-        v.gimbalAngle = inputs.controls.gimbalAngle;
+    if (v) {
+        // Base manual controls
+        if (inputs.controls) {
+            v.throttle = inputs.controls.throttle;
+            // Gimbal is cumulative or absolute? Game.ts sends absolute gimbalAngle
+            v.gimbalAngle = inputs.controls.gimbalAngle;
 
-        if (inputs.controls.ignition) {
-            v.active = true;
-            // Force reset safety cutoff if re-igniting
-            if ((v as any).engineState === 'off') {
-                (v as any).engineState = 'starting';
+            if (inputs.controls.ignition) {
+                v.active = true;
+                if ((v as any).engineState === 'off') {
+                    (v as any).engineState = 'starting';
+                }
+            }
+            if (inputs.controls.cutoff) {
+                v.active = false;
+            }
+            if (inputs.controls.stage) {
+                performStaging();
             }
         }
-        if (inputs.controls.cutoff) {
-            v.active = false;
+
+        // Flight Computer Override
+        if (flightComputer && flightComputer.isActive()) {
+            const fcOut = flightComputer.update(v, simDt);
+
+            if (fcOut.throttle !== null) v.throttle = fcOut.throttle;
+            if (fcOut.pitchAngle !== null) {
+                // Simple P-controller for gimbal to match pitch
+                // In Game.ts it was: gimbal = (target - current) * 2 clamped
+                const err = fcOut.pitchAngle - v.angle;
+                v.gimbalAngle = Math.max(-0.5, Math.min(0.5, err * 2));
+            }
+            if (fcOut.stage) {
+                // callback handles it
+            }
+            if (fcOut.abort) {
+                v.throttle = 0;
+                v.active = false;
+                self.postMessage({ type: 'EVENT', payload: { name: 'ABORT' } });
+            }
+            // SAS mode is handled by SAS which FC might use, 
+            // but for now FC output sasMode is informational or used by SAS utils
         }
     }
 
     // 3. Physics Integration
-    // groundY is module-level state set in init()
-
     entities.forEach((e) => {
-        // Apply physics
-        // We pass empty 'keys' because control is applied above via properties
         e.applyPhysics(simDt, {});
-
-        // FTS Update
-        // Only if liftoff? Main thread tracks liftoff for now, or we track it?
-        // Let's rely on simple updates.
     });
 
     // 4. Fault Injector (if active)
     const trackedVessel = entities[trackedIndex];
     if (trackedVessel) {
-        // Cast to any to access reliability if it's protected or missing on interface
         if ((trackedVessel as any).reliability) {
             faultInjector.update(trackedVessel, (trackedVessel as any).reliability, groundY, simDt);
         }
     }
 
+    missionTime += simDt;
     postState();
 }
 
@@ -117,7 +162,26 @@ function handleCommand(cmd: any) {
         case 'STAGE':
             performStaging();
             break;
-        // Other commands...
+        case 'FC_LOAD_SCRIPT':
+            const result = flightComputer.loadScript(cmd.script);
+            self.postMessage({
+                type: 'EVENT',
+                payload: {
+                    name: 'FC_SCRIPT_LOADED',
+                    success: result.success,
+                    errors: result.errors
+                }
+            });
+            break;
+        case 'FC_START':
+            flightComputer.activate();
+            break;
+        case 'FC_STOP':
+            flightComputer.deactivate();
+            break;
+        case 'FC_PAUSE':
+            flightComputer.togglePause();
+            break;
     }
 }
 
@@ -125,8 +189,6 @@ function performStaging() {
     const tracked = entities[trackedIndex];
     if (!tracked) return;
 
-    // Logic copied from Game.performStaging
-    // We need to differentiate types.
     if (tracked instanceof FullStack) {
         // Sep S1
         entities = entities.filter((e) => e !== tracked);
@@ -141,11 +203,9 @@ function performStaging() {
         upper.active = true;
         upper.throttle = 1.0;
 
-        // Add both
         entities.push(booster);
         entities.push(upper);
 
-        // Track Upper Stage (last added)
         trackedIndex = entities.length - 1;
 
         self.postMessage({ type: 'EVENT', payload: { name: 'STAGING_S1', x: tracked.x, y: tracked.y } });
@@ -153,7 +213,6 @@ function performStaging() {
         if (!tracked.fairingsDeployed) {
             tracked.fairingsDeployed = true;
 
-            // Create fairings
             const fL = new Fairing(tracked.x - 12, tracked.y - 40, tracked.vx - 10, tracked.vy, -1);
             fL.angle = tracked.angle - 0.5;
             entities.push(fL);
@@ -164,7 +223,6 @@ function performStaging() {
 
             self.postMessage({ type: 'EVENT', payload: { name: 'FAIRING_SEP' } });
         } else {
-            // Payload Sep
             tracked.active = false;
             tracked.throttle = 0;
 
@@ -181,37 +239,82 @@ function performStaging() {
     postState();
 }
 
+function mapEntityType(e: Vessel): number {
+    if (e instanceof FullStack) return EntityType.FULLSTACK;
+    if (e instanceof Booster) return EntityType.BOOSTER;
+    if (e instanceof UpperStage) return EntityType.UPPER_STAGE;
+    if (e instanceof Fairing) return EntityType.FAIRING;
+    if (e instanceof Payload) return EntityType.PAYLOAD;
+    return EntityType.UNKNOWN;
+}
+
+function mapEngineState(state: string): number {
+    switch (state) {
+        case 'starting': return EngineStateCode.STARTING;
+        case 'running': return EngineStateCode.RUNNING;
+        case 'flameout': return EngineStateCode.FLAMEOUT;
+        default: return EngineStateCode.OFF;
+    }
+}
+
 function postState() {
-    // Get state environment at ground (altitude 0) for basic telemetry
-    // More complex environment data can be sent if needed
-    const envState = environment.getState(0);
+    if (sharedView) {
+        // 1. Header
+        sharedView[HeaderOffset.TIMESTAMP] = missionTime;
+        sharedView[HeaderOffset.ENTITY_COUNT] = entities.length;
 
-    const entitiesState = entities.map((e) => ({
-        type: e.constructor.name,
-        x: e.x,
-        y: e.y,
-        vx: e.vx,
-        vy: e.vy,
-        angle: e.angle,
-        throttle: e.throttle,
-        gimbalAngle: e.gimbalAngle,
-        // Specifics
-        fairingsDeployed: e instanceof UpperStage ? e.fairingsDeployed : undefined,
-        active: e.active,
-        fuel: e.fuel,
-        // We need engine state for HUD
-        engineState: (e as any).engineState,
-        ignitersRemaining: (e as any).ignitersRemaining
-    }));
+        // Environment
+        const envState = environment.getState(0);
+        sharedView[HeaderOffset.WIND_X] = envState.windVelocity.x;
+        sharedView[HeaderOffset.WIND_Y] = envState.windVelocity.y;
+        sharedView[HeaderOffset.DENSITY_MULT] = envState.densityMultiplier;
 
+        // 2. Entities
+        for (let i = 0; i < entities.length; i++) {
+            const e = entities[i];
+            // Ensure e is defined for safety
+            if (!e) continue;
+
+            const base = HEADER_SIZE + i * ENTITY_STRIDE;
+
+            sharedView[base + EntityOffset.TYPE] = mapEntityType(e);
+            sharedView[base + EntityOffset.X] = e.x;
+            sharedView[base + EntityOffset.Y] = e.y;
+            sharedView[base + EntityOffset.VX] = e.vx;
+            sharedView[base + EntityOffset.VY] = e.vy;
+            sharedView[base + EntityOffset.ANGLE] = e.angle;
+            sharedView[base + EntityOffset.THROTTLE] = e.throttle;
+            sharedView[base + EntityOffset.GIMBAL] = e.gimbalAngle;
+            sharedView[base + EntityOffset.FUEL] = e.fuel;
+            sharedView[base + EntityOffset.ACTIVE] = e.active ? 1 : 0;
+
+            sharedView[base + EntityOffset.ENGINE_STATE] = mapEngineState((e as any).engineState);
+            sharedView[base + EntityOffset.IGNITERS] = (e as any).ignitersRemaining || 0;
+
+            sharedView[base + EntityOffset.WIDTH] = e.w;
+            sharedView[base + EntityOffset.HEIGHT] = e.h;
+            sharedView[base + EntityOffset.CRASHED] = e.crashed ? 1 : 0;
+
+            sharedView[base + EntityOffset.SKIN_TEMP] = e.skinTemp;
+            sharedView[base + EntityOffset.HEAT_SHIELD] = e.heatShieldRemaining;
+            sharedView[base + EntityOffset.ABLATING] = e.isAblating ? 1 : 0;
+            sharedView[base + EntityOffset.FAIRING_DEP] = (e as any).fairingsDeployed ? 1 : 0;
+            sharedView[base + EntityOffset.MASS] = e.mass;
+            sharedView[base + EntityOffset.APOGEE] = e.apogee;
+        }
+    }
+
+    // Post simplified state for main thread sync trigger and FTS/FC status
     self.postMessage({
         type: 'STATE',
         payload: {
             missionTime,
-            entities: entitiesState,
             trackedIndex,
             fts: fts.getStatus(),
-            environment: envState
+            fc: {
+                status: flightComputer ? flightComputer.getStatusString() : 'FC: ---',
+                command: flightComputer ? flightComputer.getActiveCommandText() : ''
+            }
         }
     });
 }

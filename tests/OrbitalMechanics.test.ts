@@ -6,10 +6,10 @@ import {
     calculateHohmannTransfer,
     calculateCircularizationFromElements,
     calculateGroundTrack,
-    MU,
-    LAUNCH_SITE
+    LAUNCH_SITE,
+    MU
 } from '../src/physics/OrbitalMechanics';
-import { R_EARTH } from '../src/constants';
+import { R_EARTH } from '../src/config/Constants';
 import { vec2 } from '../src/types';
 
 describe('OrbitalMechanics', () => {

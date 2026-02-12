@@ -6,8 +6,8 @@
  */
 
 import { Vessel } from './Vessel';
-import { CONFIG, PIXELS_PER_METER } from '../constants';
-import { state } from '../state';
+import { CONFIG, PIXELS_PER_METER, ISP_TO_VELOCITY } from '../config/Constants';
+import { state } from '../core/State';
 import { PIDController } from '../utils/PIDController';
 import { StageSeparation } from '../types';
 import { DEFAULT_AERO_CONFIG, BOOSTER_AERO_CONFIG, UPPER_STAGE_AERO_CONFIG, PAYLOAD_AERO_CONFIG } from './Aerodynamics';

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../src/physics/RocketComponents';
-import { state } from '../src/state';
+import { state } from '../src/core/State';
 
 describe('RocketComponents', () => {
     describe('Initialization', () => {

@@ -34,8 +34,15 @@ describe('FlightComputerHUD Security', () => {
                 remove: vi.fn()
             },
             querySelector: vi.fn((selector) => {
-                if (selector === '.fc-mode') return modeDiv; // Simulate existing element
-                if (selector === '.fc-command') return commandDiv; // Simulate existing element
+                // console.log('querySelector called with:', selector);
+                if (selector === '.fc-mode') {
+                    // console.log('Returning modeDiv mock');
+                    return modeDiv;
+                }
+                if (selector === '.fc-command') {
+                    // console.log('Returning commandDiv mock');
+                    return commandDiv;
+                }
                 return null;
             }),
             appendChild: vi.fn(),

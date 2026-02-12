@@ -32,16 +32,16 @@ class MockHTMLElement {
         this.attributes[name] = value;
     }
 
-    addEventListener() {}
-    removeEventListener() {}
-    focus() {}
+    addEventListener() { }
+    removeEventListener() { }
+    focus() { }
     appendChild(child: MockHTMLElement) {
         this.children.push(child);
         return child;
     }
 
     // Minimal querySelector/remove/etc
-    remove(index?: number) {}
+    remove(index?: number) { }
     querySelector(selector: string) { return null; }
 }
 
@@ -59,7 +59,7 @@ const mockDocument = {
         return findIn(mockDocument.body);
     },
     createElement: (tagName: string) => new MockHTMLElement(tagName),
-    addEventListener: () => {},
+    addEventListener: () => { },
 };
 
 const mockLocalStorage = {
@@ -89,14 +89,22 @@ describe('ScriptEditor Accessibility', () => {
     });
 
     it('should have aria-label on interactive elements', () => {
+        // Mock Game object
+        const mockGame: any = {
+            flightComputer: flightComputer,
+            command: vi.fn(),
+            on: vi.fn(),
+            addPhysicsEventListener: vi.fn()
+        };
+
         // Instantiate editor
-        editor = new ScriptEditor(flightComputer);
+        editor = new ScriptEditor(mockGame);
 
         // Get the modal (it's appended to body)
         const modal = mockDocument.body.children[0];
         expect(modal).toBeDefined();
 
-        const html = modal.innerHTML;
+        const html = modal!.innerHTML;
 
         // Assertions for Accessibility Attributes
 
