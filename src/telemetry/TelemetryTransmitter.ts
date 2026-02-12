@@ -1,6 +1,6 @@
 /**
  * Telemetry Transmitter
- * 
+ *
  * Broadcasts simulation state to other tabs/windows via BroadcastChannel API.
  * Decouples the simulation loop from the remote visualization view.
  */

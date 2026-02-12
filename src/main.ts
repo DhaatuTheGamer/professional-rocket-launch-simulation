@@ -1,6 +1,6 @@
 /**
  * Main Entry Point
- * 
+ *
  * Initializes the game and sets up UI event listeners.
  * This is the entry point for the bundled application.
  */
@@ -52,7 +52,7 @@ const vabEditor = new VABEditor('vab-modal', (blueprint: VehicleBlueprint) => {
     if (splashScreen) splashScreen.style.display = 'none';
 
     game.spawnVessel(blueprint);
-    game.missionLog.log(`${blueprint.name} configured - ΔV: ${stats.totalDeltaV.toFixed(0)} m/s`, "info");
+    game.missionLog.log(`${blueprint.name} configured - ΔV: ${stats.totalDeltaV.toFixed(0)} m/s`, 'info');
     showOnboarding();
 });
 
@@ -80,7 +80,7 @@ document.getElementById('tooltip-dismiss')?.addEventListener('click', () => {
 document.getElementById('start-btn')?.addEventListener('click', () => {
     const splash = document.getElementById('splash-screen');
     if (splash) splash.style.display = 'none';
-    game.missionLog.log("Mission Control Active", "info");
+    game.missionLog.log('Mission Control Active', 'info');
     showOnboarding();
 });
 
@@ -129,9 +129,9 @@ document.getElementById('launch-btn')?.addEventListener('click', () => {
     } else if (flightPhase === 'ascending') {
         // Abort - cut engines
         game.setThrottle(0);
-        game.missionLog.log("ABORT INITIATED", "warn");
+        game.missionLog.log('ABORT INITIATED', 'warn');
     } else if (flightPhase === 'descending') {
-        game.missionLog.log("LANDING LEGS DEPLOYED", "info");
+        game.missionLog.log('LANDING LEGS DEPLOYED', 'info');
     }
 });
 
@@ -152,9 +152,9 @@ document.getElementById('audio-btn')?.addEventListener('click', (e) => {
 });
 
 // --- IMPROVEMENT #4: SAS Control with Mode Indicator ---
-document.querySelectorAll('.sas-btn').forEach(btn => {
+document.querySelectorAll('.sas-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.sas-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.sas-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
 
         const mode = btn.id.replace('sas-', '').toUpperCase() as keyof typeof SASModes;
@@ -179,14 +179,14 @@ document.querySelectorAll('.sas-btn').forEach(btn => {
 });
 
 // --- IMPROVEMENT #10: Camera Mode Panel ---
-document.querySelectorAll('#camera-panel button').forEach(btn => {
+document.querySelectorAll('#camera-panel button').forEach((btn) => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('#camera-panel button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#camera-panel button').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
 
         const camMode = parseInt((btn as HTMLButtonElement).dataset.cam ?? '1');
         game.input.cameraMode = camMode;
-        game.missionLog.log(`Camera: ${btn.textContent?.trim()}`, "info");
+        game.missionLog.log(`Camera: ${btn.textContent?.trim()}`, 'info');
     });
 });
 
@@ -219,11 +219,7 @@ document.getElementById('fts-destruct-btn')?.addEventListener('click', () => {
 document.getElementById('fis-panel')?.addEventListener('fis-toggle', ((e: CustomEvent) => {
     const faultId = e.detail?.faultId;
     if (faultId && game.trackedEntity && game.trackedEntity instanceof Vessel) {
-        game.faultInjector.toggleFault(
-            faultId,
-            game.trackedEntity,
-            (game.trackedEntity as Vessel).reliability
-        );
+        game.faultInjector.toggleFault(faultId, game.trackedEntity, (game.trackedEntity as Vessel).reliability);
     }
 }) as EventListener);
 
@@ -235,7 +231,7 @@ document.getElementById('fc-btn')?.addEventListener('click', () => {
 // --- Telemetry Pop-out Button ---
 document.getElementById('telemetry-btn')?.addEventListener('click', () => {
     window.open('telemetry.html', 'Telemetry', 'width=800,height=600');
-    game.missionLog.log("Telemetry Link Established", "success");
+    game.missionLog.log('Telemetry Link Established', 'success');
 });
 
 // --- Flight Computer HUD Update ---
@@ -326,7 +322,7 @@ window.addEventListener('keydown', (e) => {
     // G - Toggle Flight Computer
     if (e.key === 'g' || e.key === 'G') {
         game.flightComputer.toggle();
-        game.missionLog.log(`Flight Computer: ${game.flightComputer.getStatusString()}`, "info");
+        game.missionLog.log(`Flight Computer: ${game.flightComputer.getStatusString()}`, 'info');
 
         // Update FC button state
         const fcBtn = document.getElementById('fc-btn');
@@ -344,7 +340,7 @@ window.addEventListener('keydown', (e) => {
     if (e.key === 'r' || e.key === 'R') {
         game.blackBox.toggle();
         const status = game.blackBox.getStatusString();
-        game.missionLog.log(`Black Box: ${status || 'IDLE'}`, "info");
+        game.missionLog.log(`Black Box: ${status || 'IDLE'}`, 'info');
     }
 
     // E - Export Flight Data
@@ -352,9 +348,9 @@ window.addEventListener('keydown', (e) => {
         const frames = game.blackBox.getFrames();
         if (frames.length > 0) {
             exportFlightData(frames, game.blackBox.getSummary(), 'csv');
-            game.missionLog.log(`Exported ${frames.length} frames to CSV`, "success");
+            game.missionLog.log(`Exported ${frames.length} frames to CSV`, 'success');
         } else {
-            game.missionLog.log("No flight data to export", "warn");
+            game.missionLog.log('No flight data to export', 'warn');
         }
     }
 
@@ -399,9 +395,8 @@ document.getElementById('export-btn')?.addEventListener('click', () => {
     const frames = game.blackBox.getFrames();
     if (frames.length > 0) {
         exportFlightData(frames, game.blackBox.getSummary(), 'csv');
-        game.missionLog.log(`Exported ${frames.length} frames to CSV`, "success");
+        game.missionLog.log(`Exported ${frames.length} frames to CSV`, 'success');
     } else {
-        game.missionLog.log("No flight data to export", "warn");
+        game.missionLog.log('No flight data to export', 'warn');
     }
 });
-

@@ -1,6 +1,6 @@
 /**
  * Audio Engine
- * 
+ *
  * Web Audio API-based sound engine for rocket simulation.
  * Generates procedural audio for:
  * - Engine rumble (filtered noise, pitch varies with altitude/throttle)
@@ -57,7 +57,7 @@ export class AudioEngine implements IAudioEngine {
             let lastOut = 0;
             for (let i = 0; i < bufferSize; i++) {
                 const white = Math.random() * 2 - 1;
-                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                output[i] = (lastOut + 0.02 * white) / 1.02;
                 lastOut = output[i]!;
                 output[i]! *= 3.5; // Amplify
             }
@@ -91,7 +91,7 @@ export class AudioEngine implements IAudioEngine {
 
     /**
      * Update engine sound based on thrust and atmospheric conditions
-     * 
+     *
      * @param throttle - Current throttle (0-1)
      * @param density - Atmospheric density (kg/m³)
      * @param velocity - Current velocity (m/s)
@@ -111,7 +111,7 @@ export class AudioEngine implements IAudioEngine {
 
         // Frequency increases with speed (Doppler-like effect)
         const speedFactor = Math.min((velocity ?? 0) / 3000, 1);
-        const targetFreq = 100 + (throttle * 600) + (speedFactor * 300);
+        const targetFreq = 100 + throttle * 600 + speedFactor * 300;
 
         this.lowPass.frequency.setTargetAtTime(targetFreq, this.ctx.currentTime, 0.1);
     }
@@ -169,11 +169,7 @@ export class AudioEngine implements IAudioEngine {
         this.muted = !this.muted;
 
         if (this.masterGain && this.ctx) {
-            this.masterGain.gain.setTargetAtTime(
-                this.muted ? 0 : 0.5,
-                this.ctx.currentTime,
-                0.1
-            );
+            this.masterGain.gain.setTargetAtTime(this.muted ? 0 : 0.5, this.ctx.currentTime, 0.1);
         }
 
         // Cancel any pending speech
@@ -186,7 +182,7 @@ export class AudioEngine implements IAudioEngine {
 
     /**
      * Speak text using Web Speech API
-     * 
+     *
      * @param text - Text to speak
      */
     speak(text: string): void {
@@ -196,9 +192,7 @@ export class AudioEngine implements IAudioEngine {
         utterance.rate = 1.1;
 
         const voices = window.speechSynthesis.getVoices();
-        const preferred = voices.find(v =>
-            v.name.includes('Google US English') || v.name.includes('Samantha')
-        );
+        const preferred = voices.find((v) => v.name.includes('Google US English') || v.name.includes('Samantha'));
         if (preferred) {
             utterance.voice = preferred;
         }

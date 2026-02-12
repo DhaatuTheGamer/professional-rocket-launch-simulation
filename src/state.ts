@@ -1,6 +1,6 @@
 /**
  * Global State Container
- * 
+ *
  * Legacy compatibility layer for global state access.
  * Now backed by SimulationStore for strict state management.
  */
@@ -28,7 +28,7 @@ export const state: GameState = {
     particles: [],
     audio: null,
     missionLog: null,
-    assets: undefined,
+    assets: undefined
 
     // Store properties not originally in GameState but present in Store State
     // (We only map what GameState interface defines)

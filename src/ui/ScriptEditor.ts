@@ -114,7 +114,7 @@ WHEN APOGEE > 100000 THEN THROTTLE 0"></textarea>
         // Safely populate preset scripts
         const presetSelect = document.getElementById('script-preset-select') as HTMLSelectElement;
         if (presetSelect) {
-            Object.keys(PRESET_SCRIPTS).forEach(name => {
+            Object.keys(PRESET_SCRIPTS).forEach((name) => {
                 const option = document.createElement('option');
                 option.value = name;
                 option.textContent = name;

@@ -1,6 +1,6 @@
 /**
  * Physics Proxy
- * 
+ *
  * Main thread interface to the Physics Worker.
  * Handles:
  * - Worker instantiation
@@ -104,7 +104,7 @@ export class PhysicsProxy {
     }
 
     private handleEvent(event: any) {
-        this.eventListeners.forEach(cb => cb(event));
+        this.eventListeners.forEach((cb) => cb(event));
     }
 
     private syncView() {
@@ -150,12 +150,18 @@ export class PhysicsProxy {
 
     private createViewEntity(type: string, x: number, y: number): Vessel {
         switch (type) {
-            case 'FullStack': return new FullStack(x, y);
-            case 'Booster': return new Booster(x, y);
-            case 'UpperStage': return new UpperStage(x, y);
-            case 'Fairing': return new Fairing(x, y);
-            case 'Payload': return new Payload(x, y);
-            default: return new FullStack(x, y); // Fallback
+            case 'FullStack':
+                return new FullStack(x, y);
+            case 'Booster':
+                return new Booster(x, y);
+            case 'UpperStage':
+                return new UpperStage(x, y);
+            case 'Fairing':
+                return new Fairing(x, y);
+            case 'Payload':
+                return new Payload(x, y);
+            default:
+                return new FullStack(x, y); // Fallback
         }
     }
 

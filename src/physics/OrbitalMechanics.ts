@@ -1,6 +1,6 @@
 /**
  * Orbital Mechanics Module
- * 
+ *
  * Provides physics calculations for orbital maneuvers and trajectory planning.
  * Includes Keplerian element calculation, Vis-Viva equation, and maneuver planning algorithms.
  */
@@ -107,7 +107,7 @@ export function calculateOrbitalElements(r: Vector2D, v: Vector2D): KeplerianEle
     // or calc via: cos(nu) = (a(1-e^2)/r - 1) / e
     let trueAnomaly = 0;
     if (e > 1e-6) {
-        const cosNu = (a * (1 - e * e) / rMag - 1) / e;
+        const cosNu = ((a * (1 - e * e)) / rMag - 1) / e;
         // Clamp to [-1, 1] for acos
         trueAnomaly = Math.acos(Math.max(-1, Math.min(1, cosNu)));
         // Check sign using flight path angle (v dot r)
@@ -225,10 +225,10 @@ export function calculateCircularizationFromElements(
     // Delta-V required
     const deltaV = Math.abs(vTarget - vCurrent);
 
-    // Estimate burn time: t = (m * dv) / F 
+    // Estimate burn time: t = (m * dv) / F
     const burnTime = (deltaV * mass) / Math.max(1, thrust);
 
-    const label = atApoapsis ? "Circularize at Apoapsis" : "Circularize at Periapsis";
+    const label = atApoapsis ? 'Circularize at Apoapsis' : 'Circularize at Periapsis';
     // Target altitude is the altitude of the burn point (since we circularize there)
     const targetAlt = rBurn - R_EARTH;
 
@@ -245,15 +245,15 @@ export function calculateCircularizationFromElements(
 
 /**
  * Calculate Ground Track (Latitude/Longitude)
- * 
+ *
  * Uses spherical trigonometry to project downrange distance onto Earth's surface.
  * Accounts for Earth's rotation (Coriolis/inertial frame offset).
- * 
+ *
  * @param downrange Downrange distance from launch site (meters) (x coordinate in sim)
  * @param time Mission elapsed time (seconds)
  * @returns { lat: number, lon: number } (Radians)
  */
-export function calculateGroundTrack(downrange: number, time: number): { lat: number, lon: number } {
+export function calculateGroundTrack(downrange: number, time: number): { lat: number; lon: number } {
     const lat0 = LAUNCH_SITE.lat;
     const lon0 = LAUNCH_SITE.lon;
     const az = LAUNCH_SITE.azimuth; // Launch azimuth

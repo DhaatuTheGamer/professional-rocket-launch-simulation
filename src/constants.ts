@@ -1,6 +1,6 @@
 /**
  * Physics Constants for Rocket Simulation
- * 
+ *
  * All values use SI units:
  * - Distance: meters (m)
  * - Time: seconds (s)
@@ -85,7 +85,7 @@ export const CONFIG: PhysicsConfig = {
 /**
  * Calculate atmospheric density at a given altitude
  * Uses exponential atmosphere model: ρ = ρ₀ * e^(-h/H)
- * 
+ *
  * @param altitude - Altitude in meters
  * @returns Density in kg/m³
  */
@@ -97,7 +97,7 @@ export function getAtmosphericDensity(altitude: number): number {
 /**
  * Calculate gravitational acceleration at altitude
  * Uses inverse square law: g = g₀ * (R/(R+h))²
- * 
+ *
  * @param altitude - Altitude in meters
  * @returns Gravitational acceleration in m/s²
  */
@@ -109,7 +109,7 @@ export function getGravity(altitude: number): number {
 /**
  * Calculate dynamic pressure (q)
  * q = 0.5 * ρ * v²
- * 
+ *
  * @param density - Atmospheric density in kg/m³
  * @param velocity - Velocity in m/s
  * @returns Dynamic pressure in Pascals
@@ -120,7 +120,7 @@ export function getDynamicPressure(density: number, velocity: number): number {
 
 /**
  * Calculate Mach number
- * 
+ *
  * @param velocity - Velocity in m/s
  * @returns Mach number (dimensionless)
  */
@@ -131,7 +131,7 @@ export function getMachNumber(velocity: number): number {
 /**
  * Get transonic drag multiplier based on Mach number
  * Drag increases significantly near Mach 1 (transonic regime)
- * 
+ *
  * @param mach - Mach number
  * @returns Drag multiplier (1.0 to 2.5)
  */

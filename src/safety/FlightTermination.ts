@@ -1,9 +1,9 @@
 /**
  * Flight Termination System (FTS)
- * 
+ *
  * Independent safety system that monitors rocket trajectory and provides
  * both automatic and manual destruct capability for Range Safety.
- * 
+ *
  * FTS States: SAFE → WARNING → ARM → DESTRUCT
  */
 
@@ -17,11 +17,7 @@ import { state } from '../state';
 
 export type FTSState = 'SAFE' | 'WARNING' | 'ARM' | 'DESTRUCT';
 
-export type FTSViolation = 
-    | 'CORRIDOR_BREACH'
-    | 'TRAJECTORY_DEVIATION'
-    | 'TUMBLE'
-    | 'NONE';
+export type FTSViolation = 'CORRIDOR_BREACH' | 'TRAJECTORY_DEVIATION' | 'TUMBLE' | 'NONE';
 
 export interface FTSConfig {
     /** Max lateral deviation from launch site (meters) */
@@ -49,7 +45,7 @@ export interface FTSStatus {
     violationMessage: string;
     warningTimer: number;
     armTimer: number;
-    corridorFraction: number;  // 0-1, how close to corridor edge
+    corridorFraction: number; // 0-1, how close to corridor edge
 }
 
 // ============================================================================
@@ -57,14 +53,14 @@ export interface FTSStatus {
 // ============================================================================
 
 export const DEFAULT_FTS_CONFIG: FTSConfig = {
-    corridorWidthM: 50000,        // 50km lateral corridor
-    corridorMaxAltM: 500000,      // 500km max altitude
-    maxDeviationAngleDeg: 45,     // 45° max deviation
-    maxTumbleRateDeg: 90,         // 90°/s tumble threshold
-    warningDurationS: 3.0,        // 3s warning before ARM
-    armDurationS: 3.0,            // 3s ARM before auto-destruct
+    corridorWidthM: 50000, // 50km lateral corridor
+    corridorMaxAltM: 500000, // 500km max altitude
+    maxDeviationAngleDeg: 45, // 45° max deviation
+    maxTumbleRateDeg: 90, // 90°/s tumble threshold
+    warningDurationS: 3.0, // 3s warning before ARM
+    armDurationS: 3.0, // 3s ARM before auto-destruct
     autoDestructEnabled: true,
-    warningThreshold: 0.75        // Warning at 75% of corridor
+    warningThreshold: 0.75 // Warning at 75% of corridor
 };
 
 // ============================================================================
@@ -164,7 +160,7 @@ export class FlightTerminationSystem {
 
         // Calculate vessel metrics
         const alt = (groundY - vessel.y - vessel.h) / PIXELS_PER_METER;
-        const lateralDistance = Math.abs((vessel.x - this._launchX)) / PIXELS_PER_METER;
+        const lateralDistance = Math.abs(vessel.x - this._launchX) / PIXELS_PER_METER;
 
         // Angular rate detection
         const angleDeg = vessel.angle * (180 / Math.PI);
@@ -173,9 +169,7 @@ export class FlightTerminationSystem {
 
         // Flight path angle
         const vel = Math.sqrt(vessel.vx * vessel.vx + vessel.vy * vessel.vy);
-        const flightPathAngle = vel > 1 
-            ? Math.atan2(vessel.vx, -vessel.vy) * (180 / Math.PI)
-            : 0;
+        const flightPathAngle = vel > 1 ? Math.atan2(vessel.vx, -vessel.vy) * (180 / Math.PI) : 0;
 
         // Corridor fraction (0 = center, 1 = edge)
         this._corridorFraction = Math.max(

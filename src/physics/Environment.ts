@@ -1,8 +1,8 @@
 /**
  * Environment Module
- * 
+ *
  * Simulates atmospheric and environmental hazards for realistic launch conditions.
- * 
+ *
  * Features:
  * - Wind Shear: Altitude-layered wind profiles
  * - Gusts: Random turbulence using simplified Dryden model
@@ -112,7 +112,7 @@ export const DEFAULT_ENVIRONMENT_CONFIG: EnvironmentConfig = {
 
 /**
  * Environment simulation system
- * 
+ *
  * Manages wind, gusts, and day/night cycle for realistic launch conditions.
  */
 export class EnvironmentSystem {
@@ -164,10 +164,7 @@ export class EnvironmentSystem {
             const gustY = Math.cos(t * 0.5 + this.gustPhaseY) * Math.sin(t * 0.4) * gustMagnitude;
 
             // Apply damping for smooth transitions
-            this.currentGust = vec2(
-                this.currentGust.x * 0.7 + gustX * 0.3,
-                this.currentGust.y * 0.7 + gustY * 0.3
-            );
+            this.currentGust = vec2(this.currentGust.x * 0.7 + gustX * 0.3, this.currentGust.y * 0.7 + gustY * 0.3);
         }
     }
 
@@ -187,9 +184,10 @@ export class EnvironmentSystem {
 
             if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
                 // Interpolate within the layer for smooth transitions
-                const layerProgress = (layer.altitudeMax === layer.altitudeMin)
-                    ? 0
-                    : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
+                const layerProgress =
+                    layer.altitudeMax === layer.altitudeMin
+                        ? 0
+                        : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
 
                 // Find next layer for interpolation
                 // Since layers are sorted, the next layer is simply at index i + 1
@@ -202,19 +200,12 @@ export class EnvironmentSystem {
                 if (nextLayer && nextLayer.altitudeMin === layer.altitudeMax) {
                     // Smooth interpolation between layers
                     speed = layer.windSpeed + (nextLayer.windSpeed - layer.windSpeed) * layerProgress;
-                    direction = this.interpolateAngle(
-                        layer.windDirection,
-                        nextLayer.windDirection,
-                        layerProgress
-                    );
+                    direction = this.interpolateAngle(layer.windDirection, nextLayer.windDirection, layerProgress);
                 }
 
                 // Convert to velocity vector
                 // Wind direction is where wind comes FROM, so we negate for force direction
-                return vec2(
-                    -Math.cos(direction) * speed,
-                    -Math.sin(direction) * speed
-                );
+                return vec2(-Math.cos(direction) * speed, -Math.sin(direction) * speed);
             }
         }
 
@@ -246,7 +237,7 @@ export class EnvironmentSystem {
 
     /**
      * Get atmospheric density multiplier based on time of day
-     * 
+     *
      * Night air is denser (colder), day air is less dense (warmer).
      * Variation is approximately 1-3%.
      */
@@ -368,7 +359,7 @@ export function formatTimeOfDay(hours: number): string {
  */
 export function getWindDirectionString(radians: number): string {
     // Convert to degrees (0-360, where 0 is East in our system)
-    let degrees = (radians * 180 / Math.PI + 360) % 360;
+    let degrees = ((radians * 180) / Math.PI + 360) % 360;
 
     // Convert to compass bearing (0 is North)
     degrees = (90 - degrees + 360) % 360;

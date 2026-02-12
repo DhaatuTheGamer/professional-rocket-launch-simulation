@@ -1,11 +1,14 @@
 /**
  * Telemetry Receiver
- * 
+ *
  * Handles receiving broadcasted telemetry data and updating the UI.
  */
 import { TelemetryPacket } from './TelemetryTransmitter';
 
-interface Vector2D { x: number, y: number }
+interface Vector2D {
+    x: number;
+    y: number;
+}
 
 class TelemetryReceiver {
     private channel: BroadcastChannel;
@@ -69,8 +72,8 @@ class TelemetryReceiver {
         this.dispFuel.textContent = (data.fuel * 100).toFixed(1);
 
         // Update Status
-        this.statusEl.textContent = "CONNECTED - T+" + data.missionTime.toFixed(1);
-        this.statusEl.style.color = "#4ade80"; // green
+        this.statusEl.textContent = 'CONNECTED - T+' + data.missionTime.toFixed(1);
+        this.statusEl.style.color = '#4ade80'; // green
 
         // Update Visuals
         this.drawMap(data.position, data.velocityVector);
@@ -105,8 +108,8 @@ class TelemetryReceiver {
         const cy = height - 50;
         const scale = 0.5; // pixels per m
 
-        const x = cx + (pos.x * scale);
-        const y = cy - (pos.y * scale);
+        const x = cx + pos.x * scale;
+        const y = cy - pos.y * scale;
 
         // Path history
         this.path.push({ x, y });
@@ -166,7 +169,7 @@ class TelemetryReceiver {
         this.altHistory.forEach((val, i) => {
             const x = i * step;
             const normalize = (val - min) / (max - min);
-            const y = height - (normalize * height);
+            const y = height - normalize * height;
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });

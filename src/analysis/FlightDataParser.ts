@@ -1,6 +1,6 @@
 /**
  * Flight Data Parser
- * 
+ *
  * Handles parsing of CSV and JSON flight logs.
  */
 
@@ -20,12 +20,11 @@ export interface FlightFrame {
 }
 
 export class FlightDataParser {
-
     public static parseCSV(csvContent: string): FlightFrame[] {
         const lines = csvContent.trim().split('\n');
         if (lines.length < 2) return [];
 
-        const headers = (lines[0] || '').split(',').map(h => h.trim());
+        const headers = (lines[0] || '').split(',').map((h) => h.trim());
         const frames: FlightFrame[] = [];
 
         for (let i = 1; i < lines.length; i++) {
@@ -40,18 +39,42 @@ export class FlightDataParser {
                 const val = values[index]?.trim();
                 if (val !== undefined) {
                     switch (header) {
-                        case 'timestamp': frame.timestamp = parseInt(val); break;
-                        case 'missionTime': frame.missionTime = parseFloat(val); break;
-                        case 'altitude': frame.altitude = parseFloat(val); break;
-                        case 'velocity': frame.velocity = parseFloat(val); break;
-                        case 'fuel': frame.fuel = parseFloat(val); break;
-                        case 'throttle': frame.throttle = parseFloat(val); break;
-                        case 'q': frame.q = parseFloat(val); break;
-                        case 'gForce': frame.gForce = parseFloat(val); break;
-                        case 'angle': frame.angle = parseFloat(val); break;
-                        case 'posX': frame.posX = parseFloat(val); break;
-                        case 'posY': frame.posY = parseFloat(val); break;
-                        case 'event': frame.event = val; break;
+                        case 'timestamp':
+                            frame.timestamp = parseInt(val);
+                            break;
+                        case 'missionTime':
+                            frame.missionTime = parseFloat(val);
+                            break;
+                        case 'altitude':
+                            frame.altitude = parseFloat(val);
+                            break;
+                        case 'velocity':
+                            frame.velocity = parseFloat(val);
+                            break;
+                        case 'fuel':
+                            frame.fuel = parseFloat(val);
+                            break;
+                        case 'throttle':
+                            frame.throttle = parseFloat(val);
+                            break;
+                        case 'q':
+                            frame.q = parseFloat(val);
+                            break;
+                        case 'gForce':
+                            frame.gForce = parseFloat(val);
+                            break;
+                        case 'angle':
+                            frame.angle = parseFloat(val);
+                            break;
+                        case 'posX':
+                            frame.posX = parseFloat(val);
+                            break;
+                        case 'posY':
+                            frame.posY = parseFloat(val);
+                            break;
+                        case 'event':
+                            frame.event = val;
+                            break;
                     }
                 }
             });
@@ -75,7 +98,7 @@ export class FlightDataParser {
             }
             return [];
         } catch (e) {
-            console.error("Failed to parse JSON", e);
+            console.error('Failed to parse JSON', e);
             return [];
         }
     }

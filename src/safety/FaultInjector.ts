@@ -1,6 +1,6 @@
 /**
  * Fault Injection System (FIS)
- * 
+ *
  * Allows instructors to silently inject specific failures into the simulation
  * for training purposes. Supports immediate, timed, and conditional triggers.
  */
@@ -23,16 +23,16 @@ export interface FaultDefinition {
     label: string;
     category: FaultCategory;
     description: string;
-    failureType?: FailureType;     // Maps to existing reliability failures
-    customHandler?: string;         // For custom fault effects (e.g., 'THROTTLE_STUCK', 'FUEL_LEAK')
+    failureType?: FailureType; // Maps to existing reliability failures
+    customHandler?: string; // For custom fault effects (e.g., 'THROTTLE_STUCK', 'FUEL_LEAK')
 }
 
 interface ActiveFault {
     definition: FaultDefinition;
     status: FaultStatus;
     triggerType: FaultTriggerType;
-    delay: number;                  // Seconds for timed trigger
-    elapsed: number;                // Time since armed
+    delay: number; // Seconds for timed trigger
+    elapsed: number; // Time since armed
     condition?: (vessel: IVessel, alt: number) => boolean;
 }
 
@@ -113,17 +113,23 @@ export class FaultInjector {
     }
 
     /** Get whether a custom fault is active */
-    get throttleStuck(): boolean { return this._throttleStuck; }
-    get throttleStuckValue(): number { return this._throttleStuckValue; }
-    get fuelLeakActive(): boolean { return this._fuelLeakActive; }
+    get throttleStuck(): boolean {
+        return this._throttleStuck;
+    }
+    get throttleStuckValue(): number {
+        return this._throttleStuckValue;
+    }
+    get fuelLeakActive(): boolean {
+        return this._fuelLeakActive;
+    }
 
     /** Arm a fault for injection */
     armFault(faultId: string, triggerType: FaultTriggerType = 'immediate', delay: number = 0): void {
-        const def = FAULT_CATALOG.find(f => f.id === faultId);
+        const def = FAULT_CATALOG.find((f) => f.id === faultId);
         if (!def) return;
 
         // Remove existing instance of same fault
-        this.activeFaults = this.activeFaults.filter(f => f.definition.id !== faultId);
+        this.activeFaults = this.activeFaults.filter((f) => f.definition.id !== faultId);
 
         this.activeFaults.push({
             definition: def,
@@ -138,7 +144,7 @@ export class FaultInjector {
 
     /** Inject a fault immediately */
     injectFault(faultId: string, vessel: IVessel, reliability: ReliabilitySystem): void {
-        const fault = this.activeFaults.find(f => f.definition.id === faultId);
+        const fault = this.activeFaults.find((f) => f.definition.id === faultId);
         if (!fault || fault.status === 'injected') return;
 
         this.executeFault(fault, vessel, reliability);
@@ -146,7 +152,7 @@ export class FaultInjector {
 
     /** Toggle a fault: first click arms, second click injects */
     toggleFault(faultId: string, vessel: IVessel, reliability: ReliabilitySystem): void {
-        const existing = this.activeFaults.find(f => f.definition.id === faultId);
+        const existing = this.activeFaults.find((f) => f.definition.id === faultId);
 
         if (!existing) {
             // First click: arm
@@ -265,7 +271,7 @@ export class FaultInjector {
         `;
 
         for (const cat of categories) {
-            const faults = FAULT_CATALOG.filter(f => f.category === cat);
+            const faults = FAULT_CATALOG.filter((f) => f.category === cat);
             html += `
                 <div class="fis-category">
                     <div class="fis-category-label">${categoryLabels[cat]}</div>
@@ -273,13 +279,11 @@ export class FaultInjector {
             `;
 
             for (const fault of faults) {
-                const active = this.activeFaults.find(f => f.definition.id === fault.id);
-                const statusClass = active?.status === 'injected' ? 'injected'
-                    : active?.status === 'armed' ? 'armed'
-                        : '';
-                const statusLabel = active?.status === 'injected' ? '⚡ ACTIVE'
-                    : active?.status === 'armed' ? '🔴 ARMED'
-                        : '';
+                const active = this.activeFaults.find((f) => f.definition.id === fault.id);
+                const statusClass =
+                    active?.status === 'injected' ? 'injected' : active?.status === 'armed' ? 'armed' : '';
+                const statusLabel =
+                    active?.status === 'injected' ? '⚡ ACTIVE' : active?.status === 'armed' ? '🔴 ARMED' : '';
 
                 html += `
                     <button class="fis-fault-btn ${statusClass}" 
@@ -304,16 +308,18 @@ export class FaultInjector {
         this.containerEl.innerHTML = html;
 
         // Wire button events
-        this.containerEl.querySelectorAll('.fis-fault-btn').forEach(btn => {
+        this.containerEl.querySelectorAll('.fis-fault-btn').forEach((btn) => {
             btn.addEventListener('click', (e) => {
-                const target = (e.currentTarget as HTMLButtonElement);
+                const target = e.currentTarget as HTMLButtonElement;
                 const faultId = target.dataset.fault;
                 if (faultId) {
                     // Dispatch custom event — handled by main.ts
-                    this.containerEl?.dispatchEvent(new CustomEvent('fis-toggle', {
-                        detail: { faultId },
-                        bubbles: true
-                    }));
+                    this.containerEl?.dispatchEvent(
+                        new CustomEvent('fis-toggle', {
+                            detail: { faultId },
+                            bubbles: true
+                        })
+                    );
                 }
             });
         });

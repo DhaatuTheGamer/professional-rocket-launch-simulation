@@ -1,6 +1,6 @@
 /**
  * Analysis App
- * 
+ *
  * Main controller for the post-flight analysis tool.
  * Handles UI interactions, data loading, playback, and rendering.
  */
@@ -44,7 +44,7 @@ class AnalysisApp {
 
     private initCharts() {
         const ids = ['visualizer', 'chart-alt', 'chart-vel', 'chart-throttle', 'chart-q'];
-        ids.forEach(id => {
+        ids.forEach((id) => {
             const canvas = document.getElementById(id + (id === 'visualizer' ? '-canvas' : '')) as HTMLCanvasElement;
             if (canvas) {
                 this.canvases[id] = canvas;
@@ -54,7 +54,7 @@ class AnalysisApp {
     }
 
     private resizeCanvases() {
-        Object.values(this.canvases).forEach(canvas => {
+        Object.values(this.canvases).forEach((canvas) => {
             const rect = canvas.parentElement?.getBoundingClientRect();
             if (rect) {
                 canvas.width = rect.width;
@@ -69,7 +69,10 @@ class AnalysisApp {
         const fileInput = document.getElementById('file-input') as HTMLInputElement;
         const overlay = document.getElementById('upload-overlay');
 
-        dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
         dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
         dropZone?.addEventListener('drop', (e) => {
             e.preventDefault();
@@ -133,7 +136,7 @@ class AnalysisApp {
     private onDataLoaded() {
         if (this.frames.length === 0) return;
         this.currentIndex = 0;
-        this.timeScrubber.value = "0";
+        this.timeScrubber.value = '0';
         this.renderCharts(); // Draw static background charts
         this.renderFrame(0);
 
@@ -248,19 +251,19 @@ class AnalysisApp {
         // Altitude scaling (logarithmic-ish for vis?) or linear
         // Let's keep it simple: Rocket moves up
         const scale = 0.5; // pixels per m
-        const rocketY = groundY - (frame.altitude * scale);
+        const rocketY = groundY - frame.altitude * scale;
 
         // Auto-pan camera logic: keep rocket vertically centered if high up
         let camY = 0;
         if (rocketY < h / 2) {
-            camY = (h / 2) - rocketY;
+            camY = h / 2 - rocketY;
         }
 
         ctx.save();
         ctx.translate(w / 2, camY);
 
         /** Draw Rocket path **/
-        // Optimization: Don't draw full path every frame in 2D viz if it's expensive, 
+        // Optimization: Don't draw full path every frame in 2D viz if it's expensive,
         // but here it's cheapish
         /*
         ctx.beginPath();
@@ -278,7 +281,7 @@ class AnalysisApp {
 
         // Draw Rocket
         const rx = (frame.posX ?? 0) * scale;
-        const ry = groundY - (frame.altitude * scale); // raw Y position relative to ground
+        const ry = groundY - frame.altitude * scale; // raw Y position relative to ground
 
         ctx.translate(rx, ry);
 
@@ -338,7 +341,7 @@ class AnalysisApp {
         const dataMin = min ?? 0;
         let dataMax = max ?? -Infinity;
         if (max === undefined) {
-            this.frames.forEach(f => {
+            this.frames.forEach((f) => {
                 const val = f[metric] as number;
                 if (val > dataMax) dataMax = val;
             });
@@ -356,7 +359,7 @@ class AnalysisApp {
             const x = (i / (this.frames.length - 1)) * w;
             const val = f[metric] as number;
             const normalized = (val - dataMin) / range;
-            const y = h - (normalized * h);
+            const y = h - normalized * h;
 
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -385,7 +388,7 @@ class AnalysisApp {
 
         const xPct = index / (this.frames.length - 1);
 
-        ['chart-alt', 'chart-vel', 'chart-throttle', 'chart-q'].forEach(id => {
+        ['chart-alt', 'chart-vel', 'chart-throttle', 'chart-q'].forEach((id) => {
             const ctx = this.ctxs[id];
             const canvas = this.canvases[id];
             if (!ctx || !canvas) return;

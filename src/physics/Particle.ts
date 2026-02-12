@@ -1,6 +1,6 @@
 /**
  * Particle System
- * 
+ *
  * Visual particle effects for exhaust, explosions, and debris.
  * Each particle has physics properties and renders with type-specific appearance.
  */
@@ -63,20 +63,14 @@ export class Particle implements IParticle {
 
     /**
      * Create a new particle
-     * 
+     *
      * @param x - Initial X position (pixels)
      * @param y - Initial Y position (pixels)
      * @param type - Particle type for visual appearance
      * @param vx - Initial X velocity (pixels/frame)
      * @param vy - Initial Y velocity (pixels/frame)
      */
-    constructor(
-        x: number,
-        y: number,
-        type: ParticleType,
-        vx: number = 0,
-        vy: number = 0
-    ) {
+    constructor(x: number, y: number, type: ParticleType, vx: number = 0, vy: number = 0) {
         this.x = x;
         this.y = y;
         this.type = type;
@@ -106,7 +100,7 @@ export class Particle implements IParticle {
 
     /**
      * Update particle state
-     * 
+     *
      * @param groundLevel - Y position of ground (unused, for interface compat)
      * @param timeScale - Time warp multiplier
      */
@@ -135,7 +129,7 @@ export class Particle implements IParticle {
 
     /**
      * Draw particle to canvas
-     * 
+     *
      * @param ctx - Canvas 2D rendering context
      * @deprecated Use Particle.drawParticles for batched rendering instead.
      */

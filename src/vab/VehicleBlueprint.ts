@@ -1,6 +1,6 @@
 /**
  * Vehicle Blueprint
- * 
+ *
  * Data structures for user-designed rockets.
  * Blueprints can be saved/loaded and converted to playable vehicles.
  */
@@ -104,11 +104,7 @@ export function addStage(blueprint: VehicleBlueprint): VehicleBlueprint {
 /**
  * Add a part to a stage
  */
-export function addPartToStage(
-    blueprint: VehicleBlueprint,
-    stageIndex: number,
-    part: RocketPart
-): VehicleBlueprint {
+export function addPartToStage(blueprint: VehicleBlueprint, stageIndex: number, part: RocketPart): VehicleBlueprint {
     const stages = [...blueprint.stages];
     const stage = stages[stageIndex];
     if (!stage) return blueprint;
@@ -140,7 +136,7 @@ export function removePartFromStage(
 
     stages[stageIndex] = {
         ...stage,
-        parts: stage.parts.filter(p => p.instanceId !== instanceId)
+        parts: stage.parts.filter((p) => p.instanceId !== instanceId)
     };
 
     return {
@@ -353,9 +349,9 @@ export function serializeBlueprint(blueprint: VehicleBlueprint): string {
     // Convert to a format that only stores part IDs
     const serializable = {
         ...blueprint,
-        stages: blueprint.stages.map(stage => ({
+        stages: blueprint.stages.map((stage) => ({
             ...stage,
-            parts: stage.parts.map(inst => ({
+            parts: stage.parts.map((inst) => ({
                 partId: inst.part.id,
                 instanceId: inst.instanceId,
                 stageIndex: inst.stageIndex
@@ -413,9 +409,7 @@ export function loadBlueprints(): VehicleBlueprint[] {
 
     try {
         const jsons = JSON.parse(data) as string[];
-        return jsons
-            .map(deserializeBlueprint)
-            .filter((b): b is VehicleBlueprint => b !== null);
+        return jsons.map(deserializeBlueprint).filter((b): b is VehicleBlueprint => b !== null);
     } catch (e) {
         console.error('Failed to load blueprints:', e);
         return [];

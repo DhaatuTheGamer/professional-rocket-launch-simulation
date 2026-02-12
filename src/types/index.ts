@@ -1,56 +1,29 @@
 /**
  * Core Type Definitions for Rocket Simulation
- * 
+ *
  * These interfaces define the data structures used throughout the physics
  * simulation, ensuring type safety and preventing unit mixing errors.
  */
 
 // Re-export aerodynamics types for convenience
-export type {
-    AerodynamicsConfig,
-    AerodynamicState,
-    AerodynamicForces
-} from '../physics/Aerodynamics.ts';
+export type { AerodynamicsConfig, AerodynamicState, AerodynamicForces } from '../physics/Aerodynamics.ts';
 
 // Re-export TPS types for convenience
-export type {
-    TPSConfig,
-    ThermalState
-} from '../physics/ThermalProtection.ts';
+export type { TPSConfig, ThermalState } from '../physics/ThermalProtection.ts';
 
 // Re-export propulsion types for convenience
-import type {
-    PropulsionConfig,
-    PropulsionState,
-    EngineState
-} from '../physics/Propulsion.ts';
+import type { PropulsionConfig, PropulsionState, EngineState } from '../physics/Propulsion.ts';
 
 // Re-export propulsion types for convenience
-export type {
-    PropulsionConfig,
-    PropulsionState,
-    EngineState
-};
+export type { PropulsionConfig, PropulsionState, EngineState };
 
 // Re-export reliability types for convenience
-import type {
-    FailureType,
-    FailureMode,
-    ReliabilityConfig
-} from '../physics/Reliability.ts';
+import type { FailureType, FailureMode, ReliabilityConfig } from '../physics/Reliability.ts';
 
-export type {
-    FailureType,
-    FailureMode,
-    ReliabilityConfig
-};
+export type { FailureType, FailureMode, ReliabilityConfig };
 
 // Re-export environment types for convenience
-export type {
-    WindLayer,
-    EnvironmentConfig,
-    EnvironmentState
-} from '../physics/Environment.ts';
+export type { WindLayer, EnvironmentConfig, EnvironmentState } from '../physics/Environment.ts';
 
 // ============================================================================
 // Vector Types
@@ -100,30 +73,30 @@ export const Vec2 = {
  * State dictionary for RK4 integration
  */
 export interface PhysicsState {
-    x: number;      // Position X (meters)
-    y: number;      // Position Y (meters)  
-    vx: number;     // Velocity X (m/s)
-    vy: number;     // Velocity Y (m/s)
-    mass: number;   // Mass (kg)
+    x: number; // Position X (meters)
+    y: number; // Position Y (meters)
+    vx: number; // Velocity X (m/s)
+    vy: number; // Velocity Y (m/s)
+    mass: number; // Mass (kg)
 }
 
 /**
  * Derivatives for RK4 integration
  */
 export interface Derivatives {
-    dx: number;     // dPosition/dt = velocity
+    dx: number; // dPosition/dt = velocity
     dy: number;
-    dvx: number;    // dVelocity/dt = acceleration
+    dvx: number; // dVelocity/dt = acceleration
     dvy: number;
-    dmass: number;  // dMass/dt = -fuel flow rate
+    dmass: number; // dMass/dt = -fuel flow rate
 }
 
 /**
  * Orbital elements for trajectory prediction
  */
 export interface OrbitalElements {
-    phi: number;    // Angular position (radians)
-    r: number;      // Radius from Earth center (meters)
+    phi: number; // Angular position (radians)
+    r: number; // Radius from Earth center (meters)
 }
 
 // ============================================================================
@@ -134,16 +107,16 @@ export interface OrbitalElements {
  * Configuration for physics simulation constants
  */
 export interface PhysicsConfig {
-    MAX_THRUST_BOOSTER: number;     // Newtons
-    MAX_THRUST_UPPER: number;       // Newtons
-    MASS_BOOSTER: number;           // kg (dry mass)
-    MASS_UPPER: number;             // kg (dry mass)
-    FUEL_MASS: number;              // kg
-    DRAG_COEFF: number;             // Dimensionless
-    ISP_VAC_BOOSTER: number;        // seconds (specific impulse vacuum)
-    ISP_SL_BOOSTER: number;         // seconds (specific impulse sea level)
-    ISP_VAC_UPPER: number;          // seconds
-    ISP_SL_UPPER: number;           // seconds
+    MAX_THRUST_BOOSTER: number; // Newtons
+    MAX_THRUST_UPPER: number; // Newtons
+    MASS_BOOSTER: number; // kg (dry mass)
+    MASS_UPPER: number; // kg (dry mass)
+    FUEL_MASS: number; // kg
+    DRAG_COEFF: number; // Dimensionless
+    ISP_VAC_BOOSTER: number; // seconds (specific impulse vacuum)
+    ISP_SL_BOOSTER: number; // seconds (specific impulse sea level)
+    ISP_VAC_UPPER: number; // seconds
+    ISP_SL_UPPER: number; // seconds
 }
 
 /**
@@ -151,19 +124,14 @@ export interface PhysicsConfig {
  */
 export interface StageSeparation {
     type: VesselType;
-    separationVelocity: number;     // m/s
-    offsetY: number;                // pixels
+    separationVelocity: number; // m/s
+    offsetY: number; // pixels
 }
 
 /**
  * All possible vessel types in the simulation
  */
-export type VesselType =
-    | 'FullStack'
-    | 'Booster'
-    | 'UpperStage'
-    | 'Payload'
-    | 'Fairing';
+export type VesselType = 'FullStack' | 'Booster' | 'UpperStage' | 'Payload' | 'Fairing';
 
 /**
  * Particle effect types
@@ -209,7 +177,7 @@ export const SASMode = {
     RETROGRADE: 'RETROGRADE'
 } as const;
 
-export type SASMode = typeof SASMode[keyof typeof SASMode];
+export type SASMode = (typeof SASMode)[keyof typeof SASMode];
 
 /**
  * Input action states
@@ -231,8 +199,8 @@ export interface InputActions {
  */
 export interface JoystickState {
     active: boolean;
-    x: number;  // -1 to 1
-    y: number;  // -1 to 1
+    x: number; // -1 to 1
+    y: number; // -1 to 1
 }
 
 /**
@@ -240,7 +208,7 @@ export interface JoystickState {
  */
 export interface ThrottleTouchState {
     active: boolean;
-    value: number;  // 0 to 1
+    value: number; // 0 to 1
 }
 
 // ============================================================================
@@ -292,23 +260,23 @@ export interface IVessel {
     lastOrbitUpdate: number;
 
     // Aerodynamic state for stability analysis
-    aoa: number;                    // Angle of Attack (radians)
-    stabilityMargin: number;        // (CP - CoM) / length, positive = stable
-    isAeroStable: boolean;          // CP behind CoM
-    liftForce: number;              // Current lift force (N)
-    dragForce: number;              // Current drag force (N)
+    aoa: number; // Angle of Attack (radians)
+    stabilityMargin: number; // (CP - CoM) / length, positive = stable
+    isAeroStable: boolean; // CP behind CoM
+    liftForce: number; // Current lift force (N)
+    dragForce: number; // Current drag force (N)
 
     // Thermal protection state
-    skinTemp: number;               // Skin temperature (K)
-    heatShieldRemaining: number;    // Heat shield fraction (0-1)
-    isAblating: boolean;            // Currently ablating
-    isThermalCritical: boolean;     // Temperature critical
+    skinTemp: number; // Skin temperature (K)
+    heatShieldRemaining: number; // Heat shield fraction (0-1)
+    isAblating: boolean; // Currently ablating
+    isThermalCritical: boolean; // Temperature critical
 
     // Propulsion state
-    engineState: EngineState;       // Current engine state
-    ignitersRemaining: number;      // Remaining igniter cartridges
-    ullageSettled: boolean;         // Fuel settled for ignition
-    actualThrottle: number;         // Lagged throttle (vs commanded)
+    engineState: EngineState; // Current engine state
+    ignitersRemaining: number; // Remaining igniter cartridges
+    ullageSettled: boolean; // Fuel settled for ignition
+    actualThrottle: number; // Lagged throttle (vs commanded)
 
     applyPhysics(dt: number, keys: Record<string, boolean>): void;
     spawnExhaust(timeScale: number): void;
@@ -368,7 +336,7 @@ export interface IAssetLoader {
  * Telemetry data point
  */
 export interface TelemetryDataPoint {
-    t: number;      // Time (seconds)
-    alt: number;    // Altitude (meters)
-    vel: number;    // Velocity (m/s)
+    t: number; // Time (seconds)
+    alt: number; // Altitude (meters)
+    vel: number; // Velocity (m/s)
 }

@@ -1,6 +1,6 @@
 /**
  * BlackBoxRecorder - Flight Data Recorder
- * 
+ *
  * Records all flight variables at 20Hz for post-flight analysis.
  * Provides export functionality to CSV and JSON formats.
  */
@@ -16,25 +16,25 @@ import { PIXELS_PER_METER, getAtmosphericDensity, getMachNumber } from '../const
  * A single frame of flight data
  */
 export interface FlightDataFrame {
-    t: number;           // Mission time (seconds)
-    alt: number;         // Altitude (meters)
-    vx: number;          // Velocity X (m/s)
-    vy: number;          // Velocity Y (m/s)
-    speed: number;       // Total speed (m/s)
-    accelX: number;      // Acceleration X (m/s²)
-    accelY: number;      // Acceleration Y (m/s²)
-    gForce: number;      // G-force (g)
-    angle: number;       // Pitch angle (degrees)
-    gimbal: number;      // Gimbal angle (degrees)
-    throttle: number;    // Throttle (0-1)
-    mass: number;        // Total mass (kg)
-    fuel: number;        // Fuel fraction (0-1)
-    q: number;           // Dynamic pressure (Pa)
-    mach: number;        // Mach number
-    aoa: number;         // Angle of attack (degrees)
-    skinTemp: number;    // Skin temperature (K)
+    t: number; // Mission time (seconds)
+    alt: number; // Altitude (meters)
+    vx: number; // Velocity X (m/s)
+    vy: number; // Velocity Y (m/s)
+    speed: number; // Total speed (m/s)
+    accelX: number; // Acceleration X (m/s²)
+    accelY: number; // Acceleration Y (m/s²)
+    gForce: number; // G-force (g)
+    angle: number; // Pitch angle (degrees)
+    gimbal: number; // Gimbal angle (degrees)
+    throttle: number; // Throttle (0-1)
+    mass: number; // Total mass (kg)
+    fuel: number; // Fuel fraction (0-1)
+    q: number; // Dynamic pressure (Pa)
+    mach: number; // Mach number
+    aoa: number; // Angle of attack (degrees)
+    skinTemp: number; // Skin temperature (K)
     engineState: string; // Engine state
-    apogee: number;      // Predicted apogee (m)
+    apogee: number; // Predicted apogee (m)
 }
 
 /**
@@ -49,15 +49,15 @@ export interface FlightSummary {
     missionName: string;
     startTime: Date;
     endTime: Date | null;
-    duration: number;        // seconds
-    maxAltitude: number;     // meters
-    maxVelocity: number;     // m/s
-    maxGForce: number;       // g
-    maxQ: number;            // Pa
+    duration: number; // seconds
+    maxAltitude: number; // meters
+    maxVelocity: number; // m/s
+    maxGForce: number; // g
+    maxQ: number; // Pa
     maxMach: number;
-    finalState: string;      // 'landed' | 'crashed' | 'in-flight'
+    finalState: string; // 'landed' | 'crashed' | 'in-flight'
     frameCount: number;
-    sampleRate: number;      // Hz
+    sampleRate: number; // Hz
 }
 
 // ============================================================================
@@ -230,14 +230,14 @@ export class BlackBoxRecorder {
             accelX: accelX,
             accelY: accelY,
             gForce: gForce,
-            angle: vessel.angle * 180 / Math.PI,
-            gimbal: vessel.gimbalAngle * 180 / Math.PI,
+            angle: (vessel.angle * 180) / Math.PI,
+            gimbal: (vessel.gimbalAngle * 180) / Math.PI,
             throttle: vessel.throttle,
             mass: vessel.mass,
             fuel: vessel.fuel,
             q: vessel.q,
             mach: mach,
-            aoa: vessel.aoa * 180 / Math.PI,
+            aoa: (vessel.aoa * 180) / Math.PI,
             skinTemp: vessel.skinTemp,
             engineState: vessel.engineState,
             apogee: vessel.apogee
@@ -316,10 +316,14 @@ export class BlackBoxRecorder {
      */
     getStatusString(): string {
         switch (this.state) {
-            case 'idle': return '';
-            case 'recording': return `● REC ${this.frames.length}`;
-            case 'paused': return '⏸ PAUSED';
-            case 'stopped': return `■ ${this.frames.length} frames`;
+            case 'idle':
+                return '';
+            case 'recording':
+                return `● REC ${this.frames.length}`;
+            case 'paused':
+                return '⏸ PAUSED';
+            case 'stopped':
+                return `■ ${this.frames.length} frames`;
         }
     }
 }

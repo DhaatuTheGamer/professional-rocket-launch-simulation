@@ -1,26 +1,14 @@
 /**
  * Game
- * 
+ *
  * Main game controller class.
  * Manages game loop, physics updates, rendering, and subsystems.
  */
 
 import { CameraMode, MissionState, OrbitalElements, IVessel } from '../types';
-import {
-    CONFIG,
-    PIXELS_PER_METER,
-    R_EARTH,
-    getAtmosphericDensity
-} from '../constants';
+import { CONFIG, PIXELS_PER_METER, R_EARTH, getAtmosphericDensity } from '../constants';
 import { MU } from '../physics/OrbitalMechanics';
-import {
-    state,
-    updateDimensions,
-    setAudioEngine,
-    setMissionLog,
-    setAssetLoader,
-    addParticle
-} from '../state';
+import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from '../state';
 import { InputManager } from './InputManager';
 import { AudioEngine } from '../utils/AudioEngine';
 import { AssetLoader } from '../utils/AssetLoader';
@@ -104,7 +92,6 @@ export class Game {
     private readonly FIXED_DT: number = 1 / 60;
     public missionTime: number = 0;
     private lastStageTime: number = 0;
-
 
     private bloomCanvas: HTMLCanvasElement;
     private bloomCtx: CanvasRenderingContext2D;
@@ -253,15 +240,23 @@ export class Game {
      */
     async init(): Promise<void> {
         // Audio requires user interaction
-        document.addEventListener('click', () => {
-            this.audio.resume();
-            this.audio.init();
-        }, { once: true });
+        document.addEventListener(
+            'click',
+            () => {
+                this.audio.resume();
+                this.audio.init();
+            },
+            { once: true }
+        );
 
-        document.addEventListener('touchstart', () => {
-            this.audio.resume();
-            this.audio.init();
-        }, { once: true });
+        document.addEventListener(
+            'touchstart',
+            () => {
+                this.audio.resume();
+                this.audio.init();
+            },
+            { once: true }
+        );
 
         // Toggle Maneuver Planner with 'O'
         window.addEventListener('keydown', (e) => {
@@ -313,7 +308,7 @@ export class Game {
      * Spawn a new vessel from a blueprint
      */
     spawnVessel(blueprint: any): void {
-        console.log("Spawning blueprint:", blueprint?.name);
+        console.log('Spawning blueprint:', blueprint?.name);
         // For now, reset which triggers worker init to spawn default rocket
         this.reset();
     }
@@ -323,7 +318,7 @@ export class Game {
      */
     public launch(): void {
         if (this.missionState.liftoff) {
-            this.missionLog.log("Already launched!", "info");
+            this.missionLog.log('Already launched!', 'info');
             return;
         }
 
@@ -335,8 +330,8 @@ export class Game {
             this.mainStack.throttle = 1.0;
         }
 
-        this.missionLog.log("IGNITION SEQUENCE START", "warn");
-        this.audio.speak("Ignition");
+        this.missionLog.log('IGNITION SEQUENCE START', 'warn');
+        this.audio.speak('Ignition');
     }
 
     /**
@@ -351,24 +346,26 @@ export class Game {
      */
     private handlePhysicsEvent(e: any): void {
         if (e.name === 'STAGING_S1') {
-            this.missionLog.log("STAGING: S1 SEP", "warn");
+            this.missionLog.log('STAGING: S1 SEP', 'warn');
             this.audio.playStaging();
 
             // Create staging particles (Visual only)
             for (let i = 0; i < 30; i++) {
-                addParticle(new Particle(
-                    e.x + (Math.random() - 0.5) * 20,
-                    e.y + 80,
-                    'smoke',
-                    0, // velocity handled by particle logic?
-                    0
-                ));
+                addParticle(
+                    new Particle(
+                        e.x + (Math.random() - 0.5) * 20,
+                        e.y + 80,
+                        'smoke',
+                        0, // velocity handled by particle logic?
+                        0
+                    )
+                );
             }
         } else if (e.name === 'FAIRING_SEP') {
-            this.missionLog.log("FAIRING SEP", "info");
+            this.missionLog.log('FAIRING SEP', 'info');
             this.audio.playStaging();
         } else if (e.name === 'PAYLOAD_SEP') {
-            this.missionLog.log("PAYLOAD DEP", "success");
+            this.missionLog.log('PAYLOAD DEP', 'success');
             this.audio.playStaging();
         }
     }
@@ -427,7 +424,7 @@ export class Game {
                 if (fcOutput.abort) {
                     throttle = 0;
                     abort = true;
-                    this.missionLog.log("FC: ABORT COMMAND", "warn");
+                    this.missionLog.log('FC: ABORT COMMAND', 'warn');
                 }
 
                 // Staging command from FC?
@@ -512,8 +509,8 @@ export class Game {
 
             if (!this.missionState.liftoff && alt > 20) {
                 this.missionState.liftoff = true;
-                this.missionLog.log("LIFTOFF", "warn");
-                this.audio.speak("Liftoff");
+                this.missionLog.log('LIFTOFF', 'warn');
+                this.audio.speak('Liftoff');
                 if (this.blackBox.getState() === 'idle') {
                     this.blackBox.start('Flight');
                 }
@@ -609,7 +606,6 @@ export class Game {
             }
         }
     }
-
 
     /**
      * Update orbit prediction paths
@@ -743,7 +739,7 @@ export class Game {
 
                 // Draw arrow
                 this.ctx.translate(screenX, screenY);
-                // Note: Wind vector points WHERE wind is going. 
+                // Note: Wind vector points WHERE wind is going.
                 const angle = Math.atan2(wind.y, wind.x);
 
                 this.ctx.rotate(angle);
@@ -810,7 +806,7 @@ export class Game {
         this.ctx.fill();
 
         // Draw vessels and orbits
-        this.entities.forEach(e => {
+        this.entities.forEach((e) => {
             if (e.crashed) return;
 
             const alt = (this.groundY - e.y - e.h) / PIXELS_PER_METER;
@@ -846,7 +842,7 @@ export class Game {
         // Label
         this.ctx.fillStyle = 'white';
         this.ctx.font = '20px monospace';
-        this.ctx.fillText("MAP MODE", 20, 40);
+        this.ctx.fillText('MAP MODE', 20, 40);
     }
 
     /**
@@ -874,12 +870,14 @@ export class Game {
         if (this.trackedEntity) {
             // DEBUG: Log coordinates occasionally
             if (Math.random() < 0.01) {
-                console.log(`Tracked Pos: ${this.trackedEntity.x.toFixed(2)}, ${this.trackedEntity.y.toFixed(2)} | CamY: ${this.cameraY.toFixed(2)} | Zoom: ${this.ZOOM}`);
+                console.log(
+                    `Tracked Pos: ${this.trackedEntity.x.toFixed(2)}, ${this.trackedEntity.y.toFixed(2)} | CamY: ${this.cameraY.toFixed(2)} | Zoom: ${this.ZOOM}`
+                );
             }
 
             let targetY = this.trackedEntity.y - (this.height * 0.6) / this.ZOOM;
             if (this.cameraMode === 'ROCKET') {
-                targetY = this.trackedEntity.y - (this.height / 2) / this.ZOOM;
+                targetY = this.trackedEntity.y - this.height / 2 / this.ZOOM;
             }
 
             if (targetY < 0) {
@@ -905,7 +903,7 @@ export class Game {
         // We want the rocket to be at:
         // Screen X: width/2
         // Screen Y: height * 0.6 (slightly below center)
-        // 
+        //
         // Logic: ScreenPos = (WorldPos - CamPos) * Zoom
         // width/2 = (RocketX - CamX) * Zoom  =>  CamX = RocketX - (width/2)/Zoom
         // height*0.6 = (RocketY - CamY) * Zoom => CamY = RocketY - (height*0.6)/Zoom
@@ -913,14 +911,14 @@ export class Game {
         let camX = 0; // Default center
         if (this.trackedEntity) {
             // Calculate desired camera position to keep rocket centered
-            camX = this.trackedEntity.x - (this.width / 2) / this.ZOOM;
+            camX = this.trackedEntity.x - this.width / 2 / this.ZOOM;
 
             // Smoothly update cameraY (altitude tracking)
             // We want RocketY - CamY to be constant-ish
             const targetCamY = this.trackedEntity.y - (this.height * 0.7) / this.ZOOM;
 
             // Clamp camera: Don't show below ground too much
-            // Ground is at this.groundY. 
+            // Ground is at this.groundY.
             // If we want ground at bottom of screen: CamY = groundY - height/Zoom
             const minCamY = this.groundY - (this.height - 50) / this.ZOOM;
 
@@ -940,8 +938,6 @@ export class Game {
         // Note: this.cameraY is already being tracked in the class
         this.ctx.translate(-camX + shakeX, -this.cameraY + shakeY);
 
-
-
         // Ground
         this.ctx.fillStyle = '#2ecc71';
         this.ctx.fillRect(-50000, this.groundY, 100000, 500);
@@ -950,7 +946,7 @@ export class Game {
         Particle.drawParticles(this.ctx, this.particles);
 
         // Entities
-        this.entities.forEach(e => e.draw(this.ctx, 0));
+        this.entities.forEach((e) => e.draw(this.ctx, 0));
 
         // Draw environmental overlays
         this.drawEnvironment(this.cameraY);
@@ -976,9 +972,7 @@ export class Game {
 
         // Apogee estimate
         const g = 9.8;
-        const apogeeEst = alt + (this.trackedEntity.vy < 0
-            ? (this.trackedEntity.vy ** 2) / (2 * g)
-            : 0);
+        const apogeeEst = alt + (this.trackedEntity.vy < 0 ? this.trackedEntity.vy ** 2 / (2 * g) : 0);
 
         // Update DOM HUD
         const hudAlt = this.hudAlt;
@@ -1019,7 +1013,7 @@ export class Game {
             // Only update if changed by more than 0.001
             if (Math.abs(last.fuelPct - fuelPct) > 0.001) {
                 last.fuelPct = fuelPct;
-                gaugeFuel.style.height = (fuelPct * 100) + '%';
+                gaugeFuel.style.height = fuelPct * 100 + '%';
             }
         }
 
@@ -1027,13 +1021,13 @@ export class Game {
             const thrustPct = this.trackedEntity.throttle;
             if (Math.abs(last.thrustPct - thrustPct) > 0.001) {
                 last.thrustPct = thrustPct;
-                gaugeThrust.style.height = (thrustPct * 100) + '%';
+                gaugeThrust.style.height = thrustPct * 100 + '%';
             }
         }
 
         // Aerodynamic stability display
         if (hudAoa) {
-            const aoaDeg = Math.abs(this.trackedEntity.aoa * 180 / Math.PI);
+            const aoaDeg = Math.abs((this.trackedEntity.aoa * 180) / Math.PI);
             const aoaStr = aoaDeg.toFixed(1) + '°';
 
             if (last.aoa !== aoaStr) {
@@ -1095,11 +1089,11 @@ export class Game {
                 let color = UI_COLORS.GREEN;
                 // Color coding based on temperature ratio to max
                 if (this.trackedEntity.isThermalCritical) {
-                    color = UI_COLORS.RED;  // Red - critical
+                    color = UI_COLORS.RED; // Red - critical
                 } else if (tempC > 400) {
-                    color = UI_COLORS.ORANGE;  // Orange - warning
+                    color = UI_COLORS.ORANGE; // Orange - warning
                 } else if (tempC > 200) {
-                    color = UI_COLORS.YELLOW;  // Yellow - elevated
+                    color = UI_COLORS.YELLOW; // Yellow - elevated
                 }
 
                 if (last.skinTempColor !== color) {
@@ -1117,15 +1111,15 @@ export class Game {
             if (shieldPct > 0) {
                 statusStr = shieldPct + '%';
                 if (this.trackedEntity.isAblating) {
-                    color = UI_COLORS.ORANGE;  // Orange when ablating
+                    color = UI_COLORS.ORANGE; // Orange when ablating
                 } else if (shieldPct < 30) {
-                    color = UI_COLORS.RED;  // Red when low
+                    color = UI_COLORS.RED; // Red when low
                 } else {
-                    color = UI_COLORS.GREEN;  // Green
+                    color = UI_COLORS.GREEN; // Green
                 }
             } else {
                 statusStr = 'N/A';
-                color = UI_COLORS.GRAY;  // Gray when no TPS
+                color = UI_COLORS.GRAY; // Gray when no TPS
             }
 
             if (last.tpsStatus !== statusStr) {
@@ -1186,11 +1180,11 @@ export class Game {
 
                 let color: string;
                 if (count === 0) {
-                    color = UI_COLORS.RED;  // Red - no restarts
+                    color = UI_COLORS.RED; // Red - no restarts
                 } else if (count === 1) {
-                    color = UI_COLORS.ORANGE;  // Orange - last one
+                    color = UI_COLORS.ORANGE; // Orange - last one
                 } else {
-                    color = UI_COLORS.GREEN;  // Green
+                    color = UI_COLORS.GREEN; // Green
                 }
 
                 if (last.ignitersColor !== color) {

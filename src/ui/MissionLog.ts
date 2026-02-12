@@ -1,6 +1,6 @@
 /**
  * Mission Log
- * 
+ *
  * Event logging system for mission milestones and status updates.
  * Displays timestamped entries in the UI.
  */
@@ -23,7 +23,7 @@ export class MissionLog implements IMissionLog {
 
     /**
      * Log a mission event
-     * 
+     *
      * @param message - Event message
      * @param type - Event type for styling (info, warn, success)
      */

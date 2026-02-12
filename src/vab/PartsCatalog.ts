@@ -1,6 +1,6 @@
 /**
  * Parts Catalog
- * 
+ *
  * Defines all available rocket parts for the modular VAB.
  * Each part has physical properties, cost, and category.
  */
@@ -15,35 +15,35 @@ export interface RocketPart {
     id: string;
     name: string;
     category: PartCategory;
-    mass: number;           // Dry mass in kg
-    height: number;         // Height in pixels for rendering
-    width: number;          // Width in pixels for rendering
-    cost: number;           // Credits
+    mass: number; // Dry mass in kg
+    height: number; // Height in pixels for rendering
+    width: number; // Width in pixels for rendering
+    cost: number; // Credits
     description: string;
 
     // Engine-specific properties
-    thrust?: number;        // Max thrust in Newtons
-    ispVac?: number;        // Specific impulse in vacuum (seconds)
-    ispSL?: number;         // Specific impulse at sea level (seconds)
-    gimbalRange?: number;   // Gimbal range in radians
+    thrust?: number; // Max thrust in Newtons
+    ispVac?: number; // Specific impulse in vacuum (seconds)
+    ispSL?: number; // Specific impulse at sea level (seconds)
+    gimbalRange?: number; // Gimbal range in radians
     throttleable?: boolean; // Can throttle (SRBs cannot)
-    restarts?: number;      // Max restart count
+    restarts?: number; // Max restart count
 
     // Tank-specific properties
-    fuelCapacity?: number;  // Fuel capacity in kg
+    fuelCapacity?: number; // Fuel capacity in kg
 
     // Avionics-specific properties
-    sasCapable?: boolean;   // Has reaction wheel for SAS
-    rcsThrust?: number;     // RCS thrust in Newtons
+    sasCapable?: boolean; // Has reaction wheel for SAS
+    rcsThrust?: number; // RCS thrust in Newtons
 
     // SRB-specific properties
-    burnTime?: number;      // Burn time in seconds (for SRBs)
+    burnTime?: number; // Burn time in seconds (for SRBs)
 }
 
 export interface PartInstance {
     part: RocketPart;
-    instanceId: string;     // Unique instance ID
-    stageIndex: number;     // Which stage this belongs to
+    instanceId: string; // Unique instance ID
+    stageIndex: number; // Which stage this belongs to
 }
 
 // ============================================================================
@@ -62,7 +62,7 @@ export const ENGINE_MERLIN_1D: RocketPart = {
     thrust: 845000,
     ispVac: 311,
     ispSL: 282,
-    gimbalRange: 0.087,     // 5 degrees
+    gimbalRange: 0.087, // 5 degrees
     throttleable: true,
     restarts: 3
 };
@@ -78,7 +78,7 @@ export const ENGINE_MERLIN_VAC: RocketPart = {
     description: 'Vacuum-optimized variant with extended nozzle',
     thrust: 934000,
     ispVac: 348,
-    ispSL: 100,             // Poor at sea level
+    ispSL: 100, // Poor at sea level
     gimbalRange: 0.087,
     throttleable: true,
     restarts: 4
@@ -96,7 +96,7 @@ export const ENGINE_RAPTOR: RocketPart = {
     thrust: 2300000,
     ispVac: 380,
     ispSL: 350,
-    gimbalRange: 0.105,     // 6 degrees
+    gimbalRange: 0.105, // 6 degrees
     throttleable: true,
     restarts: 10
 };
@@ -113,7 +113,7 @@ export const ENGINE_RL10: RocketPart = {
     thrust: 110000,
     ispVac: 465,
     ispSL: 50,
-    gimbalRange: 0.07,      // 4 degrees
+    gimbalRange: 0.07, // 4 degrees
     throttleable: true,
     restarts: 15
 };
@@ -305,14 +305,14 @@ export const PARTS_CATALOG: RocketPart[] = [
  * Get a part by ID
  */
 export function getPartById(id: string): RocketPart | undefined {
-    return PARTS_CATALOG.find(p => p.id === id);
+    return PARTS_CATALOG.find((p) => p.id === id);
 }
 
 /**
  * Get all parts in a category
  */
 export function getPartsByCategory(category: PartCategory): RocketPart[] {
-    return PARTS_CATALOG.filter(p => p.category === category);
+    return PARTS_CATALOG.filter((p) => p.category === category);
 }
 
 /**

@@ -1,9 +1,9 @@
 /**
  * SAS - Stability Assist System
- * 
+ *
  * Automatic attitude control system inspired by Kerbal Space Program.
  * Maintains rocket orientation using PID control.
- * 
+ *
  * Modes:
  * - OFF: No automatic control
  * - STABILITY: Hold current orientation
@@ -47,7 +47,7 @@ export class SAS {
 
     /**
      * Set the SAS mode
-     * 
+     *
      * @param mode - New SAS mode
      * @param currentAngle - Current vessel angle (used for STABILITY mode)
      */
@@ -64,7 +64,7 @@ export class SAS {
 
     /**
      * Update SAS and get gimbal command
-     * 
+     *
      * @param vessel - Vessel to control
      * @param dt - Time delta in seconds
      * @returns Gimbal angle command (radians, clamped to maxGimbal)

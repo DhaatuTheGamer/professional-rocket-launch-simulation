@@ -1,17 +1,17 @@
 /**
  * Component Reliability & Failure Modes System
- * 
+ *
  * Implements probabilistic failure logic using "Bathtub Curve" reliability engineering principles.
  */
 
 import { state } from '../state';
 
 export type FailureType =
-    | 'ENGINE_FLAME_OUT'    // Engine shuts down unexpectedly
-    | 'ENGINE_EXPLOSION'    // Catastrophic engine failure
-    | 'STRUCTURAL_FATIGUE'  // Airframe failure due to stress
-    | 'SENSOR_GLITCH'       // Transient telemetry noise
-    | 'GIMBAL_LOCK';        // TVC stuck in one position
+    | 'ENGINE_FLAME_OUT' // Engine shuts down unexpectedly
+    | 'ENGINE_EXPLOSION' // Catastrophic engine failure
+    | 'STRUCTURAL_FATIGUE' // Airframe failure due to stress
+    | 'SENSOR_GLITCH' // Transient telemetry noise
+    | 'GIMBAL_LOCK'; // TVC stuck in one position
 
 export interface FailureMode {
     type: FailureType;
@@ -20,18 +20,18 @@ export interface FailureMode {
 }
 
 export interface ReliabilityConfig {
-    mtbfEngine: number;       // Mean Time Between Failures (seconds)
-    mtbfStructure: number;    // Mean Time Between Failures (seconds)
-    mtbfElectronics: number;  // Mean Time Between Failures (seconds)
+    mtbfEngine: number; // Mean Time Between Failures (seconds)
+    mtbfStructure: number; // Mean Time Between Failures (seconds)
+    mtbfElectronics: number; // Mean Time Between Failures (seconds)
     ignitionReliability: number; // 0-1 probability of successful start (1.0 = 100%)
-    wearFactor: number;       // Multiplier for wear-out phase (e.g. 2.0 = 2x faster wear)
+    wearFactor: number; // Multiplier for wear-out phase (e.g. 2.0 = 2x faster wear)
     sensorGlitchDuration?: number; // Duration of sensor glitches in seconds (default: 5.0)
 }
 
 export const DEFAULT_RELIABILITY_CONFIG: ReliabilityConfig = {
-    mtbfEngine: 1000,         // On average fails every 1000s (~16 mins)
-    mtbfStructure: 5000,      // Very reliable structure
-    mtbfElectronics: 200,     // Occasional sensor glitches (more frequent for visibility)
+    mtbfEngine: 1000, // On average fails every 1000s (~16 mins)
+    mtbfStructure: 5000, // Very reliable structure
+    mtbfElectronics: 200, // Occasional sensor glitches (more frequent for visibility)
     ignitionReliability: 0.99, // 1% chance of ignition failure
     wearFactor: 1.0,
     sensorGlitchDuration: 5.0
@@ -163,25 +163,25 @@ export class ReliabilitySystem {
 
         // Log it
         if (state.missionLog) {
-            let msg = "";
-            let severity: "info" | "warn" | "success" = "warn";
+            let msg = '';
+            let severity: 'info' | 'warn' | 'success' = 'warn';
 
             switch (type) {
                 case 'ENGINE_FLAME_OUT':
-                    msg = "ALERT: Engine Flameout Detected!";
+                    msg = 'ALERT: Engine Flameout Detected!';
                     break;
                 case 'ENGINE_EXPLOSION':
-                    msg = "CRITICAL: Catastrophic Engine Failure!";
+                    msg = 'CRITICAL: Catastrophic Engine Failure!';
                     break;
                 case 'STRUCTURAL_FATIGUE':
-                    msg = "CRITICAL: Structural Integrity Failed!";
+                    msg = 'CRITICAL: Structural Integrity Failed!';
                     break;
                 case 'SENSOR_GLITCH':
-                    msg = "WARN: Telemetry Sensor Glitch";
-                    severity = "info";
+                    msg = 'WARN: Telemetry Sensor Glitch';
+                    severity = 'info';
                     break;
                 case 'GIMBAL_LOCK':
-                    msg = "WARN: TVC Actuator Stuck";
+                    msg = 'WARN: TVC Actuator Stuck';
                     break;
             }
             if (msg) state.missionLog.log(msg, severity);
