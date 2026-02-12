@@ -73,7 +73,6 @@ export class Game {
     // Game state
     public entities: IVessel[] = [];
     private nextOrbitUpdateIndex: number = 0;
-    public particles: Particle[] = [];
     private cameraY: number = 0;
     private cameraMode: CameraMode = 'ROCKET';
     private cameraShakeX: number = 0;
@@ -286,7 +285,7 @@ export class Game {
      */
     reset(): void {
         this.entities = [];
-        this.particles = [];
+        state.particles = [];
         this.cameraY = 0;
         this.timeScale = 1;
         this.missionState = { liftoff: false, supersonic: false, maxq: false };
@@ -471,9 +470,22 @@ export class Game {
         // Step Physics logic in Worker
         this.physics.step(dt, { timeScale: this.timeScale, controls });
 
+        // Update particles
+        const particles = state.particles as Particle[];
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.update(this.groundY, dt * this.timeScale);
+            if (p.isDead()) {
+                particles.splice(i, 1);
+            }
+        }
+
         // Sync State
         this.entities = this.physics.getEntities();
         this.missionTime = this.physics.getMissionTime();
+
+        // Update visual effects
+        this.entities.forEach(e => e.spawnExhaust(this.timeScale));
 
         // Update references
         const trackedIdx = this.physics.getTrackedIndex();
@@ -942,7 +954,7 @@ export class Game {
         this.ctx.fillRect(-50000, this.groundY, 100000, 500);
 
         // Particles
-        Particle.drawParticles(this.ctx, this.particles);
+        Particle.drawParticles(this.ctx, state.particles as Particle[]);
 
         // Entities
         this.entities.forEach(e => e.draw(this.ctx, 0));

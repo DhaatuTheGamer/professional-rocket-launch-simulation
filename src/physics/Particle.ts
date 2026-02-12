@@ -41,6 +41,14 @@ const PARTICLE_CONFIGS: Record<ParticleType, Partial<ParticleConfig>> = {
     }
 };
 
+// Optimization: Map type string to integer ID for fast array lookup
+const TYPE_IDS: Record<ParticleType, number> = {
+    smoke: 0,
+    fire: 1,
+    spark: 2,
+    debris: 3
+};
+
 export class Particle implements IParticle {
     // Position
     public x: number;
@@ -52,6 +60,7 @@ export class Particle implements IParticle {
 
     // Type and visual properties
     public type: ParticleType;
+    public typeId: number; // Optimization: Integer ID
     public life: number;
     public size: number;
     public decay: number;
@@ -80,6 +89,7 @@ export class Particle implements IParticle {
         this.x = x;
         this.y = y;
         this.type = type;
+        this.typeId = TYPE_IDS[type];
         this.life = 1.0;
 
         // Get base configuration
@@ -141,6 +151,7 @@ export class Particle implements IParticle {
      */
     draw(ctx: CanvasRenderingContext2D): void {
         ctx.beginPath();
+        // Fallback drawing using arc
         ctx.arc(this.x, this.y, Math.max(0, this.size), 0, Math.PI * 2);
 
         switch (this.type) {
@@ -167,102 +178,123 @@ export class Particle implements IParticle {
         ctx.fill();
     }
 
-    // Reusable batches to reduce GC pressure
-    private static batches: Record<ParticleType, Particle[][]> = {
-        smoke: Array.from({ length: 20 }, () => []),
-        fire: Array.from({ length: 20 }, () => []),
-        spark: Array.from({ length: 20 }, () => []),
-        debris: Array.from({ length: 20 }, () => [])
-    };
+    // Optimization: Flat array of batches to reduce allocation and lookup overhead
+    // Structure: [typeId * 20 + lifeIndex] -> Particle[]
+    // 4 types * 20 life buckets = 80 total buckets
+    private static batches: Particle[][] = Array.from({ length: 80 }, () => []);
 
     /**
      * Batch render multiple particles
      * Optimizes performance by grouping particles with similar visual properties
      */
     static drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]): void {
-        if (particles.length === 0) return;
+        const count = particles.length;
+        if (count === 0) return;
 
-        // Clear existing batches
-        for (const type in Particle.batches) {
-            // Safety cast as we know keys match ParticleType
-            const buckets = Particle.batches[type as ParticleType];
-            for (const bucket of buckets) {
-                bucket.length = 0;
-            }
+        // 1. Clear existing batches
+        // Since we use a fixed size array, we can iterate efficiently
+        const batches = Particle.batches;
+        for (let i = 0; i < 80; i++) {
+            batches[i].length = 0;
         }
 
-        // Group particles into batches
-        for (const p of particles) {
+        // 2. Group particles into batches
+        for (let i = 0; i < count; i++) {
+            const p = particles[i];
+
             // Quantize life into 20 steps (0.05 increments)
-            // Clamp between 0 and 19 (for life 0.0 to 1.0)
-            const lifeIndex = Math.max(0, Math.min(19, Math.floor(p.life * 20)));
+            // Clamp between 0 and 19
+            let lifeIndex = Math.floor(p.life * 20);
+            if (lifeIndex < 0) lifeIndex = 0;
+            else if (lifeIndex > 19) lifeIndex = 19;
 
-            // Direct access is safe because ParticleType is exhausted in batches initialization
-            const buckets = Particle.batches[p.type];
-            if (buckets) {
-                const bucket = buckets[lifeIndex];
-                if (bucket) {
-                    bucket.push(p);
-                }
-            } else {
-                // Fallback for unknown types (or if initialization failed)
-                p.draw(ctx);
-            }
+            // Use integer ID for fast lookup
+            // If p.typeId is missing (e.g. non-Particle implementation), fallback to map
+            const typeId = p.typeId ?? TYPE_IDS[p.type];
+
+            // Calculate flat index
+            const bucketIndex = typeId * 20 + lifeIndex;
+
+            batches[bucketIndex].push(p);
         }
 
-        // Render each batch
-        // Explicitly iterate known types
-        const types: ParticleType[] = ['smoke', 'fire', 'spark', 'debris'];
+        // 3. Render each batch
+        // We unroll the type loop for clarity and specific optimizations per type
 
-        for (const type of types) {
-            const buckets = Particle.batches[type];
-            if (!buckets) continue;
+        // Type 0: Smoke (Indices 0-19)
+        for (let l = 0; l < 20; l++) {
+            const group = batches[l];
+            if (group.length === 0) continue;
 
-            for (let i = 0; i < 20; i++) {
-                const group = buckets[i];
-                if (!group || group.length === 0) continue;
+            const life = (l + 0.5) / 20;
 
-                // Use center of the quantization bucket for smoother visual transition
-                const life = (i + 0.5) / 20;
+            // Smoke uses instance color (though usually constant 200)
+            const sample = group[0];
+            const c = Math.floor(sample.color);
+            ctx.fillStyle = `rgba(${c},${c},${c},${sample.alpha * life})`;
 
-                // Set style once per batch based on type and life
-                // We use the first particle to get type-specific properties if needed (like color for smoke)
-                // But for smoke, color is constant (200), so we can just use defaults or look at the first one.
-                const sample = group[0];
-                if (!sample) continue;
-
-                switch (type) {
-                    case 'smoke': {
-                        // Smoke color is constant 200, alpha is constant 0.5
-                        const c = Math.floor(sample.color);
-                        ctx.fillStyle = `rgba(${c},${c},${c},${sample.alpha * life})`;
-                        break;
-                    }
-                    case 'fire': {
-                        const g = Math.floor(255 * life);
-                        ctx.fillStyle = `rgba(255,${g},0,${life})`;
-                        break;
-                    }
-                    case 'spark': {
-                        ctx.fillStyle = `rgba(255, 200, 150, ${life})`;
-                        break;
-                    }
-                    case 'debris': {
-                        ctx.fillStyle = `rgba(100,100,100,${life})`;
-                        break;
-                    }
-                }
-
-                // Draw all particles in this batch in one path
-                ctx.beginPath();
-                for (const p of group) {
-                    const radius = Math.max(0, p.size);
-                    // Move to start of arc to avoid connecting lines
-                    ctx.moveTo(p.x + radius, p.y);
-                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-                }
-                ctx.fill();
+            ctx.beginPath();
+            for (let k = 0; k < group.length; k++) {
+                const p = group[k];
+                const r = p.size < 0 ? 0 : p.size;
+                ctx.moveTo(p.x + r, p.y);
+                ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
             }
+            ctx.fill();
+        }
+
+        // Type 1: Fire (Indices 20-39)
+        for (let l = 0; l < 20; l++) {
+            const group = batches[20 + l];
+            if (group.length === 0) continue;
+
+            const life = (l + 0.5) / 20;
+            const g = Math.floor(255 * life);
+            ctx.fillStyle = `rgba(255,${g},0,${life})`;
+
+            ctx.beginPath();
+            for (let k = 0; k < group.length; k++) {
+                const p = group[k];
+                const r = p.size < 0 ? 0 : p.size;
+                ctx.moveTo(p.x + r, p.y);
+                ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+            }
+            ctx.fill();
+        }
+
+        // Type 2: Spark (Indices 40-59) - Optimized with rect()
+        for (let l = 0; l < 20; l++) {
+            const group = batches[40 + l];
+            if (group.length === 0) continue;
+
+            const life = (l + 0.5) / 20;
+            ctx.fillStyle = `rgba(255, 200, 150, ${life})`;
+
+            ctx.beginPath();
+            for (let k = 0; k < group.length; k++) {
+                const p = group[k];
+                const s = p.size; // Assuming size is radius-like
+                // Draw small square centered at x,y
+                ctx.rect(p.x - s, p.y - s, s * 2, s * 2);
+            }
+            ctx.fill();
+        }
+
+        // Type 3: Debris (Indices 60-79) - Optimized with rect()
+        for (let l = 0; l < 20; l++) {
+            const group = batches[60 + l];
+            if (group.length === 0) continue;
+
+            const life = (l + 0.5) / 20;
+            ctx.fillStyle = `rgba(100,100,100,${life})`;
+
+            ctx.beginPath();
+            for (let k = 0; k < group.length; k++) {
+                const p = group[k];
+                const s = p.size;
+                ctx.rect(p.x - s, p.y - s, s * 2, s * 2);
+            }
+            ctx.fill();
         }
     }
 
