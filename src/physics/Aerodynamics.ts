@@ -216,9 +216,10 @@ export function calculateCenterOfPressure(config: AerodynamicsConfig, vehicleLen
     // CP moves AFT (toward tail) as shockwaves form, starting around Mach 0.8
     // This makes the rocket MORE stable at high Mach
     if (mach > 0.8) {
-        // Smooth transition from 0.8 to 1.2
-        // Shift amount increases with Mach, capping around Mach 2.0
-        const shiftFactor = Math.min(0.15, (mach - 0.8) * 0.1);
+        // Smooth transition from 0.8 to 2.0
+        // We want a shift of 0.05 at Mach 2.0
+        // (2.0 - 0.8) * k = 0.05 => k ~= 0.041666...
+        const shiftFactor = Math.min(0.15, (mach - 0.8) * 0.0417);
         cpFraction = Math.max(0.05, cpFraction - shiftFactor);
     }
 

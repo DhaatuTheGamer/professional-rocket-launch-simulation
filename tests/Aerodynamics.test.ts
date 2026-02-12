@@ -94,4 +94,16 @@ describe('Aerodynamics', () => {
             expect(calculateCenterOfMass(config, 0.5, length)).toBe(50);
         });
     });
+    describe('calculateCenterOfPressure', () => {
+        it('should shift CP AFT (Lower) at supersonic speeds', () => {
+            const config = { ...DEFAULT_AERO_CONFIG, cpPositionFraction: 0.25 };
+            const length = 50.0;
+            // Mach 2.0 -> expectation from user issue: CP should be 10.0 (0.20 * 50)
+
+            const cp = calculateCenterOfPressure(config, length, 2.0);
+
+            // We want it to be 10 (0.20 * 50)
+            expect(cp).toBeCloseTo(10.0, 1);
+        });
+    });
 });
