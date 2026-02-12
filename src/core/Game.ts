@@ -19,7 +19,8 @@ import {
     setAudioEngine,
     setMissionLog,
     setAssetLoader,
-    addParticle
+    addParticle,
+    clearParticles
 } from '../state';
 import { InputManager } from './InputManager';
 import { AudioEngine } from '../utils/AudioEngine';
@@ -286,7 +287,7 @@ export class Game {
      */
     reset(): void {
         this.entities = [];
-        this.particles = [];
+        clearParticles();
         this.cameraY = 0;
         this.timeScale = 1;
         this.missionState = { liftoff: false, supersonic: false, maxq: false };
@@ -942,10 +943,15 @@ export class Game {
         this.ctx.fillRect(-50000, this.groundY, 100000, 500);
 
         // Particles
-        Particle.drawParticles(this.ctx, this.particles);
+        Particle.drawParticles(this.ctx, state.particles as Particle[]);
 
         // Entities
-        this.entities.forEach(e => e.draw(this.ctx, 0));
+        this.entities.forEach(e => {
+            if (e.active) {
+                e.spawnExhaust(this.timeScale);
+            }
+            e.draw(this.ctx, 0);
+        });
 
         // Draw environmental overlays
         this.drawEnvironment(this.cameraY);
