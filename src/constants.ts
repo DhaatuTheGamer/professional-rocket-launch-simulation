@@ -62,9 +62,6 @@ export const CONFIG: PhysicsConfig = {
     /** Total fuel mass (kg) */
     FUEL_MASS: 30000,
 
-    /** Aerodynamic drag coefficient (dimensionless) */
-    DRAG_COEFF: 0.5,
-
     /** Booster specific impulse in vacuum (seconds) */
     ISP_VAC_BOOSTER: 311,
 

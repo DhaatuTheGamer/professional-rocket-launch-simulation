@@ -14,7 +14,8 @@ import {
     DEFAULT_AERO_CONFIG,
     BOOSTER_AERO_CONFIG,
     UPPER_STAGE_AERO_CONFIG,
-    PAYLOAD_AERO_CONFIG
+    PAYLOAD_AERO_CONFIG,
+    FAIRING_AERO_CONFIG
 } from './Aerodynamics';
 import {
     DEFAULT_TPS_CONFIG,
@@ -446,7 +447,7 @@ export class Fairing extends Vessel {
         this.side = side;
         this.active = false;  // No thrust
         this.h = 40;
-        this.cd = 2.0;  // High drag
+        this.aeroConfig = FAIRING_AERO_CONFIG;
     }
 
     draw(ctx: CanvasRenderingContext2D, camY: number): void {

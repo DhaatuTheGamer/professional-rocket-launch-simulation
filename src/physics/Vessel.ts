@@ -86,9 +86,8 @@ export class Vessel implements IVessel {
     public active: boolean = true;
     public maxThrust: number = 100000;
 
-    // Aerodynamics (legacy)
-    public cd: number = CONFIG.DRAG_COEFF;
-    public q: number = 0;         // Dynamic pressure
+    // Physics State
+    public q: number = 0;         // Dynamic pressure (Pa)
 
     // Advanced Aerodynamics
     public aeroConfig: AerodynamicsConfig = DEFAULT_AERO_CONFIG;
@@ -343,7 +342,7 @@ export class Vessel implements IVessel {
         const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
         const rho = getAtmosphericDensity(altitude);
         const v = Math.sqrt(this.vx ** 2 + this.vy ** 2);
-        this.q = getDynamicPressure(rho, v);
+        this.q = getDynamicPressure(rho * currentDensityMultiplier, v);
 
         // Update propulsion state (spool-up/down, ullage, igniters)
         this.updatePropulsionState(v, altitude, dt);
@@ -468,21 +467,6 @@ export class Vessel implements IVessel {
                         `STABILITY WARNING: AoA=${(Math.abs(this.aoa) * 180 / Math.PI).toFixed(1)}° Margin=${(this.stabilityMargin * 100).toFixed(1)}%`,
                         "warn"
                     );
-                }
-            }
-        } else {
-            // Fallback to legacy damage calculation
-            let alpha = 0;
-            if (velocity > 10) {
-                const velAngle = Math.atan2(this.vx, -this.vy);
-                alpha = Math.abs(this.angle - velAngle);
-                if (alpha > Math.PI) alpha = Math.PI * 2 - alpha;
-            }
-
-            if (this.q > 5000 && alpha > 0.2) {
-                this.health -= 100 * (1 / 60);
-                if (Math.random() > 0.8) {
-                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
                 }
             }
         }

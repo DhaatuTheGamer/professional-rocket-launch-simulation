@@ -148,6 +148,20 @@ export const PAYLOAD_AERO_CONFIG: AerodynamicsConfig = {
     aspectRatio: 1.0
 };
 
+/**
+ * Aerodynamic configuration for fairing half
+ */
+export const FAIRING_AERO_CONFIG: AerodynamicsConfig = {
+    referenceArea: 4.0,            // Estimated area
+    referenceLength: 4.0,          // Length
+    cpPositionFraction: 0.50,      // Neutral stability (tumbling)
+    comPositionFullFraction: 0.50,
+    comPositionEmptyFraction: 0.50,
+    cnAlpha: 2.0,                  // Low lift
+    cd0: 2.0,                      // High drag (legacy value)
+    aspectRatio: 0.2               // Long and thin
+};
+
 // ============================================================================
 // Calculation Functions
 // ============================================================================

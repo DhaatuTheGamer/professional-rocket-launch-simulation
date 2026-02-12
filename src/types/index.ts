@@ -139,7 +139,6 @@ export interface PhysicsConfig {
     MASS_BOOSTER: number;           // kg (dry mass)
     MASS_UPPER: number;             // kg (dry mass)
     FUEL_MASS: number;              // kg
-    DRAG_COEFF: number;             // Dimensionless
     ISP_VAC_BOOSTER: number;        // seconds (specific impulse vacuum)
     ISP_SL_BOOSTER: number;         // seconds (specific impulse sea level)
     ISP_VAC_UPPER: number;          // seconds
@@ -284,7 +283,6 @@ export interface IVessel {
     active: boolean;
     maxThrust: number;
     crashed: boolean;
-    cd: number;
     q: number;
     apogee: number;
     health: number;
