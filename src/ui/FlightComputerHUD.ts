@@ -5,10 +5,21 @@
  * @param fcStatus The container element for the HUD
  * @param status The FlightComputer status object from Worker
  */
-export function updateFlightComputerHUD(fcStatus: HTMLElement, status: { status: string; command: string }): void {
+export function updateFlightComputerHUD(fcStatus: HTMLElement, status: any): void {
     if (!fcStatus) return;
 
-    const statusStr = status.status || 'FC: ---';
+    let statusStr: string;
+    let commandStr: string;
+
+    // Handle both data object (Worker/DTO) and class instance (Test/Legacy)
+    if (status && typeof status.getStatusString === 'function') {
+        statusStr = status.getStatusString();
+        commandStr = status.getActiveCommandText();
+    } else {
+        statusStr = status.status || 'FC: ---';
+        commandStr = status.command || '';
+    }
+
     const isActive = statusStr === 'FC: ACTIVE';
     const isVisible = statusStr !== 'FC: OFF' && statusStr !== 'FC: ---';
 
@@ -30,7 +41,7 @@ export function updateFlightComputerHUD(fcStatus: HTMLElement, status: { status:
                 commandDiv.className = 'fc-command';
                 fcStatus.appendChild(commandDiv);
             }
-            commandDiv.textContent = status.command || '';
+            commandDiv.textContent = commandStr;
         } else {
             if (commandDiv) {
                 commandDiv.remove();
@@ -40,5 +51,4 @@ export function updateFlightComputerHUD(fcStatus: HTMLElement, status: { status:
         fcStatus.classList.remove('active');
         fcStatus.textContent = '';
     }
-    // console.log('HUD Updated:', { statusStr, isActive, isVisible, modeText: modeDiv?.textContent, cmdText: commandDiv?.textContent });
 }
