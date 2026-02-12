@@ -818,11 +818,11 @@ export class Game {
     /**
      * Draw the scene
      */
-    private draw(): void {
+    private draw(alpha: number): void {
         if (this.cameraMode === 'MAP') {
             this.drawMapView();
         } else {
-            this.drawRocketView();
+            this.drawRocketView(alpha);
         }
 
         // Draw Mission Control Overlay
@@ -890,7 +890,10 @@ export class Game {
     /**
      * Draw rocket flight view
      */
-    private drawRocketView(): void {
+    /**
+     * Draw rocket flight view
+     */
+    private drawRocketView(alpha: number): void {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
         // Sky gradient
@@ -952,12 +955,16 @@ export class Game {
 
         let camX = 0; // Default center
         if (this.trackedEntity) {
+            // Interpolate tracked entity position for camera tracking
+            const trackedX = this.trackedEntity.prevX + (this.trackedEntity.x - this.trackedEntity.prevX) * alpha;
+            const trackedY = this.trackedEntity.prevY + (this.trackedEntity.y - this.trackedEntity.prevY) * alpha;
+
             // Calculate desired camera position to keep rocket centered
-            camX = this.trackedEntity.x - this.width / 2 / this.ZOOM;
+            camX = trackedX - this.width / 2 / this.ZOOM;
 
             // Smoothly update cameraY (altitude tracking)
             // We want RocketY - CamY to be constant-ish
-            const targetCamY = this.trackedEntity.y - (this.height * 0.7) / this.ZOOM;
+            const targetCamY = trackedY - (this.height * 0.7) / this.ZOOM;
 
             // Clamp camera: Don't show below ground too much
             // Ground is at this.groundY.
@@ -988,7 +995,7 @@ export class Game {
         Particle.drawParticles(this.ctx, this.particles);
 
         // Entities
-        this.entities.forEach((e) => e.draw(this.ctx, 0));
+        this.entities.forEach((e) => e.draw(this.ctx, 0, alpha));
 
         // Draw environmental overlays
         this.drawEnvironment(this.cameraY);
@@ -1290,6 +1297,8 @@ export class Game {
             this.accumulator -= this.FIXED_DT;
         }
 
+        const alpha = this.accumulator / this.FIXED_DT;
+
         if (this.cameraMode === 'MAP') {
             this.updateOrbitPaths(currentTime);
         }
@@ -1312,7 +1321,7 @@ export class Game {
             });
         }
 
-        this.draw();
+        this.draw(alpha);
 
         requestAnimationFrame((t) => this.animate(t));
     }

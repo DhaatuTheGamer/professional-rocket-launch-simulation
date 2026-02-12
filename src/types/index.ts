@@ -278,9 +278,14 @@ export interface IVessel {
     ullageSettled: boolean; // Fuel settled for ignition
     actualThrottle: number; // Lagged throttle (vs commanded)
 
+    // Interpolation state
+    prevX: number;
+    prevY: number;
+    prevAngle: number;
+
     applyPhysics(dt: number, keys: Record<string, boolean>): void;
     spawnExhaust(timeScale: number): void;
-    draw(ctx: CanvasRenderingContext2D, camY: number): void;
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void;
     explode(): void;
 }
 

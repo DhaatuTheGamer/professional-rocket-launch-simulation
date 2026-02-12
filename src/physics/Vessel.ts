@@ -59,6 +59,11 @@ export class Vessel implements IVessel {
     public angle: number = 0;
     public gimbalAngle: number = 0;
 
+    // Interpolation state
+    public prevX: number = 0;
+    public prevY: number = 0;
+    public prevAngle: number = 0;
+
     // Physical properties
     public mass: number = 1000;
     public w: number = 40; // Width (pixels)
@@ -125,6 +130,9 @@ export class Vessel implements IVessel {
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
+        this.prevX = x;
+        this.prevY = y;
+        this.prevAngle = 0;
     }
 
     /**
@@ -233,6 +241,11 @@ export class Vessel implements IVessel {
         // Apply control input
         const isBooster = this.constructor.name === 'Booster';
         this.control(dt, keys, isBooster);
+
+        // Store previous state for interpolation BEFORE integration
+        this.prevX = this.x;
+        this.prevY = this.y;
+        this.prevAngle = this.angle;
 
         // Run physics integration
         this.updatePhysics(dt);
@@ -691,7 +704,7 @@ export class Vessel implements IVessel {
     /**
      * Draw the vessel (to be overridden by subclasses)
      */
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void {
         // Base implementation does nothing
         // Subclasses implement specific rendering
     }

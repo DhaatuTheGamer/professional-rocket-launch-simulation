@@ -57,12 +57,17 @@ export class FullStack extends Vessel {
         this.ignitersRemaining = FULLSTACK_PROP_CONFIG.igniterCount;
     }
 
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void {
         if (this.crashed) return;
 
+        // Interpolate position and angle
+        const rX = this.prevX + (this.x - this.prevX) * alpha;
+        const rY = this.prevY + (this.y - this.prevY) * alpha;
+        const rAngle = this.prevAngle + (this.angle - this.prevAngle) * alpha;
+
         ctx.save();
-        ctx.translate(this.x, this.y - camY);
-        ctx.rotate(this.angle);
+        ctx.translate(rX, rY - camY);
+        ctx.rotate(rAngle);
 
         this.drawPlasma(ctx);
         this.drawShockwave(ctx);
@@ -208,12 +213,17 @@ export class Booster extends Vessel {
         }
     }
 
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void {
         if (this.crashed) return;
 
+        // Interpolate position and angle
+        const rX = this.prevX + (this.x - this.prevX) * alpha;
+        const rY = this.prevY + (this.y - this.prevY) * alpha;
+        const rAngle = this.prevAngle + (this.angle - this.prevAngle) * alpha;
+
         ctx.save();
-        ctx.translate(this.x, this.y - camY);
-        ctx.rotate(this.angle);
+        ctx.translate(rX, rY - camY);
+        ctx.rotate(rAngle);
 
         this.drawPlasma(ctx);
 
@@ -303,12 +313,17 @@ export class UpperStage extends Vessel {
         };
     }
 
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void {
         if (this.crashed) return;
 
+        // Interpolate position and angle
+        const rX = this.prevX + (this.x - this.prevX) * alpha;
+        const rY = this.prevY + (this.y - this.prevY) * alpha;
+        const rAngle = this.prevAngle + (this.angle - this.prevAngle) * alpha;
+
         ctx.save();
-        ctx.translate(this.x, this.y - camY);
-        ctx.rotate(this.angle);
+        ctx.translate(rX, rY - camY);
+        ctx.rotate(rAngle);
 
         this.drawPlasma(ctx);
         this.drawShockwave(ctx);
@@ -399,10 +414,15 @@ export class Payload extends Vessel {
         this.ignitersRemaining = 0;
     }
 
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void {
+        // Interpolate position and angle
+        const rX = this.prevX + (this.x - this.prevX) * alpha;
+        const rY = this.prevY + (this.y - this.prevY) * alpha;
+        const rAngle = this.prevAngle + (this.angle - this.prevAngle) * alpha;
+
         ctx.save();
-        ctx.translate(this.x, this.y - camY);
-        ctx.rotate(this.angle);
+        ctx.translate(rX, rY - camY);
+        ctx.rotate(rAngle);
 
         // Satellite body
         ctx.fillStyle = '#f1c40f';
@@ -434,10 +454,15 @@ export class Fairing extends Vessel {
         this.cd = 2.0; // High drag
     }
 
-    draw(ctx: CanvasRenderingContext2D, camY: number): void {
+    draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void {
+        // Interpolate position and angle
+        const rX = this.prevX + (this.x - this.prevX) * alpha;
+        const rY = this.prevY + (this.y - this.prevY) * alpha;
+        const rAngle = this.prevAngle + (this.angle - this.prevAngle) * alpha;
+
         ctx.save();
-        ctx.translate(this.x, this.y - camY);
-        ctx.rotate(this.angle);
+        ctx.translate(rX, rY - camY);
+        ctx.rotate(rAngle);
 
         this.drawPlasma(ctx);
 
