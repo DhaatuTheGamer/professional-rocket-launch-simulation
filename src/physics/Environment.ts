@@ -10,8 +10,8 @@
  * - Go/No-Go Launch Conditions: Wind limit evaluation
  */
 
-import { vec2, Vec2 } from '../types/index';
-import type { Vector2D } from '../types/index';
+import { vec2, Vec2 } from '../types/index.ts';
+import type { Vector2D } from '../types/index.ts';
 
 // ============================================================================
 // Interfaces
@@ -180,42 +180,57 @@ export class EnvironmentSystem {
         const safeAlt = Math.max(0, altitude);
         const layers = this.config.windLayers;
 
-        // Find the appropriate wind layer
-        for (let i = 0; i < layers.length; i++) {
-            const layer = layers[i];
-            if (!layer) continue;
+        // Optimization: Binary search for the appropriate wind layer
+        let low = 0;
+        let high = layers.length - 1;
+        let foundIndex = -1;
+
+        while (low <= high) {
+            const mid = (low + high) >>> 1;
+            const layer = layers[mid];
 
             if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
-                // Interpolate within the layer for smooth transitions
-                const layerProgress = (layer.altitudeMax === layer.altitudeMin)
-                    ? 0
-                    : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
+                foundIndex = mid;
+                break;
+            } else if (safeAlt < layer.altitudeMin) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
 
-                // Find next layer for interpolation
-                // Since layers are sorted, the next layer is simply at index i + 1
-                const nextLayer = layers[i + 1];
+        if (foundIndex !== -1) {
+            const layer = layers[foundIndex];
 
-                let speed = layer.windSpeed;
-                let direction = layer.windDirection;
+            // Interpolate within the layer for smooth transitions
+            const layerProgress = (layer.altitudeMax === layer.altitudeMin)
+                ? 0
+                : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
 
-                // Only interpolate if the next layer is contiguous
-                if (nextLayer && nextLayer.altitudeMin === layer.altitudeMax) {
-                    // Smooth interpolation between layers
-                    speed = layer.windSpeed + (nextLayer.windSpeed - layer.windSpeed) * layerProgress;
-                    direction = this.interpolateAngle(
-                        layer.windDirection,
-                        nextLayer.windDirection,
-                        layerProgress
-                    );
-                }
+            // Find next layer for interpolation
+            // Since layers are sorted, the next layer is simply at index i + 1
+            const nextLayer = layers[foundIndex + 1];
 
-                // Convert to velocity vector
-                // Wind direction is where wind comes FROM, so we negate for force direction
-                return vec2(
-                    -Math.cos(direction) * speed,
-                    -Math.sin(direction) * speed
+            let speed = layer.windSpeed;
+            let direction = layer.windDirection;
+
+            // Only interpolate if the next layer is contiguous
+            if (nextLayer && nextLayer.altitudeMin === layer.altitudeMax) {
+                // Smooth interpolation between layers
+                speed = layer.windSpeed + (nextLayer.windSpeed - layer.windSpeed) * layerProgress;
+                direction = this.interpolateAngle(
+                    layer.windDirection,
+                    nextLayer.windDirection,
+                    layerProgress
                 );
             }
+
+            // Convert to velocity vector
+            // Wind direction is where wind comes FROM, so we negate for force direction
+            return vec2(
+                -Math.cos(direction) * speed,
+                -Math.sin(direction) * speed
+            );
         }
 
         // Default: no wind at extreme altitudes
