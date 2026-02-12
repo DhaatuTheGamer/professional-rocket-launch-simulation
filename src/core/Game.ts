@@ -12,6 +12,7 @@ import {
     R_EARTH,
     getAtmosphericDensity
 } from '../constants';
+import { MU } from '../physics/OrbitalMechanics';
 import {
     state,
     updateDimensions,
@@ -600,15 +601,23 @@ export class Game {
                 };
 
                 const dtPred = 10;
+                // Precompute constant offset for radius calculation
+                // (groundY - h) / 10 + R_EARTH
+                const centerY = (this.groundY - e.h) / 10 + R_EARTH;
+
                 const startPhi = simState.x / R_EARTH;
-                const startR = R_EARTH + (this.groundY / 10 - simState.y - e.h / 10);
+                const startR = centerY - simState.y;
                 e.orbitPath.push({ phi: startPhi, r: startR });
 
                 for (let j = 0; j < 200; j++) {
-                    const pAlt = this.groundY / 10 - simState.y - e.h / 10;
-                    const pRad = pAlt + R_EARTH;
-                    const pG = 9.8 * Math.pow(R_EARTH / pRad, 2);
-                    const pFy = pG - (simState.vx ** 2) / pRad;
+                    // Optimized radius calculation
+                    const pRad = centerY - simState.y;
+
+                    // Optimized gravity: MU / r^2 (avoids Math.pow and division inside pow)
+                    const pG = MU / (pRad * pRad);
+
+                    // Optimized centrifugal force (avoids ** operator)
+                    const pFy = pG - (simState.vx * simState.vx) / pRad;
 
                     simState.vy += pFy * dtPred;
                     simState.x += simState.vx * dtPred;
@@ -617,7 +626,7 @@ export class Game {
                     if (simState.y * 10 > this.groundY) break;
 
                     const pPhi = (simState.x * 10) / R_EARTH;
-                    const pR = R_EARTH + (this.groundY / 10 - simState.y - e.h / 10);
+                    const pR = centerY - simState.y;
                     e.orbitPath.push({ phi: pPhi, r: pR });
                 }
             }
