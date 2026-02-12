@@ -103,7 +103,7 @@ describe('Aerodynamics', () => {
             const cp = calculateCenterOfPressure(config, length, 2.0);
 
             // We want it to be 10 (0.20 * 50)
-            expect(cp).toBeCloseTo(10.0, 1);
+            expect(cp).toBeCloseTo(10.0, 2);
         });
     });
 });
