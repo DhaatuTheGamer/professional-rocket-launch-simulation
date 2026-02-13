@@ -355,13 +355,40 @@ window.addEventListener('keydown', (e) => {
         }
     }
 
-    // T - Toggle FTS Arm
+    // T - Toggle SAS (Stability) / Alt+T - Toggle FTS Arm
     if (e.key === 't' || e.key === 'T') {
-        game.fts.toggleArm();
-        const ftsBtn = document.getElementById('fts-destruct-btn');
-        if (ftsBtn) {
-            ftsBtn.classList.toggle('armed', game.fts.getStatus().armed);
+        if (e.altKey) {
+            // Alt+T: Toggle FTS Arm
+            game.fts.toggleArm();
+            const ftsBtn = document.getElementById('fts-destruct-btn');
+            if (ftsBtn) {
+                ftsBtn.classList.toggle('armed', game.fts.getStatus().armed);
+            }
+        } else {
+            // T: Toggle SAS Stability
+            const sasOffBtn = document.getElementById('sas-off');
+            const sasStabBtn = document.getElementById('sas-stability');
+
+            if (sasOffBtn && sasStabBtn) {
+                // If currently OFF (active class on OFF button), switch to STABILITY
+                if (sasOffBtn.classList.contains('active')) {
+                    sasStabBtn.click();
+                } else {
+                    // If currently ON (any mode), switch to OFF
+                    sasOffBtn.click();
+                }
+            }
         }
+    }
+
+    // [ - SAS Prograde
+    if (e.key === '[') {
+        document.getElementById('sas-prograde')?.click();
+    }
+
+    // ] - SAS Retrograde
+    if (e.key === ']') {
+        document.getElementById('sas-retrograde')?.click();
     }
 
     // C - Toggle Checklist

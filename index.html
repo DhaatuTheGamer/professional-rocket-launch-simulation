@@ -50,8 +50,7 @@
                             empty.</li>
                         <li><strong>Map:</strong> Press <span style="color:#f1c40f">[M]</span> to view
                             Orbit.</li>
-                        <li><strong>SAS:</strong> Press <span style="color:#f1c40f">[T]</span> for Stability
-                            Assist.</li>
+                        <li><strong>SAS:</strong> <span style="color:#f1c40f">[T]</span> Stability, <span style="color:#f1c40f">[ []</span> Prograde, <span style="color:#f1c40f">[ ]]</span> Retrograde.</li>
                     </ul>
                     <div style="margin-top:10px; font-size:0.8rem; color:#aaa; font-style:italic;">
                         Tip: Use gravity turn at 5km altitude (tilt 45&deg; East).
@@ -157,12 +156,12 @@
         <div id="sas-controls">
             <div class="sas-title">SAS CONTROL</div>
             <div class="sas-group">
-                <button id="sas-off" class="sas-btn active">OFF</button>
-                <button id="sas-stability" class="sas-btn">STABILITY</button>
+                <button id="sas-off" class="sas-btn active" title="SAS Off [T]">OFF</button>
+                <button id="sas-stability" class="sas-btn" title="Stability Assist [T]">STABILITY</button>
             </div>
             <div class="sas-group">
-                <button id="sas-prograde" class="sas-btn">PROGRADE</button>
-                <button id="sas-retrograde" class="sas-btn">RETROGRADE</button>
+                <button id="sas-prograde" class="sas-btn" title="Prograde [ []">PROGRADE</button>
+                <button id="sas-retrograde" class="sas-btn" title="Retrograde [ ]]">RETROGRADE</button>
             </div>
             <div id="sas-mode-indicator">
                 <span class="icon"></span>
@@ -188,7 +187,7 @@
     </div>
 
     <div id="controls-help">
-        [SPACE] Launch | [S] Stage | [T] FTS Arm | [C] Checklist | [Ctrl+I] FIS | [G] Flight PC
+        [SPACE] Launch | [S] Stage | [T] SAS | [Alt+T] FTS Arm | [C] Checklist | [Ctrl+I] FIS | [G] Flight PC
     </div>
 
     <div id="status-msg">T-MINUS 3 SECONDS</div>
@@ -206,7 +205,7 @@
     <div id="controls">
         <button id="launch-btn" class="primary state-launch" title="Launch [SPACE]">INITIATE LAUNCH</button>
         <button id="checklist-btn" title="Launch Checklist [C]">Checklist</button>
-        <button id="fts-destruct-btn" class="fts-destruct" title="FTS Destruct [T to arm]">FTS DESTRUCT</button>
+        <button id="fts-destruct-btn" class="fts-destruct" title="FTS Destruct [Alt+T to arm]">FTS DESTRUCT</button>
         <button id="maneuver-btn" title="Maneuver Planner [O]">Maneuver</button>
         <button id="mission-control-btn" title="Mission Control">CAPCOM</button>
         <button id="fc-btn" title="Open Flight Computer Script Editor [F]">Flight PC</button>
