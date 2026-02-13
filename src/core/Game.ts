@@ -637,7 +637,7 @@ export class Game {
                 // State vector: [r, phi, vr, vphi]
                 // vr = radial velocity (positive up) = -e.vy
                 // vphi = tangential velocity = e.vx
-                let state = {
+                const state = {
                     r: r0,
                     phi: phi0,
                     vr: -e.vy,
@@ -650,61 +650,58 @@ export class Game {
                 // Store start point
                 e.orbitPath.push({ phi: state.phi, r: state.r });
 
-                // RK4 Integrator Types
-                type SimState = typeof state;
-                type Derivatives = { dr: number; dphi: number; dvr: number; dvphi: number };
-
-                const getDerivatives = (s: SimState): Derivatives => {
-                    const r = s.r;
-                    const vphi = s.vphi;
-                    const vr = s.vr;
-
-                    // Gravity: g = MU / r^2
-                    const g = MU / (r * r);
-
-                    // Equations of motion in polar coordinates (2-body)
-                    // Radial acceleration: r'' = vphi^2 / r - g
-                    // Tangential acceleration: vphi' = -vr * vphi / r (conservation of interaction)
-
-                    const dvr = (vphi * vphi) / r - g;
-                    const dvphi = -(vr * vphi) / r;
-                    const dr = vr;
-                    const dphi = vphi / r;
-
-                    return { dr, dphi, dvr, dvphi };
-                };
-
-                const integrate = (s: SimState, dt: number): SimState => {
-                    const k1 = getDerivatives(s);
-                    const k2 = getDerivatives({
-                        r: s.r + k1.dr * dt * 0.5,
-                        phi: s.phi + k1.dphi * dt * 0.5,
-                        vr: s.vr + k1.dvr * dt * 0.5,
-                        vphi: s.vphi + k1.dvphi * dt * 0.5
-                    });
-                    const k3 = getDerivatives({
-                        r: s.r + k2.dr * dt * 0.5,
-                        phi: s.phi + k2.dphi * dt * 0.5,
-                        vr: s.vr + k2.dvr * dt * 0.5,
-                        vphi: s.vphi + k2.dvphi * dt * 0.5
-                    });
-                    const k4 = getDerivatives({
-                        r: s.r + k3.dr * dt,
-                        phi: s.phi + k3.dphi * dt,
-                        vr: s.vr + k3.dvr * dt,
-                        vphi: s.vphi + k3.dvphi * dt
-                    });
-
-                    return {
-                        r: s.r + (k1.dr + 2 * k2.dr + 2 * k3.dr + k4.dr) * dt / 6,
-                        phi: s.phi + (k1.dphi + 2 * k2.dphi + 2 * k3.dphi + k4.dphi) * dt / 6,
-                        vr: s.vr + (k1.dvr + 2 * k2.dvr + 2 * k3.dvr + k4.dvr) * dt / 6,
-                        vphi: s.vphi + (k1.dvphi + 2 * k2.dvphi + 2 * k3.dvphi + k4.dvphi) * dt / 6
-                    };
-                };
-
+                // Optimized RK4 Integrator - Inlined to avoid object allocation
                 for (let j = 0; j < maxSteps; j++) {
-                    state = integrate(state, dtPred);
+                    const r = state.r;
+                    const phi = state.phi;
+                    const vr = state.vr;
+                    const vphi = state.vphi;
+
+                    // k1
+                    const g1 = MU / (r * r);
+                    const k1_dvr = (vphi * vphi) / r - g1;
+                    const k1_dvphi = -(vr * vphi) / r;
+                    const k1_dr = vr;
+                    const k1_dphi = vphi / r;
+
+                    // k2
+                    const r_k2 = r + k1_dr * dtPred * 0.5;
+                    const vr_k2 = vr + k1_dvr * dtPred * 0.5;
+                    const vphi_k2 = vphi + k1_dvphi * dtPred * 0.5;
+
+                    const g2 = MU / (r_k2 * r_k2);
+                    const k2_dvr = (vphi_k2 * vphi_k2) / r_k2 - g2;
+                    const k2_dvphi = -(vr_k2 * vphi_k2) / r_k2;
+                    const k2_dr = vr_k2;
+                    const k2_dphi = vphi_k2 / r_k2;
+
+                    // k3
+                    const r_k3 = r + k2_dr * dtPred * 0.5;
+                    const vr_k3 = vr + k2_dvr * dtPred * 0.5;
+                    const vphi_k3 = vphi + k2_dvphi * dtPred * 0.5;
+
+                    const g3 = MU / (r_k3 * r_k3);
+                    const k3_dvr = (vphi_k3 * vphi_k3) / r_k3 - g3;
+                    const k3_dvphi = -(vr_k3 * vphi_k3) / r_k3;
+                    const k3_dr = vr_k3;
+                    const k3_dphi = vphi_k3 / r_k3;
+
+                    // k4
+                    const r_k4 = r + k3_dr * dtPred;
+                    const vr_k4 = vr + k3_dvr * dtPred;
+                    const vphi_k4 = vphi + k3_dvphi * dtPred;
+
+                    const g4 = MU / (r_k4 * r_k4);
+                    const k4_dvr = (vphi_k4 * vphi_k4) / r_k4 - g4;
+                    const k4_dvphi = -(vr_k4 * vphi_k4) / r_k4;
+                    const k4_dr = vr_k4;
+                    const k4_dphi = vphi_k4 / r_k4;
+
+                    // Update State
+                    state.r += (k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred / 6;
+                    state.phi += (k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred / 6;
+                    state.vr += (k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred / 6;
+                    state.vphi += (k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred / 6;
 
                     // Stop if hit ground
                     if (state.r <= R_EARTH) {
