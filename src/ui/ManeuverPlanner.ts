@@ -316,7 +316,11 @@ export class ManeuverPlanner {
 
             resultDiv.innerHTML = planText;
         } catch (e: any) {
-            resultDiv.innerHTML = `<span style="color: #e74c3c;">Error: ${e.message}</span>`;
+            resultDiv.innerHTML = '';
+            const errorSpan = document.createElement('span');
+            errorSpan.style.color = '#e74c3c';
+            errorSpan.textContent = `Error: ${e.message}`;
+            resultDiv.appendChild(errorSpan);
         }
     }
 
