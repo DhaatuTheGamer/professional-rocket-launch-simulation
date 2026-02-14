@@ -185,7 +185,7 @@ export class VABEditor {
             .map(
                 (part) => `
             <div class="vab-part-item" data-part-id="${part.id}">
-                <div class="vab-part-icon"></div>
+                <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
                     <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
                     <div class="vab-part-desc">${this.escapeHTML(part.description)}</div>
@@ -266,7 +266,11 @@ export class VABEditor {
                          data-instance="${inst.instanceId}"
                          style="height: ${inst.part.height}px; width: ${inst.part.width}px;">
                         <span class="part-label">${this.escapeHTML(inst.part.name)}</span>
-                        <button class="remove-part" data-stage="${i}" data-instance="${inst.instanceId}">×</button>
+                        <button class="remove-part"
+                                data-stage="${i}"
+                                data-instance="${inst.instanceId}"
+                                title="Remove ${this.escapeHTML(inst.part.name)}"
+                                aria-label="Remove ${this.escapeHTML(inst.part.name)}">×</button>
                     </div>
                 `;
             }
@@ -298,7 +302,7 @@ export class VABEditor {
                     <div class="vab-stage-header">
                         <span class="stage-number">Stage ${i + 1}</span>
                         <span class="stage-info">${stage.parts.length} parts</span>
-                        ${i > 0 ? '<button class="remove-stage" data-stage="' + i + '">REMOVE</button>' : ''}
+                        ${i > 0 ? `<button class="remove-stage" data-stage="${i}" title="Remove Stage ${i + 1}" aria-label="Remove Stage ${i + 1}">REMOVE</button>` : ''}
                     </div>
                     <div class="vab-stage-stats">
                         <span>Mass: ${(stageStats.mass / 1000).toFixed(1)}t</span>
