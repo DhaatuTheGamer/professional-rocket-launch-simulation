@@ -13,14 +13,11 @@
  */
 
 import { type IVessel, SASMode } from '../types/index';
-import { CONFIG, PIXELS_PER_METER, GRAVITY, getAtmosphericDensity, getDynamicPressure } from '../config/Constants';
-import { SAS } from '../utils/SAS';
+import { PIXELS_PER_METER, getAtmosphericDensity, getDynamicPressure } from '../config/Constants';
 import {
     type MissionScript,
-    type ScriptCommand,
     type ScriptCondition,
     type ScriptAction,
-    type ConditionClause,
     type ComparisonOperator,
     type ConditionVariable,
     parseMissionScript,
@@ -77,12 +74,26 @@ export class FlightComputer {
     /** Callback for SAS mode change */
     public onSASChange: ((mode: SASMode) => void) | null = null;
 
+    /** Telemetry cache to avoid garbage collection */
+    private telemetryCache: Record<ConditionVariable, number>;
+
     /**
      * Create a new Flight Computer
      */
     constructor(groundY: number) {
         this.groundY = groundY;
         this.state = this.createInitialState();
+        this.telemetryCache = {
+            ALTITUDE: 0,
+            VELOCITY: 0,
+            VERTICAL_VEL: 0,
+            HORIZONTAL_VEL: 0,
+            APOGEE: 0,
+            FUEL: 0,
+            TIME: 0,
+            THROTTLE: 0,
+            DYNAMIC_PRESSURE: 0
+        };
     }
 
     /**
@@ -206,20 +217,17 @@ export class FlightComputer {
             return '';
         }
 
-        // Find the most recently triggered command that isn't a one-shot
-        const activeCommands = this.state.script.commands.filter(
-            (cmd) => cmd.state === 'active' || cmd.state === 'completed'
-        );
-
-        if (activeCommands.length === 0) {
-            return 'Waiting...';
+        // Find the most recently triggered command
+        // Optimized: iterate backwards to avoid array allocation
+        const commands = this.state.script.commands;
+        for (let i = commands.length - 1; i >= 0; i--) {
+            const cmd = commands[i];
+            if (cmd.state === 'active' || cmd.state === 'completed') {
+                return cmd.rawText.substring(0, 40) + (cmd.rawText.length > 40 ? '...' : '');
+            }
         }
 
-        const last = activeCommands[activeCommands.length - 1];
-        if (!last) {
-            return 'Waiting...';
-        }
-        return last.rawText.substring(0, 40) + (last.rawText.length > 40 ? '...' : '');
+        return 'Waiting...';
     }
 
     /**
@@ -243,7 +251,7 @@ export class FlightComputer {
         this.state.elapsedTime += dt;
 
         // Calculate telemetry values
-        const telemetry = this.calculateTelemetry(vessel);
+        this.calculateTelemetry(vessel);
 
         // Evaluate each command
         for (const command of this.state.script.commands) {
@@ -253,7 +261,7 @@ export class FlightComputer {
             }
 
             // Evaluate condition
-            const conditionMet = this.evaluateCondition(command.condition, telemetry);
+            const conditionMet = this.evaluateCondition(command.condition, this.telemetryCache);
 
             if (conditionMet) {
                 // Execute action
@@ -308,7 +316,7 @@ export class FlightComputer {
     /**
      * Calculate telemetry values from vessel state
      */
-    private calculateTelemetry(vessel: IVessel): Record<ConditionVariable, number> {
+    private calculateTelemetry(vessel: IVessel): void {
         const alt = (this.groundY - vessel.y - vessel.h) / PIXELS_PER_METER;
         const vx = vessel.vx;
         const vy = vessel.vy;
@@ -322,45 +330,39 @@ export class FlightComputer {
         const rho = getAtmosphericDensity(alt);
         const q = getDynamicPressure(rho, speed) / 1000; // kPa
 
-        return {
-            ALTITUDE: alt,
-            VELOCITY: speed,
-            VERTICAL_VEL: -vy, // Positive = up
-            HORIZONTAL_VEL: Math.abs(vx),
-            APOGEE: apogee,
-            FUEL: vessel.fuel,
-            TIME: this.state.elapsedTime,
-            THROTTLE: vessel.throttle,
-            DYNAMIC_PRESSURE: q
-        };
+        // Update cache
+        this.telemetryCache.ALTITUDE = alt;
+        this.telemetryCache.VELOCITY = speed;
+        this.telemetryCache.VERTICAL_VEL = -vy; // Positive = up
+        this.telemetryCache.HORIZONTAL_VEL = Math.abs(vx);
+        this.telemetryCache.APOGEE = apogee;
+        this.telemetryCache.FUEL = vessel.fuel;
+        this.telemetryCache.TIME = this.state.elapsedTime;
+        this.telemetryCache.THROTTLE = vessel.throttle;
+        this.telemetryCache.DYNAMIC_PRESSURE = q;
     }
 
     /**
      * Evaluate a condition against telemetry values
      */
     private evaluateCondition(condition: ScriptCondition, telemetry: Record<ConditionVariable, number>): boolean {
-        const results: boolean[] = [];
+        // Optimized: direct boolean computation without array allocation
+        if (condition.clauses.length === 0) return false;
 
-        for (const clause of condition.clauses) {
-            const value = telemetry[clause.variable];
-            const result = this.evaluateComparison(value, clause.operator, clause.value);
-            results.push(result);
-        }
+        const firstClause = condition.clauses[0];
+        const val0 = telemetry[firstClause.variable];
+        let combined = this.evaluateComparison(val0, firstClause.operator, firstClause.value);
 
-        // Combine results using logical operators
-        if (results.length === 1) {
-            return results[0] ?? false;
-        }
+        for (let i = 1; i < condition.clauses.length; i++) {
+            const clause = condition.clauses[i];
+            const val = telemetry[clause.variable];
+            const result = this.evaluateComparison(val, clause.operator, clause.value);
 
-        let combined = results[0] ?? false;
-        for (let i = 0; i < condition.logicalOperators.length; i++) {
-            const op = condition.logicalOperators[i];
-            const nextResult = results[i + 1] ?? false;
-
+            const op = condition.logicalOperators[i - 1];
             if (op === 'AND') {
-                combined = combined && nextResult;
+                combined = combined && result;
             } else if (op === 'OR') {
-                combined = combined || nextResult;
+                combined = combined || result;
             }
         }
 
