@@ -240,15 +240,6 @@ function performStaging() {
     postState();
 }
 
-function mapEntityType(e: Vessel): number {
-    if (e instanceof FullStack) return EntityType.FULLSTACK;
-    if (e instanceof Booster) return EntityType.BOOSTER;
-    if (e instanceof UpperStage) return EntityType.UPPER_STAGE;
-    if (e instanceof Fairing) return EntityType.FAIRING;
-    if (e instanceof Payload) return EntityType.PAYLOAD;
-    return EntityType.UNKNOWN;
-}
-
 function mapEngineState(state: string): number {
     switch (state) {
         case 'starting': return EngineStateCode.STARTING;
@@ -278,7 +269,7 @@ function postState() {
 
             const base = HEADER_SIZE + i * ENTITY_STRIDE;
 
-            sharedView[base + EntityOffset.TYPE] = mapEntityType(e);
+            sharedView[base + EntityOffset.TYPE] = e.type;
             sharedView[base + EntityOffset.X] = e.x;
             sharedView[base + EntityOffset.Y] = e.y;
             sharedView[base + EntityOffset.VX] = e.vx;

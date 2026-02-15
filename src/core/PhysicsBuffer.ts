@@ -5,6 +5,8 @@
  * zero-copy communication between the Physics Worker and Main Thread.
  */
 
+import { EntityType } from '../types/index';
+
 // Configuration
 export const MAX_ENTITIES = 1000;
 export const ENTITY_STRIDE = 32; // Floats per entity
@@ -50,16 +52,8 @@ export enum EntityOffset {
     ID = 21             // Unique ID (numeric part)
 }
 
-// Entity Types
-export enum EntityType {
-    UNKNOWN = 0,
-    FULLSTACK = 1,
-    BOOSTER = 2,
-    UPPER_STAGE = 3,
-    FAIRING = 4,
-    PAYLOAD = 5,
-    DEBRIS = 6
-}
+// Entity Types - Re-exported from types
+export { EntityType };
 
 // Engine States
 export enum EngineStateCode {

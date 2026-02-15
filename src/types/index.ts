@@ -345,3 +345,17 @@ export interface TelemetryDataPoint {
     alt: number; // Altitude (meters)
     vel: number; // Velocity (m/s)
 }
+
+// ============================================================================
+// Entity Types
+// ============================================================================
+
+export enum EntityType {
+    UNKNOWN = 0,
+    FULLSTACK = 1,
+    BOOSTER = 2,
+    UPPER_STAGE = 3,
+    FAIRING = 4,
+    PAYLOAD = 5,
+    DEBRIS = 6
+}

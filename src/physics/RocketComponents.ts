@@ -9,7 +9,7 @@ import { Vessel } from './Vessel';
 import { CONFIG, PIXELS_PER_METER, ISP_TO_VELOCITY } from '../config/Constants';
 import { state } from '../core/State';
 import { PIDController } from '../utils/PIDController';
-import { StageSeparation } from '../types';
+import { StageSeparation, EntityType } from '../types';
 import { DEFAULT_AERO_CONFIG, BOOSTER_AERO_CONFIG, UPPER_STAGE_AERO_CONFIG, PAYLOAD_AERO_CONFIG } from './Aerodynamics';
 import {
     DEFAULT_TPS_CONFIG,
@@ -30,6 +30,8 @@ import {
  * First stage booster + second stage + payload fairing
  */
 export class FullStack extends Vessel {
+    public override readonly type = EntityType.FULLSTACK;
+
     constructor(x: number, y: number) {
         super(x, y);
         this.h = 160;
@@ -122,6 +124,8 @@ export class FullStack extends Vessel {
  * Capable of propulsive landing with autopilot
  */
 export class Booster extends Vessel {
+    public override readonly type = EntityType.BOOSTER;
+
     /** Stage separation config */
     public nextStage: StageSeparation;
 
@@ -271,6 +275,8 @@ export class Booster extends Vessel {
  * Contains payload fairing
  */
 export class UpperStage extends Vessel {
+    public override readonly type = EntityType.UPPER_STAGE;
+
     /** Whether fairings have been jettisoned */
     public fairingsDeployed: boolean = false;
 
@@ -392,6 +398,8 @@ export class UpperStage extends Vessel {
  * Payload - Satellite or other payload after deployment
  */
 export class Payload extends Vessel {
+    public override readonly type = EntityType.PAYLOAD;
+
     /** Visual color */
     public color: string = '#bdc3c7';
 
@@ -441,6 +449,8 @@ export class Payload extends Vessel {
  * Fairing - Payload fairing half after separation
  */
 export class Fairing extends Vessel {
+    public override readonly type = EntityType.FAIRING;
+
     /** Which side (left=-1, right=1) */
     public side: number;
 

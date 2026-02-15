@@ -11,7 +11,7 @@
  * - Centrifugal acceleration for orbital motion
  */
 
-import { IVessel, PhysicsState, Derivatives, OrbitalElements } from '../types';
+import { IVessel, PhysicsState, Derivatives, OrbitalElements, EntityType } from '../types';
 import { CONFIG, PIXELS_PER_METER, getAtmosphericDensity, SPEED_OF_SOUND, RHO_SL, R_EARTH, getGravity, getDynamicPressure, getTransonicDragMultiplier, getMachNumber, DT } from '../config/Constants';
 import { state, currentWindVelocity, currentDensityMultiplier } from '../core/State';
 import { addParticle } from '../core/State';
@@ -63,6 +63,9 @@ export class Vessel implements IVessel {
     public prevX: number = 0;
     public prevY: number = 0;
     public prevAngle: number = 0;
+
+    // Entity Type
+    public readonly type: EntityType = EntityType.UNKNOWN;
 
     // Physical properties
     public mass: number = 1000;
