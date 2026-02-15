@@ -62,4 +62,42 @@ describe('VABEditor Accessibility', () => {
             expect(icon.textContent?.trim()).not.toBe('');
         });
     });
+
+    it('should have keyboard accessible part list', () => {
+        const onLaunch = vi.fn();
+        const editor = new VABEditor('vab-container', onLaunch);
+        (editor as any).render();
+
+        const partsList = container.querySelector('.vab-parts-list');
+        expect(partsList).toBeTruthy();
+        expect(partsList?.getAttribute('role')).toBe('listbox');
+
+        const partItems = container.querySelectorAll('.vab-part-item');
+        expect(partItems.length).toBeGreaterThan(0);
+
+        const firstPart = partItems[0] as HTMLElement;
+        expect(firstPart.getAttribute('role')).toBe('option');
+        expect(firstPart.getAttribute('tabindex')).toBe('0');
+        expect(firstPart.getAttribute('aria-selected')).toBe('false');
+
+        // Simulate Keydown Enter
+        const enterEvent = new dom.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+        firstPart.dispatchEvent(enterEvent);
+
+        expect(firstPart.classList.contains('selected')).toBe(true);
+        expect(firstPart.getAttribute('aria-selected')).toBe('true');
+
+        // Simulate Keydown Space to select another part
+        if (partItems.length > 1) {
+            const secondPart = partItems[1] as HTMLElement;
+            const spaceEvent = new dom.window.KeyboardEvent('keydown', { key: ' ', bubbles: true });
+            secondPart.dispatchEvent(spaceEvent);
+
+            expect(secondPart.classList.contains('selected')).toBe(true);
+            expect(secondPart.getAttribute('aria-selected')).toBe('true');
+
+            expect(firstPart.classList.contains('selected')).toBe(false);
+            expect(firstPart.getAttribute('aria-selected')).toBe('false');
+        }
+    });
 });

@@ -79,7 +79,7 @@ export class VABEditor {
                         <div class="vab-category-tabs">
                             ${this.renderCategoryTabs()}
                         </div>
-                        <div class="vab-parts-list">
+                        <div class="vab-parts-list" role="listbox" aria-label="Parts Catalog">
                             ${this.renderPartsList()}
                         </div>
                     </div>
@@ -184,7 +184,11 @@ export class VABEditor {
         return parts
             .map(
                 (part) => `
-            <div class="vab-part-item" data-part-id="${part.id}">
+            <div class="vab-part-item"
+                 data-part-id="${part.id}"
+                 role="option"
+                 tabindex="0"
+                 aria-selected="false">
                 <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
                     <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
@@ -405,10 +409,26 @@ export class VABEditor {
 
         // Part items (select part)
         this.container.querySelectorAll('.vab-part-item').forEach((item) => {
-            item.addEventListener('click', (e) => {
+            const handleSelect = (e: Event) => {
                 // Toggle selection
-                this.container.querySelectorAll('.vab-part-item').forEach((i) => i.classList.remove('selected'));
-                (e.currentTarget as HTMLElement).classList.add('selected');
+                this.container.querySelectorAll('.vab-part-item').forEach((i) => {
+                    i.classList.remove('selected');
+                    i.setAttribute('aria-selected', 'false');
+                });
+                const target = e.currentTarget as HTMLElement;
+                target.classList.add('selected');
+                target.setAttribute('aria-selected', 'true');
+            };
+
+            item.addEventListener('click', handleSelect);
+
+            // Keyboard selection support
+            item.addEventListener('keydown', (e: Event) => {
+                const keyEvent = e as KeyboardEvent;
+                if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+                    e.preventDefault(); // Prevent page scroll on Space
+                    handleSelect(e);
+                }
             });
         });
 
