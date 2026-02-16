@@ -67,4 +67,19 @@ describe('EnvironmentSystem', () => {
             expect(Vec2.magnitude(wind)).toBeCloseTo(15, 3);
         });
     });
+
+    describe('Polar Coordinate Optimization', () => {
+        it('should return correct polar coordinates without allocation', () => {
+            const env = new EnvironmentSystem();
+            const polar1 = env.getWindPolar(500);
+            const expectedSpeed = 8.5; // (5+12)/2
+
+            expect(polar1.speed).toBeCloseTo(expectedSpeed, 3);
+
+            // Check object reuse
+            const polar2 = env.getWindPolar(1000);
+            expect(polar1).toBe(polar2);
+            expect(polar1.speed).toBeCloseTo(12, 3);
+        });
+    });
 });

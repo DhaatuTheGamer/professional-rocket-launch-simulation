@@ -1,0 +1,3 @@
+## 2025-02-18 - Vector Allocation in Rendering Loops
+**Learning:** The `vec2` helper function creates new objects, and `Math` functions (sqrt, atan2) are expensive in tight loops. `EnvironmentSystem.getWindAtAltitude` was being called per-pixel-row in the rendering loop, causing excessive object allocation and redundant trigonometry.
+**Action:** When data is needed for visualization (speed/direction), prefer returning primitives or reusing objects (flyweight pattern) instead of creating new vector objects. Use polar coordinates directly if that's what the renderer needs, avoiding double conversion.

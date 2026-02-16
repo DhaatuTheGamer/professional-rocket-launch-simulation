@@ -350,7 +350,7 @@ export class Game {
      */
     private handlePhysicsEvent(e: any): void {
         // Dispatch to listeners
-        this.physicsEventListeners.forEach(cb => cb(e));
+        this.physicsEventListeners.forEach((cb) => cb(e));
 
         if (e.name === 'STAGING_S1') {
             this.missionLog.log('STAGING: S1 SEP', 'warn');
@@ -698,10 +698,10 @@ export class Game {
                     const k4_dphi = vphi_k4 / r_k4;
 
                     // Update State
-                    state.r += (k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred / 6;
-                    state.phi += (k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred / 6;
-                    state.vr += (k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred / 6;
-                    state.vphi += (k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred / 6;
+                    state.r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred) / 6;
+                    state.phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred) / 6;
+                    state.vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred) / 6;
+                    state.vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred) / 6;
 
                     // Stop if hit ground
                     if (state.r <= R_EARTH) {
@@ -720,7 +720,6 @@ export class Game {
 
         this.nextOrbitUpdateIndex = (this.nextOrbitUpdateIndex + updateBudget) % totalEntities;
     }
-
 
     /**
      * Draw environmental visuals (wind, corridors)
@@ -769,8 +768,8 @@ export class Game {
             const alt = (this.groundY - y) / PIXELS_PER_METER;
             if (alt < 0) continue;
 
-            const wind = this.environment.getWindAtAltitude(alt);
-            const speed = Math.sqrt(wind.x * wind.x + wind.y * wind.y);
+            // Optimization: Use getWindPolar to avoid object allocation and expensive sqrt/atan2 calls
+            const { speed, direction } = this.environment.getWindPolar(alt);
 
             if (speed > 1) {
                 const screenY = y;
@@ -779,7 +778,9 @@ export class Game {
                 // Draw arrow
                 this.ctx.translate(screenX, screenY);
                 // Note: Wind vector points WHERE wind is going.
-                const angle = Math.atan2(wind.y, wind.x);
+                // direction is where wind comes FROM, so direction + PI is where it goes to.
+                // atan2(-sin, -cos) = direction + PI.
+                const angle = direction + Math.PI;
 
                 this.ctx.rotate(angle);
 

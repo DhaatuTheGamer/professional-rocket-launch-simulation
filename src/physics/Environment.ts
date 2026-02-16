@@ -123,6 +123,9 @@ export class EnvironmentSystem {
     private currentGust: Vector2D = vec2(0, 0);
     private gustUpdateTimer: number = 0;
 
+    // Optimization: Reuse object to avoid allocation
+    private _tempPolar = { speed: 0, direction: 0 };
+
     constructor(config: EnvironmentConfig = DEFAULT_ENVIRONMENT_CONFIG) {
         this.config = { ...config };
         // Ensure layers are sorted for optimization
@@ -169,13 +172,19 @@ export class EnvironmentSystem {
     }
 
     /**
-     * Get wind velocity at a given altitude
+     * Get wind polar coordinates (speed and direction) at a given altitude.
+     * Optimized to avoid object allocation by reusing an internal object.
+     *
      * @param altitude - Altitude in meters
-     * @returns Wind velocity vector (m/s)
+     * @returns Object containing speed (m/s) and direction (radians)
      */
-    getWindAtAltitude(altitude: number): Vector2D {
+    getWindPolar(altitude: number): { speed: number; direction: number } {
         const safeAlt = Math.max(0, altitude);
         const layers = this.config.windLayers;
+
+        // Reset
+        this._tempPolar.speed = 0;
+        this._tempPolar.direction = 0;
 
         // Find the appropriate wind layer
         for (let i = 0; i < layers.length; i++) {
@@ -203,14 +212,24 @@ export class EnvironmentSystem {
                     direction = this.interpolateAngle(layer.windDirection, nextLayer.windDirection, layerProgress);
                 }
 
-                // Convert to velocity vector
-                // Wind direction is where wind comes FROM, so we negate for force direction
-                return vec2(-Math.cos(direction) * speed, -Math.sin(direction) * speed);
+                this._tempPolar.speed = speed;
+                this._tempPolar.direction = direction;
+                return this._tempPolar;
             }
         }
 
-        // Default: no wind at extreme altitudes
-        return vec2(0, 0);
+        return this._tempPolar;
+    }
+
+    /**
+     * Get wind velocity at a given altitude
+     * @param altitude - Altitude in meters
+     * @returns Wind velocity vector (m/s)
+     */
+    getWindAtAltitude(altitude: number): Vector2D {
+        const { speed, direction } = this.getWindPolar(altitude);
+        // Wind direction is where wind comes FROM, so we negate for force direction
+        return vec2(-Math.cos(direction) * speed, -Math.sin(direction) * speed);
     }
 
     /**
