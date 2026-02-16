@@ -76,7 +76,7 @@ export class VABEditor {
                     <!-- Parts Catalog -->
                     <div class="vab-parts-panel">
                         <h3>Parts Catalog</h3>
-                        <div class="vab-category-tabs">
+                        <div class="vab-category-tabs" role="tablist" aria-label="Part Categories">
                             ${this.renderCategoryTabs()}
                         </div>
                         <div class="vab-parts-list">
@@ -161,12 +161,17 @@ export class VABEditor {
 
         return categories
             .map(
-                (cat) => `
-            <button class="vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}"
-                    data-category="${cat.id}">
+                (cat) => {
+                    const isActive = this.selectedCategory === cat.id;
+                    return `
+            <button class="vab-cat-tab ${isActive ? 'active' : ''}"
+                    data-category="${cat.id}"
+                    role="tab"
+                    aria-selected="${isActive}">
                 ${cat.label}
             </button>
-        `
+        `;
+                }
             )
             .join('');
     }
@@ -184,7 +189,7 @@ export class VABEditor {
         return parts
             .map(
                 (part) => `
-            <div class="vab-part-item" data-part-id="${part.id}">
+            <div class="vab-part-item" data-part-id="${part.id}" tabindex="0" role="button" aria-label="Select ${this.escapeHTML(part.name)}">
                 <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
                     <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
@@ -405,10 +410,19 @@ export class VABEditor {
 
         // Part items (select part)
         this.container.querySelectorAll('.vab-part-item').forEach((item) => {
-            item.addEventListener('click', (e) => {
+            const handleSelect = (e: Event) => {
                 // Toggle selection
                 this.container.querySelectorAll('.vab-part-item').forEach((i) => i.classList.remove('selected'));
                 (e.currentTarget as HTMLElement).classList.add('selected');
+            };
+
+            item.addEventListener('click', handleSelect);
+            item.addEventListener('keydown', (e: Event) => {
+                const keyEvent = e as KeyboardEvent;
+                if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+                    keyEvent.preventDefault();
+                    handleSelect(e);
+                }
             });
         });
 
