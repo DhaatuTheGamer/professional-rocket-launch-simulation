@@ -648,7 +648,12 @@ export class Game {
                 const maxSteps = 2000; // 2000s prediction horizon
 
                 // Store start point
-                e.orbitPath.push({ phi: state.phi, r: state.r });
+                e.orbitPath.push({
+                    phi: state.phi,
+                    r: state.r,
+                    relX: Math.sin(state.phi) * state.r,
+                    relY: -Math.cos(state.phi) * state.r
+                });
 
                 // Optimized RK4 Integrator - Inlined to avoid object allocation
                 for (let j = 0; j < maxSteps; j++) {
@@ -710,11 +715,21 @@ export class Game {
 
                     // Store point (sparse)
                     if (j % 10 === 0) {
-                        e.orbitPath.push({ phi: state.phi, r: state.r });
+                        e.orbitPath.push({
+                            phi: state.phi,
+                            r: state.r,
+                            relX: Math.sin(state.phi) * state.r,
+                            relY: -Math.cos(state.phi) * state.r
+                        });
                     }
                 }
                 // Ensure final point is added
-                e.orbitPath.push({ phi: state.phi, r: state.r });
+                e.orbitPath.push({
+                    phi: state.phi,
+                    r: state.r,
+                    relX: Math.sin(state.phi) * state.r,
+                    relY: -Math.cos(state.phi) * state.r
+                });
             }
         }
 
@@ -852,8 +867,9 @@ export class Game {
             const r = R_EARTH + alt;
             const phi = e.x / R_EARTH;
 
-            const ox = cx + Math.cos(phi - Math.PI / 2) * r * scale;
-            const oy = cy + Math.sin(phi - Math.PI / 2) * r * scale;
+            // Optimized: Use identities cos(x-pi/2) = sin(x) and sin(x-pi/2) = -cos(x)
+            const ox = cx + Math.sin(phi) * r * scale;
+            const oy = cy - Math.cos(phi) * r * scale;
 
             // Vessel dot
             this.ctx.fillStyle = e === this.trackedEntity ? '#f1c40f' : '#aaa';
@@ -866,8 +882,9 @@ export class Game {
                 this.ctx.strokeStyle = this.ctx.fillStyle;
                 this.ctx.beginPath();
                 e.orbitPath.forEach((p, i) => {
-                    const px = cx + Math.cos(p.phi - Math.PI / 2) * p.r * scale;
-                    const py = cy + Math.sin(p.phi - Math.PI / 2) * p.r * scale;
+                    // Optimized: Use pre-calculated relative coordinates if available
+                    const px = cx + (p.relX ?? Math.sin(p.phi) * p.r) * scale;
+                    const py = cy + (p.relY ?? -Math.cos(p.phi) * p.r) * scale;
                     if (i === 0) {
                         this.ctx.moveTo(px, py);
                     } else {

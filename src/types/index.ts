@@ -97,6 +97,8 @@ export interface Derivatives {
 export interface OrbitalElements {
     phi: number; // Angular position (radians)
     r: number; // Radius from Earth center (meters)
+    relX?: number; // Relative X coordinate for map view (meters)
+    relY?: number; // Relative Y coordinate for map view (meters)
 }
 
 // ============================================================================
