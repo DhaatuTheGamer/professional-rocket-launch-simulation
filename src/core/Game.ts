@@ -769,8 +769,8 @@ export class Game {
             const alt = (this.groundY - y) / PIXELS_PER_METER;
             if (alt < 0) continue;
 
-            const wind = this.environment.getWindAtAltitude(alt);
-            const speed = Math.sqrt(wind.x * wind.x + wind.y * wind.y);
+            // Optimized: Use polar coordinates directly to avoid trig and object allocation
+            const { speed, direction } = this.environment.getWindPolar(alt);
 
             if (speed > 1) {
                 const screenY = y;
@@ -779,7 +779,8 @@ export class Game {
                 // Draw arrow
                 this.ctx.translate(screenX, screenY);
                 // Note: Wind vector points WHERE wind is going.
-                const angle = Math.atan2(wind.y, wind.x);
+                // direction is where wind comes FROM, so we add PI to point where it goes.
+                const angle = direction + Math.PI;
 
                 this.ctx.rotate(angle);
 
