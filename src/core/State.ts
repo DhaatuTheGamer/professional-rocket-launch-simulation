@@ -23,6 +23,12 @@ export const state: GameState = {
     height: 1080,
     entities: [],
     autopilotEnabled: false,
+    timeScale: 1.0,
+    paused: false,
+    missionTime: 0,
+    liftoff: false,
+    stageNumber: 0,
+    activeVesselId: null,
 
     // Local / Non-synced (Services & FX)
     particles: [],
@@ -52,14 +58,12 @@ store.subscribe(() => {
     state.groundY = s.groundY;
     state.entities = s.entities;
     state.autopilotEnabled = s.autopilotEnabled;
-    // GameState interface in types.ts likely doesn't have these yet, or they were removed.
-    // Commenting out to fix error until types.ts is updated.
-    // state.timeScale = s.timeScale;
-    // state.paused = s.paused;
-    // state.missionTime = s.missionTime;
-    // state.liftoff = s.liftoff;
-    // state.stageNumber = s.stageNumber;
-    // state.activeVesselId = s.activeVesselId;
+    state.timeScale = s.timeScale;
+    state.paused = s.paused;
+    state.missionTime = s.missionTime;
+    state.liftoff = s.liftoff;
+    state.stageNumber = s.stageNumber;
+    state.activeVesselId = s.activeVesselId;
 
     // Sync individual exports
     currentWindVelocity = s.windVelocity;
