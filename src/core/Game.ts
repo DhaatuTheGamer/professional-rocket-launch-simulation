@@ -18,7 +18,6 @@ import { Navball } from '../ui/Navball';
 import { TelemetrySystem } from '../ui/Telemetry';
 import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
-// FlightComputer logic moved to PhysicsWorker
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
 import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
 import { setWindVelocity, setDensityMultiplier } from './State';
@@ -48,7 +47,6 @@ export class Game {
     public telemetry: TelemetrySystem;
     public missionLog: MissionLog;
     public sas: SAS;
-    // FlightComputer logic moved to PhysicsWorker
     public blackBox: BlackBoxRecorder;
     public environment: EnvironmentSystem;
     public maneuverPlanner: ManeuverPlanner;
@@ -174,7 +172,6 @@ export class Game {
         this.telemetry = new TelemetrySystem();
         this.missionLog = new MissionLog();
         this.sas = new SAS();
-        // this.flightComputer = new FlightComputer(this.groundY);
         this.blackBox = new BlackBoxRecorder(this.groundY);
         this.environment = new EnvironmentSystem();
         this.maneuverPlanner = new ManeuverPlanner(this);
@@ -413,11 +410,6 @@ export class Game {
 
         if (this.mainStack) {
             gimbalAngle = this.mainStack.gimbalAngle;
-
-            // Flight Computer logic is now handled in PhysicsWorker
-            // We just handle manual override or SAS here if FC is not active in worker
-            // But since worker applies FC overrides, we can just send manual inputs.
-            // If FC is active in worker, it will override these.
 
             // Manual steering
             const steer = this.input.getSteering();
