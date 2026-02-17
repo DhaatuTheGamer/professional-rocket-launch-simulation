@@ -21,13 +21,15 @@ import { updateFlightComputerHUD } from './ui/FlightComputerHUD';
 let game: Game;
 try {
     game = new Game();
-    game.init().catch(e => {
-        console.error("Game initialization failed:", e);
+    game.init().catch((e) => {
+        console.error('Game initialization failed:', e);
         alert(`Game Init Error: ${e.message}`);
     });
 } catch (e: any) {
-    console.error("Game constructor failed:", e);
-    alert(`Critical Error: ${e.message}\n\nThis application looks for SharedArrayBuffer support. Please ensure you are running with COOP/COEP headers.`);
+    console.error('Game constructor failed:', e);
+    alert(
+        `Critical Error: ${e.message}\n\nThis application looks for SharedArrayBuffer support. Please ensure you are running with COOP/COEP headers.`
+    );
     throw e;
 }
 

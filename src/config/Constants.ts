@@ -144,9 +144,7 @@ export function getMachNumber(velocity: number): number {
 export function getTransonicDragMultiplier(mach: number): number {
     // Baseline drag: 1.0 Subsonic, 1.5 Supersonic
     // Smooth transition using sigmoid-like function
-    const baseline = (mach < 1.0)
-        ? 1.0
-        : 1.5 - 0.5 * Math.exp(-(mach - 1.0) * 5.0);
+    const baseline = mach < 1.0 ? 1.0 : 1.5 - 0.5 * Math.exp(-(mach - 1.0) * 5.0);
 
     // Transonic drag rise (Wave drag)
     // Gaussian peak centered at Mach 1.1, width ~0.15

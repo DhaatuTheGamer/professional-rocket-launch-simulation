@@ -7,14 +7,7 @@ import { EnvironmentSystem } from '../physics/Environment';
 import { FlightTerminationSystem } from '../safety/FlightTermination';
 import { FaultInjector } from '../safety/FaultInjector';
 import { FlightComputer } from '../guidance/FlightComputer';
-import {
-    HEADER_SIZE,
-    ENTITY_STRIDE,
-    HeaderOffset,
-    EntityOffset,
-    EntityType,
-    EngineStateCode
-} from './PhysicsBuffer';
+import { HEADER_SIZE, ENTITY_STRIDE, HeaderOffset, EntityOffset, EntityType, EngineStateCode } from './PhysicsBuffer';
 
 // State
 let entities: Vessel[] = [];
@@ -135,7 +128,7 @@ function step(inputs: any) {
                 v.active = false;
                 self.postMessage({ type: 'EVENT', payload: { name: 'ABORT' } });
             }
-            // SAS mode is handled by SAS which FC might use, 
+            // SAS mode is handled by SAS which FC might use,
             // but for now FC output sasMode is informational or used by SAS utils
         }
     }
@@ -251,10 +244,14 @@ function mapEntityType(e: Vessel): number {
 
 function mapEngineState(state: string): number {
     switch (state) {
-        case 'starting': return EngineStateCode.STARTING;
-        case 'running': return EngineStateCode.RUNNING;
-        case 'flameout': return EngineStateCode.FLAMEOUT;
-        default: return EngineStateCode.OFF;
+        case 'starting':
+            return EngineStateCode.STARTING;
+        case 'running':
+            return EngineStateCode.RUNNING;
+        case 'flameout':
+            return EngineStateCode.FLAMEOUT;
+        default:
+            return EngineStateCode.OFF;
     }
 }
 

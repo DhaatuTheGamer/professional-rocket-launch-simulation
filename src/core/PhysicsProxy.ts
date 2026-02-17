@@ -47,7 +47,7 @@ export class PhysicsProxy {
         try {
             this.sharedBuffer = new SharedArrayBuffer(BUFFER_SIZE * 8);
         } catch (e) {
-            console.error("SharedArrayBuffer not supported! Ensure COOP/COEP headers are set.");
+            console.error('SharedArrayBuffer not supported! Ensure COOP/COEP headers are set.');
             throw e;
         }
         this.sharedView = new Float64Array(this.sharedBuffer);
@@ -94,7 +94,7 @@ export class PhysicsProxy {
     }
 
     getMissionTime(): number {
-        return this.sharedView ? (this.sharedView[HeaderOffset.TIMESTAMP] || 0) : 0;
+        return this.sharedView ? this.sharedView[HeaderOffset.TIMESTAMP] || 0 : 0;
     }
 
     getTrackedIndex(): number {
@@ -118,7 +118,7 @@ export class PhysicsProxy {
                 y: wy
             },
             densityMultiplier: this.sharedView[HeaderOffset.DENSITY_MULT] || 1,
-            // Other fields might be missing if relying solely on buffer, 
+            // Other fields might be missing if relying solely on buffer,
             // but these are the critical ones for per-frame physics visualization
             surfaceWindSpeed: Math.sqrt(wx * wx + wy * wy),
             surfaceWindDirection: Math.atan2(wy, wx),
@@ -131,7 +131,6 @@ export class PhysicsProxy {
     getFlightComputerStatus(): any {
         return (this.latestState as any)?.fc || { status: 'FC: ---', command: '' };
     }
-
 
     onEvent(callback: (event: any) => void) {
         this.eventListeners.push(callback);
@@ -206,21 +205,31 @@ export class PhysicsProxy {
 
     private mapEngineStateCode(code: number): string {
         switch (code) {
-            case EngineStateCode.STARTING: return 'starting';
-            case EngineStateCode.RUNNING: return 'running';
-            case EngineStateCode.FLAMEOUT: return 'flameout';
-            default: return 'off';
+            case EngineStateCode.STARTING:
+                return 'starting';
+            case EngineStateCode.RUNNING:
+                return 'running';
+            case EngineStateCode.FLAMEOUT:
+                return 'flameout';
+            default:
+                return 'off';
         }
     }
 
     private createViewEntity(typeCode: number, x: number, y: number): Vessel {
         switch (typeCode) {
-            case EntityType.FULLSTACK: return new FullStack(x, y);
-            case EntityType.BOOSTER: return new Booster(x, y);
-            case EntityType.UPPER_STAGE: return new UpperStage(x, y);
-            case EntityType.FAIRING: return new Fairing(x, y);
-            case EntityType.PAYLOAD: return new Payload(x, y);
-            default: return new FullStack(x, y);
+            case EntityType.FULLSTACK:
+                return new FullStack(x, y);
+            case EntityType.BOOSTER:
+                return new Booster(x, y);
+            case EntityType.UPPER_STAGE:
+                return new UpperStage(x, y);
+            case EntityType.FAIRING:
+                return new Fairing(x, y);
+            case EntityType.PAYLOAD:
+                return new Payload(x, y);
+            default:
+                return new FullStack(x, y);
         }
     }
 

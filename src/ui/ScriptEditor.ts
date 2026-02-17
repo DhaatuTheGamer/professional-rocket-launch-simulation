@@ -33,7 +33,7 @@ export class ScriptEditor {
                     // Allow UI to update if needed
                     if (this.onScriptLoaded) {
                         // We don't have the parsed script object here easily unless we parse it again
-                        // or just ignore this callback if it's not critical. 
+                        // or just ignore this callback if it's not critical.
                         // The original used `this.flightComputer.state.script`.
                         // For now, we can skip passing the script object or parse locally.
                         const val = this.textarea?.value || '';
@@ -88,8 +88,8 @@ export class ScriptEditor {
                         <select id="script-preset-select" class="script-select" aria-label="Load preset script">
                             <option value="">-- Load Preset --</option>
                             ${Object.keys(PRESET_SCRIPTS)
-                .map((name) => `<option value="${name}">${name}</option>`)
-                .join('')}
+                                .map((name) => `<option value="${name}">${name}</option>`)
+                                .join('')}
                         </select>
                         
                         <select id="script-save-select" class="script-select" aria-label="Load saved script">
