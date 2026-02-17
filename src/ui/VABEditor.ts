@@ -184,7 +184,7 @@ export class VABEditor {
         return parts
             .map(
                 (part) => `
-            <div class="vab-part-item" data-part-id="${part.id}">
+            <div class="vab-part-item" data-part-id="${this.escapeHTML(part.id)}">
                 <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
                     <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
@@ -263,12 +263,12 @@ export class VABEditor {
                 if (!inst) continue;
                 html += `
                     <div class="vab-part-preview" 
-                         data-instance="${inst.instanceId}"
+                         data-instance="${this.escapeHTML(inst.instanceId)}"
                          style="height: ${inst.part.height}px; width: ${inst.part.width}px;">
                         <span class="part-label">${this.escapeHTML(inst.part.name)}</span>
                         <button class="remove-part"
                                 data-stage="${i}"
-                                data-instance="${inst.instanceId}"
+                                data-instance="${this.escapeHTML(inst.instanceId)}"
                                 title="Remove ${this.escapeHTML(inst.part.name)}"
                                 aria-label="Remove ${this.escapeHTML(inst.part.name)}">×</button>
                     </div>

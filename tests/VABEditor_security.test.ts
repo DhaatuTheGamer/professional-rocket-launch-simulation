@@ -84,6 +84,45 @@ describe('VABEditor Security', () => {
         expect(input.getAttribute('value')).toBe('');
     });
 
+    it('should not be vulnerable to XSS in part instanceId', () => {
+        const onLaunch = vi.fn();
+        const editor = new VABEditor('vab-container', onLaunch);
+
+        // Inject malicious payload into instanceId
+        const maliciousId = '"><script>alert("XSS_INSTANCE")</script>';
+        const blueprint = (editor as any).blueprint;
+
+        // Ensure there is at least one stage and one part
+        if (blueprint.stages.length === 0) {
+            blueprint.stages.push({
+                stageNumber: 0,
+                parts: [],
+                hasDecoupler: false
+            });
+        }
+
+        blueprint.stages[0].parts.push({
+            part: { name: 'Test Part', height: 10, width: 10, cost: 10, mass: 10 },
+            instanceId: maliciousId,
+            stageIndex: 0
+        });
+
+        // Force render
+        (editor as any).render();
+
+        // Check for script tag presence
+        const scripts = container.getElementsByTagName('script');
+        expect(scripts.length).toBe(0, 'Script tag found in DOM from instanceId, XSS successful!');
+
+        // Check HTML content for the malicious string appearing as raw HTML
+        const html = container.innerHTML;
+        expect(html).not.toContain('<script>');
+
+        // Ensure the attribute is escaped in the HTML string
+        // The escaped version of "> should contain &quot;&gt;
+        expect(html).toContain('data-instance=&quot;&gt;');
+    });
+
     it('should safely display blueprint name in input', () => {
         const onLaunch = vi.fn();
         const editor = new VABEditor('vab-container', onLaunch);
