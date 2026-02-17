@@ -228,6 +228,14 @@ export interface GameState {
     missionLog: IMissionLog | null;
     autopilotEnabled: boolean;
     assets?: IAssetLoader;
+
+    // Simulation state
+    timeScale: number;
+    paused: boolean;
+    missionTime: number;
+    liftoff: boolean;
+    stageNumber: number;
+    activeVesselId: string | null;
 }
 
 // ============================================================================
