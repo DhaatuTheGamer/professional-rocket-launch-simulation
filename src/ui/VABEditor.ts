@@ -184,7 +184,11 @@ export class VABEditor {
         return parts
             .map(
                 (part) => `
-            <div class="vab-part-item" data-part-id="${part.id}">
+            <div class="vab-part-item"
+                 data-part-id="${part.id}"
+                 role="button"
+                 tabindex="0"
+                 aria-label="Select ${this.escapeHTML(part.name)}">
                 <div class="vab-part-icon">${this.getPartIcon(part)}</div>
                 <div class="vab-part-info">
                     <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
@@ -405,10 +409,22 @@ export class VABEditor {
 
         // Part items (select part)
         this.container.querySelectorAll('.vab-part-item').forEach((item) => {
-            item.addEventListener('click', (e) => {
+            const selectPart = (target: HTMLElement) => {
                 // Toggle selection
                 this.container.querySelectorAll('.vab-part-item').forEach((i) => i.classList.remove('selected'));
-                (e.currentTarget as HTMLElement).classList.add('selected');
+                target.classList.add('selected');
+            };
+
+            item.addEventListener('click', (e) => {
+                selectPart(e.currentTarget as HTMLElement);
+            });
+
+            item.addEventListener('keydown', (e) => {
+                const key = (e as KeyboardEvent).key;
+                if (key === 'Enter' || key === ' ') {
+                    e.preventDefault(); // Prevent scrolling for space
+                    selectPart(e.currentTarget as HTMLElement);
+                }
             });
         });
 
