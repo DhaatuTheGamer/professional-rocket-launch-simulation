@@ -405,10 +405,22 @@ export class VABEditor {
 
         // Part items (select part)
         this.container.querySelectorAll('.vab-part-item').forEach((item) => {
-            item.addEventListener('click', (e) => {
+            const selectPart = (target: HTMLElement) => {
                 // Toggle selection
                 this.container.querySelectorAll('.vab-part-item').forEach((i) => i.classList.remove('selected'));
-                (e.currentTarget as HTMLElement).classList.add('selected');
+                target.classList.add('selected');
+            };
+
+            item.addEventListener('click', (e) => {
+                selectPart(e.currentTarget as HTMLElement);
+            });
+
+            item.addEventListener('keydown', (e) => {
+                const key = (e as KeyboardEvent).key;
+                if (key === 'Enter' || key === ' ') {
+                    e.preventDefault(); // Prevent scrolling for space
+                    selectPart(e.currentTarget as HTMLElement);
+                }
             });
         });
 

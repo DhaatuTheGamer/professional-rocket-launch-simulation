@@ -16,38 +16,38 @@ export const BUFFER_SIZE = HEADER_SIZE + MAX_ENTITIES * ENTITY_STRIDE;
 
 // Header Indices
 export enum HeaderOffset {
-    TIMESTAMP = 0,     // Current mission time
-    ENTITY_COUNT = 1,  // Number of active entities
-    FRAME_ID = 2,      // Incrementing frame counter
-    WIND_X = 3,        // Environmental wind X
-    WIND_Y = 4,        // Environmental wind Y
-    DENSITY_MULT = 5   // Air density multiplier
+    TIMESTAMP = 0, // Current mission time
+    ENTITY_COUNT = 1, // Number of active entities
+    FRAME_ID = 2, // Incrementing frame counter
+    WIND_X = 3, // Environmental wind X
+    WIND_Y = 4, // Environmental wind Y
+    DENSITY_MULT = 5 // Air density multiplier
 }
 
 // Entity Data Offsets (relative to entity start)
 export enum EntityOffset {
-    TYPE = 0,           // EntityType enum
-    X = 1,              // Position X
-    Y = 2,              // Position Y
-    VX = 3,             // Velocity X
-    VY = 4,             // Velocity Y
-    ANGLE = 5,          // Angle (radians)
-    THROTTLE = 6,       // Throttle (0-1)
-    GIMBAL = 7,         // Gimbal angle
-    FUEL = 8,           // Fuel (0-1)
-    ACTIVE = 9,         // Active state (0 or 1)
-    ENGINE_STATE = 10,  // EngineState enum
-    IGNITERS = 11,      // Igniters remaining
-    WIDTH = 12,         // Width (pixels)
-    HEIGHT = 13,        // Height (pixels)
-    CRASHED = 14,       // Crashed state (0 or 1)
-    SKIN_TEMP = 15,     // Skin temperature (K)
-    HEAT_SHIELD = 16,   // Heatshield remaining (0-1)
-    ABLATING = 17,      // Is ablating (0 or 1)
-    FAIRING_DEP = 18,   // Fairings deployed (0 or 1)
-    MASS = 19,          // Current Mass (kg)
-    APOGEE = 20,        // Apogee (m)
-    ID = 21             // Unique ID (numeric part)
+    TYPE = 0, // EntityType enum
+    X = 1, // Position X
+    Y = 2, // Position Y
+    VX = 3, // Velocity X
+    VY = 4, // Velocity Y
+    ANGLE = 5, // Angle (radians)
+    THROTTLE = 6, // Throttle (0-1)
+    GIMBAL = 7, // Gimbal angle
+    FUEL = 8, // Fuel (0-1)
+    ACTIVE = 9, // Active state (0 or 1)
+    ENGINE_STATE = 10, // EngineState enum
+    IGNITERS = 11, // Igniters remaining
+    WIDTH = 12, // Width (pixels)
+    HEIGHT = 13, // Height (pixels)
+    CRASHED = 14, // Crashed state (0 or 1)
+    SKIN_TEMP = 15, // Skin temperature (K)
+    HEAT_SHIELD = 16, // Heatshield remaining (0-1)
+    ABLATING = 17, // Is ablating (0 or 1)
+    FAIRING_DEP = 18, // Fairings deployed (0 or 1)
+    MASS = 19, // Current Mass (kg)
+    APOGEE = 20, // Apogee (m)
+    ID = 21 // Unique ID (numeric part)
 }
 
 // Entity Types

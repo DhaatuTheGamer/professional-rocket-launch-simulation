@@ -18,7 +18,6 @@ import { Navball } from '../ui/Navball';
 import { TelemetrySystem } from '../ui/Telemetry';
 import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
-// FlightComputer logic moved to PhysicsWorker
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
 import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
 import { setWindVelocity, setDensityMultiplier } from './State';
@@ -48,7 +47,6 @@ export class Game {
     public telemetry: TelemetrySystem;
     public missionLog: MissionLog;
     public sas: SAS;
-    // FlightComputer logic moved to PhysicsWorker
     public blackBox: BlackBoxRecorder;
     public environment: EnvironmentSystem;
     public maneuverPlanner: ManeuverPlanner;
@@ -174,7 +172,6 @@ export class Game {
         this.telemetry = new TelemetrySystem();
         this.missionLog = new MissionLog();
         this.sas = new SAS();
-        // this.flightComputer = new FlightComputer(this.groundY);
         this.blackBox = new BlackBoxRecorder(this.groundY);
         this.environment = new EnvironmentSystem();
         this.maneuverPlanner = new ManeuverPlanner(this);
@@ -350,7 +347,7 @@ export class Game {
      */
     private handlePhysicsEvent(e: any): void {
         // Dispatch to listeners
-        this.physicsEventListeners.forEach(cb => cb(e));
+        this.physicsEventListeners.forEach((cb) => cb(e));
 
         if (e.name === 'STAGING_S1') {
             this.missionLog.log('STAGING: S1 SEP', 'warn');
@@ -413,11 +410,6 @@ export class Game {
 
         if (this.mainStack) {
             gimbalAngle = this.mainStack.gimbalAngle;
-
-            // Flight Computer logic is now handled in PhysicsWorker
-            // We just handle manual override or SAS here if FC is not active in worker
-            // But since worker applies FC overrides, we can just send manual inputs.
-            // If FC is active in worker, it will override these.
 
             // Manual steering
             const steer = this.input.getSteering();
@@ -698,10 +690,10 @@ export class Game {
                     const k4_dphi = vphi_k4 / r_k4;
 
                     // Update State
-                    state.r += (k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred / 6;
-                    state.phi += (k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred / 6;
-                    state.vr += (k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred / 6;
-                    state.vphi += (k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred / 6;
+                    state.r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred) / 6;
+                    state.phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred) / 6;
+                    state.vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred) / 6;
+                    state.vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred) / 6;
 
                     // Stop if hit ground
                     if (state.r <= R_EARTH) {
@@ -720,7 +712,6 @@ export class Game {
 
         this.nextOrbitUpdateIndex = (this.nextOrbitUpdateIndex + updateBudget) % totalEntities;
     }
-
 
     /**
      * Draw environmental visuals (wind, corridors)
@@ -769,8 +760,8 @@ export class Game {
             const alt = (this.groundY - y) / PIXELS_PER_METER;
             if (alt < 0) continue;
 
-            const wind = this.environment.getWindAtAltitude(alt);
-            const speed = Math.sqrt(wind.x * wind.x + wind.y * wind.y);
+            // Optimized: Use polar coordinates directly to avoid trig and object allocation
+            const { speed, direction } = this.environment.getWindPolar(alt);
 
             if (speed > 1) {
                 const screenY = y;
@@ -779,7 +770,8 @@ export class Game {
                 // Draw arrow
                 this.ctx.translate(screenX, screenY);
                 // Note: Wind vector points WHERE wind is going.
-                const angle = Math.atan2(wind.y, wind.x);
+                // direction is where wind comes FROM, so we add PI to point where it goes.
+                const angle = direction + Math.PI;
 
                 this.ctx.rotate(angle);
 
