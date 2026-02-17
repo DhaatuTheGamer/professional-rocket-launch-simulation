@@ -169,48 +169,75 @@ export class EnvironmentSystem {
     }
 
     /**
+     * Get wind polar coordinates at a given altitude (optimized)
+     * Uses binary search for O(log n) lookup instead of O(n)
+     * @param altitude - Altitude in meters
+     * @returns Object with speed (m/s) and direction (radians)
+     */
+    getWindPolar(altitude: number): { speed: number; direction: number } {
+        const safeAlt = Math.max(0, altitude);
+        const layers = this.config.windLayers;
+
+        // Binary search for the appropriate wind layer
+        // Optimization: layers are sorted by altitudeMin in constructor
+        let low = 0;
+        let high = layers.length - 1;
+        let layerIndex = -1;
+
+        while (low <= high) {
+            const mid = (low + high) >>> 1;
+            const layer = layers[mid];
+
+            if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
+                layerIndex = mid;
+                break;
+            } else if (safeAlt < layer.altitudeMin) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (layerIndex === -1) {
+            return { speed: 0, direction: 0 };
+        }
+
+        const layer = layers[layerIndex];
+
+        // Interpolate within the layer for smooth transitions
+        const layerProgress =
+            layer.altitudeMax === layer.altitudeMin
+                ? 0
+                : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
+
+        // Find next layer for interpolation
+        // Since layers are sorted, the next layer is simply at index + 1
+        const nextLayer = layers[layerIndex + 1];
+
+        let speed = layer.windSpeed;
+        let direction = layer.windDirection;
+
+        // Only interpolate if the next layer is contiguous
+        if (nextLayer && nextLayer.altitudeMin === layer.altitudeMax) {
+            // Smooth interpolation between layers
+            speed = layer.windSpeed + (nextLayer.windSpeed - layer.windSpeed) * layerProgress;
+            direction = this.interpolateAngle(layer.windDirection, nextLayer.windDirection, layerProgress);
+        }
+
+        return { speed, direction };
+    }
+
+    /**
      * Get wind velocity at a given altitude
      * @param altitude - Altitude in meters
      * @returns Wind velocity vector (m/s)
      */
     getWindAtAltitude(altitude: number): Vector2D {
-        const safeAlt = Math.max(0, altitude);
-        const layers = this.config.windLayers;
+        const { speed, direction } = this.getWindPolar(altitude);
 
-        // Find the appropriate wind layer
-        for (let i = 0; i < layers.length; i++) {
-            const layer = layers[i];
-            if (!layer) continue;
-
-            if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
-                // Interpolate within the layer for smooth transitions
-                const layerProgress =
-                    layer.altitudeMax === layer.altitudeMin
-                        ? 0
-                        : (safeAlt - layer.altitudeMin) / (layer.altitudeMax - layer.altitudeMin);
-
-                // Find next layer for interpolation
-                // Since layers are sorted, the next layer is simply at index i + 1
-                const nextLayer = layers[i + 1];
-
-                let speed = layer.windSpeed;
-                let direction = layer.windDirection;
-
-                // Only interpolate if the next layer is contiguous
-                if (nextLayer && nextLayer.altitudeMin === layer.altitudeMax) {
-                    // Smooth interpolation between layers
-                    speed = layer.windSpeed + (nextLayer.windSpeed - layer.windSpeed) * layerProgress;
-                    direction = this.interpolateAngle(layer.windDirection, nextLayer.windDirection, layerProgress);
-                }
-
-                // Convert to velocity vector
-                // Wind direction is where wind comes FROM, so we negate for force direction
-                return vec2(-Math.cos(direction) * speed, -Math.sin(direction) * speed);
-            }
-        }
-
-        // Default: no wind at extreme altitudes
-        return vec2(0, 0);
+        // Convert to velocity vector
+        // Wind direction is where wind comes FROM, so we negate for force direction
+        return vec2(-Math.cos(direction) * speed, -Math.sin(direction) * speed);
     }
 
     /**

@@ -267,12 +267,12 @@ export class VABEditor {
                 if (!inst) continue;
                 html += `
                     <div class="vab-part-preview" 
-                         data-instance="${inst.instanceId}"
+                         data-instance="${this.escapeHTML(inst.instanceId)}"
                          style="height: ${inst.part.height}px; width: ${inst.part.width}px;">
                         <span class="part-label">${this.escapeHTML(inst.part.name)}</span>
                         <button class="remove-part"
                                 data-stage="${i}"
-                                data-instance="${inst.instanceId}"
+                                data-instance="${this.escapeHTML(inst.instanceId)}"
                                 title="Remove ${this.escapeHTML(inst.part.name)}"
                                 aria-label="Remove ${this.escapeHTML(inst.part.name)}">×</button>
                     </div>
