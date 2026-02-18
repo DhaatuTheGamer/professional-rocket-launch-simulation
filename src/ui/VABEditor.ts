@@ -76,10 +76,10 @@ export class VABEditor {
                     <!-- Parts Catalog -->
                     <div class="vab-parts-panel">
                         <h3>Parts Catalog</h3>
-                        <div class="vab-category-tabs">
+                        <div class="vab-category-tabs" role="tablist">
                             ${this.renderCategoryTabs()}
                         </div>
-                        <div class="vab-parts-list">
+                        <div class="vab-parts-list" id="vab-parts-list" role="tabpanel" aria-labelledby="tab-${this.selectedCategory}">
                             ${this.renderPartsList()}
                         </div>
                     </div>
@@ -151,20 +151,24 @@ export class VABEditor {
      */
     private renderCategoryTabs(): string {
         const categories: { id: PartCategory; icon: string; label: string }[] = [
-            { id: 'engine', icon: '', label: 'Engines' },
-            { id: 'tank', icon: '', label: 'Tanks' },
-            { id: 'avionics', icon: '', label: 'Avionics' },
-            { id: 'fairing', icon: '', label: 'Fairings' },
-            { id: 'decoupler', icon: '', label: 'Decouplers' },
-            { id: 'srb', icon: '', label: 'SRBs' }
+            { id: 'engine', icon: '🔥', label: 'Engines' },
+            { id: 'tank', icon: '⛽', label: 'Tanks' },
+            { id: 'avionics', icon: '🎛️', label: 'Avionics' },
+            { id: 'fairing', icon: '🛡️', label: 'Fairings' },
+            { id: 'decoupler', icon: '⚡', label: 'Decouplers' },
+            { id: 'srb', icon: '🚀', label: 'SRBs' }
         ];
 
         return categories
             .map(
                 (cat) => `
             <button class="vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}"
+                    role="tab"
+                    aria-selected="${this.selectedCategory === cat.id}"
+                    aria-controls="vab-parts-list"
+                    id="tab-${cat.id}"
                     data-category="${cat.id}">
-                ${cat.label}
+                <span class="tab-icon">${cat.icon}</span> ${cat.label}
             </button>
         `
             )
