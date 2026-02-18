@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 describe('CSP Security Headers', () => {
-    const htmlFiles = ['analysis.html', 'telemetry.html'];
+    const htmlFiles = ['analysis.html', 'telemetry.html', 'index.html'];
 
     htmlFiles.forEach((file) => {
         it(`${file} should have a strict Content-Security-Policy`, () => {
