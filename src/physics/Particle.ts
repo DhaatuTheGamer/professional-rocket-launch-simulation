@@ -249,12 +249,24 @@ export class Particle implements IParticle {
 
                 // Draw all particles in this batch in one path
                 ctx.beginPath();
-                for (const p of group) {
-                    const radius = Math.max(0, p.size);
-                    // Move to start of arc to avoid connecting lines
-                    ctx.moveTo(p.x + radius, p.y);
-                    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+
+                // Optimization: Use rect for small, simple particles (spark, debris)
+                // Use arc for larger, round particles (smoke, fire)
+                if (type === 'spark' || type === 'debris') {
+                    for (const p of group) {
+                        const size = Math.max(0, p.size);
+                        // Center the rect to match arc behavior
+                        ctx.rect(p.x - size, p.y - size, size * 2, size * 2);
+                    }
+                } else {
+                    for (const p of group) {
+                        const radius = Math.max(0, p.size);
+                        // Move to start of arc to avoid connecting lines
+                        ctx.moveTo(p.x + radius, p.y);
+                        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                    }
                 }
+
                 ctx.fill();
             }
         }
