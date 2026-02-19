@@ -172,11 +172,13 @@ export class EnvironmentSystem {
      * Get wind polar coordinates at a given altitude (optimized)
      * Uses binary search for O(log n) lookup instead of O(n)
      * @param altitude - Altitude in meters
+     * @param out - Optional object to store results (avoids allocation)
      * @returns Object with speed (m/s) and direction (radians)
      */
-    getWindPolar(altitude: number): { speed: number; direction: number } {
+    getWindPolar(altitude: number, out?: { speed: number; direction: number }): { speed: number; direction: number } {
         const safeAlt = Math.max(0, altitude);
         const layers = this.config.windLayers;
+        const result = out || { speed: 0, direction: 0 };
 
         // Binary search for the appropriate wind layer
         // Optimization: layers are sorted by altitudeMin in constructor
@@ -199,7 +201,9 @@ export class EnvironmentSystem {
         }
 
         if (layerIndex === -1) {
-            return { speed: 0, direction: 0 };
+            result.speed = 0;
+            result.direction = 0;
+            return result;
         }
 
         const layer = layers[layerIndex];
@@ -224,7 +228,16 @@ export class EnvironmentSystem {
             direction = this.interpolateAngle(layer.windDirection, nextLayer.windDirection, layerProgress);
         }
 
-        return { speed, direction };
+        result.speed = speed;
+        result.direction = direction;
+        return result;
+    }
+
+    /**
+     * Get current gust vector
+     */
+    getCurrentGust(): Vector2D {
+        return this.currentGust;
     }
 
     /**

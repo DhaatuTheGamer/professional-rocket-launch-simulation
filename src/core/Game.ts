@@ -770,13 +770,15 @@ export class Game {
         this.ctx.save();
         const step = 200; // pixels
         const startY = Math.floor(camY / step) * step;
+        const tempWind = { speed: 0, direction: 0 };
 
         for (let y = startY; y < camY + this.height / this.ZOOM; y += step) {
             const alt = (this.groundY - y) / PIXELS_PER_METER;
             if (alt < 0) continue;
 
             // Optimized: Use polar coordinates directly to avoid trig and object allocation
-            const { speed, direction } = this.environment.getWindPolar(alt);
+            this.environment.getWindPolar(alt, tempWind);
+            const { speed, direction } = tempWind;
 
             if (speed > 1) {
                 const screenY = y;

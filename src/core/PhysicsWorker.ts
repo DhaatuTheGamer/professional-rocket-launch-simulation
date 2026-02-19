@@ -262,10 +262,12 @@ function postState() {
         sharedView[HeaderOffset.ENTITY_COUNT] = entities.length;
 
         // Environment
-        const envState = environment.getState(0);
-        sharedView[HeaderOffset.WIND_X] = envState.windVelocity.x;
-        sharedView[HeaderOffset.WIND_Y] = envState.windVelocity.y;
-        sharedView[HeaderOffset.DENSITY_MULT] = envState.densityMultiplier;
+        const baseWind = environment.getWindAtAltitude(0);
+        const gust = environment.getCurrentGust();
+        // At altitude 0, gustScale is 1.0, so total wind is base + gust
+        sharedView[HeaderOffset.WIND_X] = baseWind.x + gust.x;
+        sharedView[HeaderOffset.WIND_Y] = baseWind.y + gust.y;
+        sharedView[HeaderOffset.DENSITY_MULT] = environment.getDensityMultiplier();
 
         // 2. Entities
         for (let i = 0; i < entities.length; i++) {
