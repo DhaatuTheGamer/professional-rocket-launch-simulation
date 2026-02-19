@@ -87,9 +87,6 @@ export class ScriptEditor {
                     <div class="script-toolbar">
                         <select id="script-preset-select" class="script-select" aria-label="Load preset script">
                             <option value="">-- Load Preset --</option>
-                            ${Object.keys(PRESET_SCRIPTS)
-                                .map((name) => `<option value="${name}">${name}</option>`)
-                                .join('')}
                         </select>
                         
                         <select id="script-save-select" class="script-select" aria-label="Load saved script">
