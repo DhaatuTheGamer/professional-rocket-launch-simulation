@@ -448,6 +448,7 @@ export class VABEditor {
                 const key = (e as KeyboardEvent).key;
                 if (key === 'Enter' || key === ' ') {
                     e.preventDefault(); // Prevent scrolling for space
+                    (e.currentTarget as HTMLElement).classList.add('selected');
                     selectPart(e.currentTarget as HTMLElement);
                 }
             });
