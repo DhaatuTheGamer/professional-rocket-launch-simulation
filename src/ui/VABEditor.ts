@@ -25,6 +25,7 @@ export class VABEditor {
     private blueprint: VehicleBlueprint;
     private savedBlueprints: VehicleBlueprint[] = [];
     private selectedCategory: PartCategory = 'engine';
+    private selectedPartId: string | null = null;
     private onLaunch: (blueprint: VehicleBlueprint) => void;
 
     constructor(containerId: string, onLaunch: (blueprint: VehicleBlueprint) => void) {
@@ -64,6 +65,10 @@ export class VABEditor {
      */
     private render(): void {
         const stats = calculateStats(this.blueprint);
+
+        // Preserve scroll position of parts list
+        const partsList = this.container.querySelector('#vab-parts-list');
+        const scrollTop = partsList ? partsList.scrollTop : 0;
 
         this.container.innerHTML = `
             <div class="vab-editor">
@@ -131,6 +136,12 @@ export class VABEditor {
             nameInput.value = this.blueprint.name;
         }
 
+        // Restore scroll position
+        const newPartsList = this.container.querySelector('#vab-parts-list');
+        if (newPartsList) {
+            newPartsList.scrollTop = scrollTop;
+        }
+
         this.attachEventListeners();
     }
 
@@ -188,7 +199,7 @@ export class VABEditor {
         return parts
             .map(
                 (part) => `
-            <div class="vab-part-item"
+            <div class="vab-part-item ${this.selectedPartId === part.id ? 'selected' : ''}"
                  data-part-id="${part.id}"
                  role="button"
                  tabindex="0"
@@ -302,6 +313,13 @@ export class VABEditor {
             return '<div class="vab-no-stages">No stages yet. Click "Add Stage" to begin.</div>';
         }
 
+        const selectedPart = this.selectedPartId ? PARTS_CATALOG.find((p) => p.id === this.selectedPartId) : null;
+        const btnTitle = selectedPart
+            ? `Add ${this.escapeHTML(selectedPart.name)}`
+            : 'Select a part from the catalog first';
+        const btnDisabled = !selectedPart ? 'disabled' : '';
+        const btnText = selectedPart ? `+ Add ${this.escapeHTML(selectedPart.name)}` : '+ Add Selected Part';
+
         return this.blueprint.stages
             .map((stage, i) => {
                 const stageStats = this.getStageStats(stage);
@@ -316,7 +334,7 @@ export class VABEditor {
                         <span>Mass: ${(stageStats.mass / 1000).toFixed(1)}t</span>
                         <span>ΔV: ${stageStats.deltaV.toFixed(0)} m/s</span>
                     </div>
-                    <button class="vab-add-to-stage" data-stage="${i}">+ Add Selected Part</button>
+                    <button class="vab-add-to-stage" data-stage="${i}" ${btnDisabled} title="${btnTitle}">${btnText}</button>
                 </div>
             `;
             })
@@ -407,6 +425,7 @@ export class VABEditor {
             btn.addEventListener('click', (e) => {
                 const target = e.currentTarget as HTMLElement;
                 this.selectedCategory = target.dataset.category as PartCategory;
+                this.selectedPartId = null;
                 this.render();
             });
         });
@@ -414,9 +433,11 @@ export class VABEditor {
         // Part items (select part)
         this.container.querySelectorAll('.vab-part-item').forEach((item) => {
             const selectPart = (target: HTMLElement) => {
-                // Toggle selection
-                this.container.querySelectorAll('.vab-part-item').forEach((i) => i.classList.remove('selected'));
-                target.classList.add('selected');
+                const partId = target.dataset.partId;
+                if (partId) {
+                    this.selectedPartId = partId;
+                    this.render();
+                }
             };
 
             item.addEventListener('click', (e) => {
@@ -436,10 +457,8 @@ export class VABEditor {
         this.container.querySelectorAll('.vab-add-to-stage').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 const stageIndex = parseInt((e.currentTarget as HTMLElement).dataset.stage || '0');
-                const selectedPart = this.container.querySelector('.vab-part-item.selected');
-                if (selectedPart) {
-                    const partId = (selectedPart as HTMLElement).dataset.partId;
-                    const part = PARTS_CATALOG.find((p) => p.id === partId);
+                if (this.selectedPartId) {
+                    const part = PARTS_CATALOG.find((p) => p.id === this.selectedPartId);
                     if (part) {
                         this.blueprint = addPartToStage(this.blueprint, stageIndex, part);
                         this.render();
