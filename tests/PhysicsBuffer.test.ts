@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getEntityOffset, EntityOffset, HEADER_SIZE, ENTITY_STRIDE } from '@core/PhysicsBuffer';
+import { getEntityOffset, EntityOffset, HEADER_SIZE, ENTITY_STRIDE } from '../src/core/PhysicsBuffer';
 
 describe('PhysicsBuffer', () => {
     describe('getEntityOffset', () => {

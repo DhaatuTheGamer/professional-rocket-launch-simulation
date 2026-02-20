@@ -143,7 +143,7 @@ export class Game {
     // Sky Gradient Cache
     private skyGradientCache = {
         lastHeight: -1,
-        lastSpaceRatio: -1,
+        lastStep: -1,
         gradient: null as CanvasGradient | null
     };
 
@@ -879,20 +879,25 @@ export class Game {
 
         // Sky gradient
         const alt = -this.cameraY;
-        const spaceRatio = Math.round(Math.min(Math.max(alt / 60000, 0), 1) * 100) / 100;
+        let step = (alt / 600) | 0;
+        if (step < 0) step = 0;
+        else if (step > 100) step = 100;
 
         // Optimized: Reuse gradient if parameters haven't changed
         if (
             this.skyGradientCache.gradient &&
             this.skyGradientCache.lastHeight === this.height &&
-            this.skyGradientCache.lastSpaceRatio === spaceRatio
+            this.skyGradientCache.lastStep === step
         ) {
             this.ctx.fillStyle = this.skyGradientCache.gradient;
         } else {
-            const rBot = Math.floor(135 * (1 - spaceRatio));
-            const gBot = Math.floor(206 * (1 - spaceRatio));
-            const bBot = Math.floor(235 * (1 - spaceRatio));
-            const bTop = Math.floor(20 * (1 - spaceRatio));
+            const spaceRatio = step / 100;
+            const invRatio = 1 - spaceRatio;
+
+            const rBot = (135 * invRatio) | 0;
+            const gBot = (206 * invRatio) | 0;
+            const bBot = (235 * invRatio) | 0;
+            const bTop = (20 * invRatio) | 0;
 
             const grd = this.ctx.createLinearGradient(0, 0, 0, this.height);
             grd.addColorStop(0, `rgb(0, 0, ${bTop})`);
@@ -902,7 +907,7 @@ export class Game {
             // Update cache
             this.skyGradientCache.gradient = grd;
             this.skyGradientCache.lastHeight = this.height;
-            this.skyGradientCache.lastSpaceRatio = spaceRatio;
+            this.skyGradientCache.lastStep = step;
         }
 
         this.ctx.fillRect(0, 0, this.width, this.height);
