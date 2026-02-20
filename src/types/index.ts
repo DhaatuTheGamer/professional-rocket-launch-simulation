@@ -327,7 +327,7 @@ export interface IAudioEngine {
     muted: boolean;
 
     init(): void;
-    setThrust(throttle: number, density: number, velocity: number): void;
+    update(vessel: IVessel, altitude: number): void;
     playExplosion(): void;
     playStaging(): void;
     toggleMute(): boolean;

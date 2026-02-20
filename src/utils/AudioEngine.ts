@@ -9,7 +9,8 @@
  * - Voice announcements (Web Speech API)
  */
 
-import { IAudioEngine } from '../types';
+import { IAudioEngine, IVessel } from '../types';
+import { getAtmosphericDensity } from '../config/Constants';
 
 export class AudioEngine implements IAudioEngine {
     /** Web Audio context */
@@ -90,13 +91,25 @@ export class AudioEngine implements IAudioEngine {
     }
 
     /**
+     * Update engine sound based on vessel state
+     *
+     * @param vessel - The vessel to track
+     * @param altitude - Current altitude in meters
+     */
+    update(vessel: IVessel, altitude: number): void {
+        const vel = Math.sqrt(vessel.vx ** 2 + vessel.vy ** 2);
+        const rho = getAtmosphericDensity(altitude);
+        this.setThrust(vessel.throttle, rho, vel);
+    }
+
+    /**
      * Update engine sound based on thrust and atmospheric conditions
      *
      * @param throttle - Current throttle (0-1)
      * @param density - Atmospheric density (kg/m³)
      * @param velocity - Current velocity (m/s)
      */
-    setThrust(throttle: number, density: number, velocity: number): void {
+    private setThrust(throttle: number, density: number, velocity: number): void {
         if (!this.initialized || this.muted || !this.ctx || !this.noiseGain || !this.lowPass) return;
 
         const vacuumMuffle = 0.3;

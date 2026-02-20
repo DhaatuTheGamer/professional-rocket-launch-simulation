@@ -6,7 +6,7 @@
  */
 
 import { CameraMode, MissionState, OrbitalElements, IVessel } from '../types';
-import { CONFIG, PIXELS_PER_METER, R_EARTH, getAtmosphericDensity } from '../config/Constants';
+import { CONFIG, PIXELS_PER_METER, R_EARTH } from '../config/Constants';
 import { MU } from '../physics/OrbitalMechanics';
 import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from './State';
 import { InputManager } from './InputManager';
@@ -491,9 +491,7 @@ export class Game {
             //  const ftsStatus = this.physics.getFTSStatus();
 
             // Audio update
-            const vel = Math.sqrt(this.trackedEntity.vx ** 2 + this.trackedEntity.vy ** 2);
-            const rho = getAtmosphericDensity(alt);
-            this.audio.setThrust(this.trackedEntity.throttle, rho, vel);
+            this.audio.update(this.trackedEntity, alt);
 
             if (!this.missionState.liftoff && alt > 20) {
                 this.missionState.liftoff = true;

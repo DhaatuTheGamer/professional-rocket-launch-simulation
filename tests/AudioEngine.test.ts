@@ -43,4 +43,33 @@ describe('AudioEngine', () => {
         expect(engine.initialized).toBe(true);
         expect((engine as any).ctx).toBeInstanceOf(MockAudioContext);
     });
+
+    it('should update engine sound based on vessel state', () => {
+        const engine = new AudioEngine();
+        engine.init();
+
+        // Mock vessel
+        const vessel = {
+            vx: 300,
+            vy: 400,
+            throttle: 1.0
+        } as any;
+
+        // Verify that internal nodes are updated
+        // We can access private properties via 'any' casting for testing
+        const noiseGain = (engine as any).noiseGain;
+        const lowPass = (engine as any).lowPass;
+
+        expect(noiseGain).toBeDefined();
+        expect(lowPass).toBeDefined();
+
+        // Spy on audio node methods
+        const gainSpy = vi.spyOn(noiseGain.gain, 'setTargetAtTime');
+        const freqSpy = vi.spyOn(lowPass.frequency, 'setTargetAtTime');
+
+        engine.update(vessel, 0); // Sea level
+
+        expect(gainSpy).toHaveBeenCalled();
+        expect(freqSpy).toHaveBeenCalled();
+    });
 });
