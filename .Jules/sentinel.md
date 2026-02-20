@@ -12,3 +12,8 @@
 **Vulnerability:** Duplicate rendering and potential XSS in `ScriptEditor`.
 **Learning:** The `ScriptEditor` was rendering preset scripts twice: once via unsafe `innerHTML` interpolation (risk of XSS if presets were tainted) and again via safe `appendChild` DOM creation (causing duplicate UI elements). This happened because of mixing template literals for initial structure and imperative DOM logic for population.
 **Prevention:** Avoid mixing `innerHTML` templates with dynamic data if subsequent DOM manipulation is also used. Prefer creating dynamic lists solely via `document.createElement` and `appendChild` to ensure safety and correctness.
+
+## 2026-02-20 - Information Exposure via Error Messages
+**Vulnerability:** Information Exposure in `server.js`.
+**Learning:** The development server was returning raw Node.js error codes (e.g., `EISDIR`) in HTTP 500 responses. This information leakage could help an attacker understand the server's internal state or file structure.
+**Prevention:** Never expose internal error details or stack traces to the client in production or public-facing environments. Use generic error messages (e.g., "Internal Server Error") and log the specific error details to the server console for debugging.
