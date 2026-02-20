@@ -616,9 +616,10 @@ export class Game {
             if (needsUpdate) {
                 if (!e.orbitPath) {
                     e.orbitPath = [];
-                } else {
-                    e.orbitPath.length = 0;
                 }
+
+                let pathIdx = 0;
+                const path = e.orbitPath;
                 e.lastOrbitUpdate = now;
 
                 // Initial State for RK4
@@ -629,31 +630,33 @@ export class Game {
                 // State vector: [r, phi, vr, vphi]
                 // vr = radial velocity (positive up) = -e.vy
                 // vphi = tangential velocity = e.vx
-                const state = {
-                    r: r0,
-                    phi: phi0,
-                    vr: -e.vy,
-                    vphi: e.vx
-                };
+                let r = r0;
+                let phi = phi0;
+                let vr = -e.vy;
+                let vphi = e.vx;
 
                 const dtPred = 1.0; // 1s steps
                 const maxSteps = 2000; // 2000s prediction horizon
 
                 // Store start point
-                e.orbitPath.push({
-                    phi: state.phi,
-                    r: state.r,
-                    relX: Math.sin(state.phi) * state.r,
-                    relY: -Math.cos(state.phi) * state.r
-                });
+                if (pathIdx < path.length) {
+                    const p = path[pathIdx];
+                    p.phi = phi;
+                    p.r = r;
+                    p.relX = Math.sin(phi) * r;
+                    p.relY = -Math.cos(phi) * r;
+                } else {
+                    path.push({
+                        phi: phi,
+                        r: r,
+                        relX: Math.sin(phi) * r,
+                        relY: -Math.cos(phi) * r
+                    });
+                }
+                pathIdx++;
 
                 // Optimized RK4 Integrator - Inlined to avoid object allocation
                 for (let j = 0; j < maxSteps; j++) {
-                    const r = state.r;
-                    const phi = state.phi;
-                    const vr = state.vr;
-                    const vphi = state.vphi;
-
                     // k1
                     const g1 = MU / (r * r);
                     const k1_dvr = (vphi * vphi) / r - g1;
@@ -695,33 +698,56 @@ export class Game {
                     const k4_dphi = vphi_k4 / r_k4;
 
                     // Update State
-                    state.r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred) / 6;
-                    state.phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred) / 6;
-                    state.vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred) / 6;
-                    state.vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred) / 6;
+                    r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred) / 6;
+                    phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred) / 6;
+                    vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred) / 6;
+                    vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred) / 6;
 
                     // Stop if hit ground
-                    if (state.r <= R_EARTH) {
+                    if (r <= R_EARTH) {
                         break;
                     }
 
                     // Store point (sparse)
                     if (j % 10 === 0) {
-                        e.orbitPath.push({
-                            phi: state.phi,
-                            r: state.r,
-                            relX: Math.sin(state.phi) * state.r,
-                            relY: -Math.cos(state.phi) * state.r
-                        });
+                        if (pathIdx < path.length) {
+                            const p = path[pathIdx];
+                            p.phi = phi;
+                            p.r = r;
+                            p.relX = Math.sin(phi) * r;
+                            p.relY = -Math.cos(phi) * r;
+                        } else {
+                            path.push({
+                                phi: phi,
+                                r: r,
+                                relX: Math.sin(phi) * r,
+                                relY: -Math.cos(phi) * r
+                            });
+                        }
+                        pathIdx++;
                     }
                 }
                 // Ensure final point is added
-                e.orbitPath.push({
-                    phi: state.phi,
-                    r: state.r,
-                    relX: Math.sin(state.phi) * state.r,
-                    relY: -Math.cos(state.phi) * state.r
-                });
+                if (pathIdx < path.length) {
+                    const p = path[pathIdx];
+                    p.phi = phi;
+                    p.r = r;
+                    p.relX = Math.sin(phi) * r;
+                    p.relY = -Math.cos(phi) * r;
+                } else {
+                    path.push({
+                        phi: phi,
+                        r: r,
+                        relX: Math.sin(phi) * r,
+                        relY: -Math.cos(phi) * r
+                    });
+                }
+                pathIdx++;
+
+                // Trim excess points
+                if (pathIdx < path.length) {
+                    path.length = pathIdx;
+                }
             }
         }
 
