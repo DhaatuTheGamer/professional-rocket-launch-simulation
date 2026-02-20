@@ -58,6 +58,7 @@ import {
     getIgnitionFailureMessage
 } from './Propulsion';
 import { ReliabilitySystem, ReliabilityConfig, DEFAULT_RELIABILITY_CONFIG } from './Reliability';
+import { ParticleSystem } from './ParticleSystem';
 
 export class Vessel implements IVessel {
     // Position (pixels)
@@ -587,62 +588,7 @@ export class Vessel implements IVessel {
      * @param timeScale - Time warp multiplier
      */
     spawnExhaust(timeScale: number): void {
-        if (this.throttle <= 0 || this.fuel <= 0 || this.crashed) return;
-
-        const rawCount = Math.ceil(this.throttle * 5 * timeScale);
-
-        // Clamp particle count to prevent performance issues during time warp
-        const MAX_PARTICLES = 20;
-        let count = rawCount;
-        let sizeScale = 1.0;
-
-        if (count > MAX_PARTICLES) {
-            count = MAX_PARTICLES;
-            // Scale size by sqrt of count reduction to maintain visual mass (area)
-            sizeScale = Math.sqrt(rawCount / count);
-        }
-
-        const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
-        const vacuumFactor = Math.min(Math.max(0, altitude) / 30000, 1.0);
-
-        // Exhaust spreads more in vacuum
-        const spreadBase = 0.1 + vacuumFactor * 1.5;
-
-        // Exhaust position (engine nozzle)
-        const exX = this.x - Math.sin(this.angle) * this.h;
-        const exY = this.y + Math.cos(this.angle) * this.h;
-        const ejectionSpeed = 30 + this.throttle * 20;
-
-        for (let i = 0; i < count; i++) {
-            const particleAngle = this.angle + Math.PI + (Math.random() - 0.5) * spreadBase;
-            const ejectVx = Math.sin(particleAngle) * ejectionSpeed;
-            const ejectVy = -Math.cos(particleAngle) * ejectionSpeed;
-
-            // Convert rocket velocity from m/s to pixels/frame
-            const rocketVxPx = this.vx * PIXELS_PER_METER * DT;
-            const rocketVyPx = this.vy * PIXELS_PER_METER * DT;
-
-            const p = new Particle(exX, exY, 'fire', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
-
-            // Apply visual scaling
-            if (sizeScale > 1.0) {
-                p.size *= sizeScale;
-            }
-
-            if (vacuumFactor > 0.8) {
-                p.decay *= 0.5; // Particles last longer in vacuum
-            }
-            addParticle(p);
-
-            // Add smoke at lower altitudes
-            if (Math.random() > 0.5 && vacuumFactor < 0.5) {
-                const s = new Particle(exX, exY, 'smoke', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
-                if (sizeScale > 1.0) {
-                    s.size *= sizeScale;
-                }
-                addParticle(s);
-            }
-        }
+        ParticleSystem.spawnExhaust(this, timeScale);
     }
 
     /**
