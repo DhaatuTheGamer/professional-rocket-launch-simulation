@@ -33,28 +33,28 @@ import { TelemetryTransmitter } from '../telemetry/TelemetryTransmitter';
 
 export class Game {
     // Canvas and rendering
-    private canvas: HTMLCanvasElement;
-    private ctx: CanvasRenderingContext2D;
-    private width: number;
-    private height: number;
-    public groundY: number;
+    private canvas!: HTMLCanvasElement;
+    private ctx!: CanvasRenderingContext2D;
+    private width!: number;
+    private height!: number;
+    public groundY!: number;
 
     // Subsystems
-    public input: InputManager;
-    public audio: AudioEngine;
-    public assets: AssetLoader;
-    public navball: Navball;
-    public telemetry: TelemetrySystem;
-    public missionLog: MissionLog;
-    public sas: SAS;
-    public blackBox: BlackBoxRecorder;
-    public environment: EnvironmentSystem;
-    public maneuverPlanner: ManeuverPlanner;
-    public missionControl: MissionControl;
-    public fts: FlightTerminationSystem;
-    public checklist: LaunchChecklist;
-    public faultInjector: FaultInjector;
-    public transmitter: TelemetryTransmitter;
+    public input!: InputManager;
+    public audio!: AudioEngine;
+    public assets!: AssetLoader;
+    public navball!: Navball;
+    public telemetry!: TelemetrySystem;
+    public missionLog!: MissionLog;
+    public sas!: SAS;
+    public blackBox!: BlackBoxRecorder;
+    public environment!: EnvironmentSystem;
+    public maneuverPlanner!: ManeuverPlanner;
+    public missionControl!: MissionControl;
+    public fts!: FlightTerminationSystem;
+    public checklist!: LaunchChecklist;
+    public faultInjector!: FaultInjector;
+    public transmitter!: TelemetryTransmitter;
 
     // Game state
     public entities: IVessel[] = [];
@@ -157,9 +157,16 @@ export class Game {
     private hudIgniters: HTMLElement | null = null;
     private hudFtsState: HTMLElement | null = null;
 
-    private physics: PhysicsProxy;
+    private physics!: PhysicsProxy;
 
     constructor() {
+        // Initialization moved to init() -> initializeSubsystems()
+    }
+
+    /**
+     * Initialize subsystems and core components
+     */
+    private initializeSubsystems(): void {
         this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d', { alpha: false }) as CanvasRenderingContext2D;
 
@@ -196,8 +203,6 @@ export class Game {
         (window as any).navball = this.navball;
         (window as any).missionLog = this.missionLog;
         (window as any).audio = this.audio;
-
-        this.initHUDCache();
     }
 
     /**
@@ -227,6 +232,9 @@ export class Game {
      * Initialize game
      */
     async init(): Promise<void> {
+        this.initializeSubsystems();
+        this.initHUDCache();
+
         // Audio requires user interaction
         document.addEventListener(
             'click',

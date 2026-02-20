@@ -81,6 +81,8 @@ describe('Performance', () => {
 
     it('should NOT query DOM during drawHUD loop', () => {
         const game = new TestGame();
+        (game as any).initializeSubsystems();
+        (game as any).initHUDCache();
 
         // Initial setup calls are expected
         const initialCalls = getElementByIdCalls;

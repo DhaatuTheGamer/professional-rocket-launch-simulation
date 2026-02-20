@@ -86,6 +86,7 @@ describe('Orbit Optimization', () => {
 
     it('should calculate orbit path and verify object reuse', () => {
         const game = new TestGame();
+        (game as any).initializeSubsystems();
 
         // Setup a mock vessel
         // x=0 means phi=0 (at top of circle in game coordinates maybe? phi=x/R_EARTH)

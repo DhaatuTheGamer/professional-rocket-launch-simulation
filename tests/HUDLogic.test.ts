@@ -60,6 +60,7 @@ import { Game } from '../src/core/Game';
 describe('Game HUD Logic', () => {
     it('should toggle MaxQ warning correctly', () => {
         const game = new Game();
+        (game as any).initHUDCache();
 
         // Setup initial state
         const hudMaxQ = { style: { display: 'none' }, textContent: '' };
