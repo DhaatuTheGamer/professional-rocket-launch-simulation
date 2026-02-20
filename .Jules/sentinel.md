@@ -12,3 +12,8 @@
 **Vulnerability:** Duplicate rendering and potential XSS in `ScriptEditor`.
 **Learning:** The `ScriptEditor` was rendering preset scripts twice: once via unsafe `innerHTML` interpolation (risk of XSS if presets were tainted) and again via safe `appendChild` DOM creation (causing duplicate UI elements). This happened because of mixing template literals for initial structure and imperative DOM logic for population.
 **Prevention:** Avoid mixing `innerHTML` templates with dynamic data if subsequent DOM manipulation is also used. Prefer creating dynamic lists solely via `document.createElement` and `appendChild` to ensure safety and correctness.
+
+## 2026-02-20 - Server Security Headers Regression
+**Vulnerability:** Missing automated verification for server-side security headers (CSP).
+**Learning:** While the backend (`server.js`) implemented a robust Content Security Policy, there was no automated test to verify its presence on HTTP responses. This created a risk of regression if `SECURITY_HEADERS` were accidentally removed or modified.
+**Prevention:** Implemented `tests/ServerSecurityHeaders.test.ts` to spin up the server and assert the presence of critical headers (CSP, HSTS, X-Content-Type-Options) on all responses (200, 404, etc.).

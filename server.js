@@ -18,6 +18,7 @@ const MIME_TYPES = {
 };
 
 const SECURITY_HEADERS = {
+    // Security: Content Security Policy (CSP) and other hardening headers
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
