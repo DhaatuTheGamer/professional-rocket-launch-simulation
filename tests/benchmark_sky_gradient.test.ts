@@ -5,11 +5,11 @@ import { describe, test, expect } from 'vitest';
 class MockCanvasContext {
     createLinearGradient(x0: number, y0: number, x1: number, y1: number) {
         return {
-            addColorStop: (offset: number, color: string) => {},
+            addColorStop: (offset: number, color: string) => { },
         };
     }
     fillStyle: any;
-    fillRect(x: number, y: number, w: number, h: number) {}
+    fillRect(x: number, y: number, w: number, h: number) { }
 }
 
 function originalGradientLogic(ctx: any, width: number, height: number, cameraY: number) {
@@ -32,33 +32,27 @@ function originalGradientLogic(ctx: any, width: number, height: number, cameraY:
 // Proposed optimized logic
 class GradientCache {
     private lastHeight: number = -1;
-    private lastRBot: number = -1;
-    private lastGBot: number = -1;
-    private lastBBot: number = -1;
-    private lastBTop: number = -1;
+    private lastSpaceRatio: number = -1;
     private cachedGradient: any = null;
 
     update(ctx: any, width: number, height: number, cameraY: number) {
         const alt = -cameraY;
-        const spaceRatio = Math.min(Math.max(alt / 60000, 0), 1);
-
-        const rBot = Math.floor(135 * (1 - spaceRatio));
-        const gBot = Math.floor(206 * (1 - spaceRatio));
-        const bBot = Math.floor(235 * (1 - spaceRatio));
-        const bTop = Math.floor(20 * (1 - spaceRatio));
+        const spaceRatio = Math.round(Math.min(Math.max(alt / 60000, 0), 1) * 100) / 100;
 
         if (
             this.cachedGradient &&
             this.lastHeight === height &&
-            this.lastRBot === rBot &&
-            this.lastGBot === gBot &&
-            this.lastBBot === bBot &&
-            this.lastBTop === bTop
+            this.lastSpaceRatio === spaceRatio
         ) {
             ctx.fillStyle = this.cachedGradient;
             ctx.fillRect(0, 0, width, height);
             return;
         }
+
+        const rBot = Math.floor(135 * (1 - spaceRatio));
+        const gBot = Math.floor(206 * (1 - spaceRatio));
+        const bBot = Math.floor(235 * (1 - spaceRatio));
+        const bTop = Math.floor(20 * (1 - spaceRatio));
 
         const grd = ctx.createLinearGradient(0, 0, 0, height);
         grd.addColorStop(0, `rgb(0, 0, ${bTop})`);
@@ -66,10 +60,7 @@ class GradientCache {
 
         this.cachedGradient = grd;
         this.lastHeight = height;
-        this.lastRBot = rBot;
-        this.lastGBot = gBot;
-        this.lastBBot = bBot;
-        this.lastBTop = bTop;
+        this.lastSpaceRatio = spaceRatio;
 
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, width, height);
