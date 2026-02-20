@@ -73,4 +73,31 @@ describe('ManeuverPlanner Security', () => {
         // 2. Verify the text content shows the error message verbatim
         expect(resultDiv?.textContent).toContain(maliciousPayload);
     });
+
+    it('should NOT render HTML from ManeuverPlan description', () => {
+        const planner = new ManeuverPlanner(mockGame);
+        planner.show();
+
+        const maliciousDescription = '<img src=x onerror=alert("XSS")>';
+
+        // Mock calculateCircularizationFromElements to return malicious description
+        vi.spyOn(OrbitalMechanics, 'calculateCircularizationFromElements').mockReturnValue({
+            deltaV: 100,
+            burnTime: 10,
+            description: maliciousDescription,
+            targetOrbit: { apoapsis: 200000, periapsis: 200000 }
+        });
+
+        const select = document.getElementById('maneuver-type-select') as HTMLSelectElement;
+        expect(select).not.toBeNull();
+        select.value = 'circularize-apo';
+        select.dispatchEvent(new Event('change'));
+
+        const resultDiv = document.getElementById('planner-results');
+
+        // Should NOT contain the image element
+        expect(resultDiv?.querySelector('img')).toBeNull();
+        // Should contain the text representation
+        expect(resultDiv?.textContent).toContain(maliciousDescription);
+    });
 });
