@@ -41,13 +41,13 @@ export class ManeuverPlanner {
         modal.className = 'script-editor-modal'; // Reuse script editor styling for consistency
         modal.style.display = 'none'; // Hidden by default
         modal.innerHTML = `
-            <div class="script-editor-content" style="max-width: 500px;">
+            <div class="script-editor-content maneuver-planner-content">
                 <div class="script-editor-header">
                     <h2>Orbital Maneuver Planner</h2>
                     <button id="planner-close-btn" class="script-close-btn">×</button>
                 </div>
                 
-                <div class="script-editor-body" style="padding: 15px;">
+                <div class="script-editor-body maneuver-planner-body">
                     <div class="maneuver-section">
                         <h3>Current Orbit</h3>
                         <div id="planner-orbit-stats" class="stats-grid">
@@ -55,24 +55,24 @@ export class ManeuverPlanner {
                         </div>
                     </div>
 
-                    <div class="maneuver-section" style="margin-top: 20px;">
+                    <div class="maneuver-section">
                         <h3>Select Maneuver</h3>
-                        <select id="maneuver-type-select" class="script-select" style="width: 100%; margin-bottom: 10px;">
+                        <select id="maneuver-type-select" class="script-select maneuver-select">
                             <option value="circularize-apo">Circularize at Apoapsis</option>
                             <option value="circularize-peri">Circularize at Periapsis</option>
                             <option value="hohmann">Hohmann Transfer</option>
                         </select>
 
-                        <div id="hohmann-inputs" style="display: none; margin-bottom: 10px;">
-                            <label style="color: #aaa; font-size: 0.9em;">Target Altitude (km):</label>
-                            <input type="number" id="target-alt-input" class="script-name-input" 
-                                value="500" style="width: 100px;">
+                        <div id="hohmann-inputs" class="maneuver-input-group" style="display: none;">
+                            <label class="maneuver-label">Target Altitude (km):</label>
+                            <input type="number" id="target-alt-input" class="script-name-input maneuver-input"
+                                value="500">
                         </div>
                     </div>
 
-                    <div class="maneuver-section" style="margin-top: 20px;">
+                    <div class="maneuver-section">
                         <h3>Maneuver Plan</h3>
-                        <div id="planner-results" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 4px; font-family: monospace;">
+                        <div id="planner-results" class="maneuver-results">
                             Select a maneuver to calculate...
                         </div>
                     </div>
@@ -309,7 +309,7 @@ export class ManeuverPlanner {
         } catch (e: any) {
             resultDiv.innerHTML = '';
             const errorSpan = document.createElement('span');
-            errorSpan.style.color = '#e74c3c';
+            errorSpan.className = 'maneuver-error';
             errorSpan.textContent = `Error: ${e.message}`;
             resultDiv.appendChild(errorSpan);
         }
@@ -323,7 +323,7 @@ export class ManeuverPlanner {
         container.appendChild(document.createElement('br'));
 
         const hr = document.createElement('hr');
-        hr.style.cssText = "border: 0; border-top: 1px solid #555; margin: 5px 0;";
+        hr.className = 'maneuver-separator';
         container.appendChild(hr);
 
         const targetDiv = document.createElement('div');
@@ -331,10 +331,9 @@ export class ManeuverPlanner {
         container.appendChild(targetDiv);
 
         const dvDiv = document.createElement('div');
-        dvDiv.style.marginTop = '8px';
+        dvDiv.className = 'maneuver-dv-container';
         const dvSpan = document.createElement('span');
-        dvSpan.style.color = '#3498db';
-        dvSpan.style.fontSize = '1.2em';
+        dvSpan.className = 'maneuver-dv-value';
         dvSpan.textContent = `ΔV: ${plan.deltaV.toFixed(1)} m/s`;
         dvDiv.appendChild(dvSpan);
         container.appendChild(dvDiv);
@@ -344,9 +343,7 @@ export class ManeuverPlanner {
         container.appendChild(burnDiv);
 
         const waitDiv = document.createElement('div');
-        waitDiv.style.fontSize = '0.8em';
-        waitDiv.style.color = '#888';
-        waitDiv.style.marginTop = '5px';
+        waitDiv.className = 'maneuver-wait-text';
         waitDiv.textContent = `Wait for ${plan.description.includes('Apoapsis') ? 'Apoapsis' : 'Periapsis'} to execute.`;
         container.appendChild(waitDiv);
     }
@@ -359,7 +356,7 @@ export class ManeuverPlanner {
         container.appendChild(document.createElement('br'));
 
         const hr = document.createElement('hr');
-        hr.style.cssText = "border: 0; border-top: 1px solid #555; margin: 5px 0;";
+        hr.className = 'maneuver-separator';
         container.appendChild(hr);
 
         const timeDiv = document.createElement('div');
@@ -367,8 +364,7 @@ export class ManeuverPlanner {
         container.appendChild(timeDiv);
 
         const burn1Header = document.createElement('div');
-        burn1Header.style.marginTop = '5px';
-        burn1Header.style.color = '#f39c12';
+        burn1Header.className = 'maneuver-burn-header';
         burn1Header.textContent = 'Burn 1 (Departure):';
         container.appendChild(burn1Header);
 
@@ -381,8 +377,7 @@ export class ManeuverPlanner {
         container.appendChild(dur1Div);
 
         const burn2Header = document.createElement('div');
-        burn2Header.style.marginTop = '5px';
-        burn2Header.style.color = '#f39c12';
+        burn2Header.className = 'maneuver-burn-header';
         burn2Header.textContent = 'Burn 2 (Arrival):';
         container.appendChild(burn2Header);
 

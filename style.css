@@ -2142,3 +2142,76 @@ button.primary:hover {
     font-size: 0.6rem;
     color: #e74c3c;
 }
+/* ========================================
+   MANEUVER PLANNER
+   ======================================== */
+.maneuver-planner-content {
+    max-width: 500px;
+}
+
+.maneuver-planner-body {
+    padding: var(--spacing-md);
+}
+
+.maneuver-section {
+    margin-top: var(--spacing-lg);
+}
+
+.maneuver-section:first-child {
+    margin-top: 0;
+}
+
+.maneuver-select {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+}
+
+.maneuver-input-group {
+    margin-bottom: var(--spacing-sm);
+}
+
+.maneuver-label {
+    color: var(--color-text-muted);
+    font-size: 0.9em;
+}
+
+.maneuver-input {
+    width: 100px;
+}
+
+.maneuver-results {
+    background: rgba(0, 0, 0, 0.3);
+    padding: var(--spacing-sm);
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.maneuver-separator {
+    border: 0;
+    border-top: 1px solid #555;
+    margin: 5px 0;
+}
+
+.maneuver-dv-container {
+    margin-top: 8px;
+}
+
+.maneuver-dv-value {
+    color: var(--color-primary);
+    font-size: 1.2em;
+}
+
+.maneuver-wait-text {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 5px;
+}
+
+.maneuver-burn-header {
+    margin-top: 5px;
+    color: var(--color-warning);
+}
+
+.maneuver-error {
+    color: var(--color-danger);
+}
