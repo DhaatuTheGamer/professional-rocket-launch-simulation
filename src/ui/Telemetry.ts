@@ -100,51 +100,40 @@ export class TelemetrySystem {
         const len = this.data.length;
         if (len < 2) return;
 
-        // Draw altitude line (green)
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = '#2ecc71';
-        this.ctx.beginPath();
-
         const maxAlt = this.maxAlt;
         const maxVel = this.maxVel;
         const xStep = w / (len - 1);
         const yAltScale = h / maxAlt;
+        const yVelScale = h / maxVel;
+
+        const altPath = new Path2D();
+        const velPath = new Path2D();
 
         for (let i = 0; i < len; i++) {
             const d = this.data[i];
             if (!d) continue;
             const x = i * xStep;
-            const y = h - d.alt * yAltScale;
+
+            const yAlt = h - d.alt * yAltScale;
+            const yVel = h - d.vel * yVelScale;
 
             if (i === 0) {
-                this.ctx.moveTo(x, y);
+                altPath.moveTo(x, yAlt);
+                velPath.moveTo(x, yVel);
             } else {
-                this.ctx.lineTo(x, y);
+                altPath.lineTo(x, yAlt);
+                velPath.lineTo(x, yVel);
             }
         }
 
-        this.ctx.stroke();
+        // Draw altitude line (green)
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = '#2ecc71';
+        this.ctx.stroke(altPath);
 
         // Draw velocity line (blue)
         this.ctx.strokeStyle = '#3498db';
-        this.ctx.beginPath();
-
-        const yVelScale = h / maxVel;
-
-        for (let i = 0; i < len; i++) {
-            const d = this.data[i];
-            if (!d) continue;
-            const x = i * xStep;
-            const y = h - d.vel * yVelScale;
-
-            if (i === 0) {
-                this.ctx.moveTo(x, y);
-            } else {
-                this.ctx.lineTo(x, y);
-            }
-        }
-
-        this.ctx.stroke();
+        this.ctx.stroke(velPath);
     }
 
     /**
