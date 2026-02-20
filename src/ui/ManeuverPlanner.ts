@@ -305,7 +305,6 @@ export class ManeuverPlanner {
 
                 this.renderHohmannPlan(hResult, targetAltKm, resultDiv);
             }
-
         } catch (e: any) {
             resultDiv.innerHTML = '';
             const errorSpan = document.createElement('span');
@@ -323,7 +322,7 @@ export class ManeuverPlanner {
         container.appendChild(document.createElement('br'));
 
         const hr = document.createElement('hr');
-        hr.style.cssText = "border: 0; border-top: 1px solid #555; margin: 5px 0;";
+        hr.style.cssText = 'border: 0; border-top: 1px solid #555; margin: 5px 0;';
         container.appendChild(hr);
 
         const targetDiv = document.createElement('div');
@@ -359,7 +358,7 @@ export class ManeuverPlanner {
         container.appendChild(document.createElement('br'));
 
         const hr = document.createElement('hr');
-        hr.style.cssText = "border: 0; border-top: 1px solid #555; margin: 5px 0;";
+        hr.style.cssText = 'border: 0; border-top: 1px solid #555; margin: 5px 0;';
         container.appendChild(hr);
 
         const timeDiv = document.createElement('div');

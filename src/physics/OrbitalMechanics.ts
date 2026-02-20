@@ -5,7 +5,7 @@
  * Includes Keplerian element calculation, Vis-Viva equation, and maneuver planning algorithms.
  */
 
-import type { Vector2D, PhysicsState } from '../types/index';
+import type { Vector2D, PhysicsState, OrbitalElements } from '../types/index';
 import { Vec2 } from '../types/index';
 import { R_EARTH, GRAVITY } from '../config/Constants';
 
@@ -286,4 +286,143 @@ export function calculateGroundTrack(downrange: number, time: number): { lat: nu
     lon = ((lon + Math.PI) % (2 * Math.PI)) - Math.PI;
 
     return { lat, lon };
+}
+
+/**
+ * Propagates an orbit using RK4 integration and populates a path array.
+ * This function is optimized to avoid object allocation during the integration loop.
+ *
+ * @param r0 Initial radius (meters)
+ * @param phi0 Initial angle (radians)
+ * @param vr0 Initial radial velocity (m/s)
+ * @param vphi0 Initial tangential velocity (m/s)
+ * @param path Array to populate with orbital elements
+ * @param maxSteps Maximum number of integration steps
+ * @param dt Step size in seconds
+ */
+export function predictOrbitPath(
+    r0: number,
+    phi0: number,
+    vr0: number,
+    vphi0: number,
+    path: OrbitalElements[],
+    maxSteps: number = 2000,
+    dt: number = 1.0
+): void {
+    let r = r0;
+    let phi = phi0;
+    let vr = vr0;
+    let vphi = vphi0;
+    let pathIdx = 0;
+
+    // Add initial point
+    if (pathIdx < path.length) {
+        const p = path[pathIdx];
+        p.phi = phi;
+        p.r = r;
+        p.relX = Math.sin(phi) * r;
+        p.relY = -Math.cos(phi) * r;
+    } else {
+        path.push({
+            phi: phi,
+            r: r,
+            relX: Math.sin(phi) * r,
+            relY: -Math.cos(phi) * r
+        });
+    }
+    pathIdx++;
+
+    for (let j = 0; j < maxSteps; j++) {
+        // k1
+        const g1 = MU / (r * r);
+        const k1_dvr = (vphi * vphi) / r - g1;
+        const k1_dvphi = -(vr * vphi) / r;
+        const k1_dr = vr;
+        const k1_dphi = vphi / r;
+
+        // k2
+        const r_k2 = r + k1_dr * dt * 0.5;
+        const vr_k2 = vr + k1_dvr * dt * 0.5;
+        const vphi_k2 = vphi + k1_dvphi * dt * 0.5;
+
+        const g2 = MU / (r_k2 * r_k2);
+        const k2_dvr = (vphi_k2 * vphi_k2) / r_k2 - g2;
+        const k2_dvphi = -(vr_k2 * vphi_k2) / r_k2;
+        const k2_dr = vr_k2;
+        const k2_dphi = vphi_k2 / r_k2;
+
+        // k3
+        const r_k3 = r + k2_dr * dt * 0.5;
+        const vr_k3 = vr + k2_dvr * dt * 0.5;
+        const vphi_k3 = vphi + k2_dvphi * dt * 0.5;
+
+        const g3 = MU / (r_k3 * r_k3);
+        const k3_dvr = (vphi_k3 * vphi_k3) / r_k3 - g3;
+        const k3_dvphi = -(vr_k3 * vphi_k3) / r_k3;
+        const k3_dr = vr_k3;
+        const k3_dphi = vphi_k3 / r_k3;
+
+        // k4
+        const r_k4 = r + k3_dr * dt;
+        const vr_k4 = vr + k3_dvr * dt;
+        const vphi_k4 = vphi + k3_dvphi * dt;
+
+        const g4 = MU / (r_k4 * r_k4);
+        const k4_dvr = (vphi_k4 * vphi_k4) / r_k4 - g4;
+        const k4_dvphi = -(vr_k4 * vphi_k4) / r_k4;
+        const k4_dr = vr_k4;
+        const k4_dphi = vphi_k4 / r_k4;
+
+        // Update State
+        r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dt) / 6;
+        phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dt) / 6;
+        vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dt) / 6;
+        vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dt) / 6;
+
+        // Stop if hit ground
+        if (r <= R_EARTH) {
+            break;
+        }
+
+        // Store point (sparse)
+        if (j % 10 === 0) {
+            if (pathIdx < path.length) {
+                const p = path[pathIdx];
+                p.phi = phi;
+                p.r = r;
+                p.relX = Math.sin(phi) * r;
+                p.relY = -Math.cos(phi) * r;
+            } else {
+                path.push({
+                    phi: phi,
+                    r: r,
+                    relX: Math.sin(phi) * r,
+                    relY: -Math.cos(phi) * r
+                });
+            }
+            pathIdx++;
+        }
+    }
+
+    // Ensure final point is added
+    if (pathIdx < path.length) {
+        const p = path[pathIdx];
+        p.phi = phi;
+        p.r = r;
+        p.relX = Math.sin(phi) * r;
+        p.relY = -Math.cos(phi) * r;
+    } else {
+        path.push({
+            phi: phi,
+            r: r,
+            relX: Math.sin(phi) * r,
+            relY: -Math.cos(phi) * r
+        });
+    }
+    pathIdx++;
+
+    // Trim excess points
+    if (pathIdx < path.length) {
+        path.length = pathIdx;
+    }
 }

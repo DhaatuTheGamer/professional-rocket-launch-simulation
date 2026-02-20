@@ -7,7 +7,7 @@
 
 import { CameraMode, MissionState, OrbitalElements, IVessel } from '../types';
 import { CONFIG, PIXELS_PER_METER, R_EARTH, getAtmosphericDensity } from '../config/Constants';
-import { MU } from '../physics/OrbitalMechanics';
+import { MU, predictOrbitPath } from '../physics/OrbitalMechanics';
 import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from './State';
 import { InputManager } from './InputManager';
 import { AudioEngine } from '../utils/AudioEngine';
@@ -628,136 +628,19 @@ export class Game {
                     e.orbitPath = [];
                 }
 
-                let pathIdx = 0;
                 const path = e.orbitPath;
                 e.lastOrbitUpdate = now;
 
-                // Initial State for RK4
+                // Initial State
                 const r0 = R_EARTH + alt;
-                // phi is x / R_EARTH (radians around earth)
                 const phi0 = e.x / R_EARTH;
+                const vr0 = -e.vy; // Radial velocity positive up
+                const vphi0 = e.vx; // Tangential velocity
 
-                // State vector: [r, phi, vr, vphi]
-                // vr = radial velocity (positive up) = -e.vy
-                // vphi = tangential velocity = e.vx
-                let r = r0;
-                let phi = phi0;
-                let vr = -e.vy;
-                let vphi = e.vx;
+                const dtPred = 1.0;
+                const maxSteps = 2000;
 
-                const dtPred = 1.0; // 1s steps
-                const maxSteps = 2000; // 2000s prediction horizon
-
-                // Store start point
-                if (pathIdx < path.length) {
-                    const p = path[pathIdx];
-                    p.phi = phi;
-                    p.r = r;
-                    p.relX = Math.sin(phi) * r;
-                    p.relY = -Math.cos(phi) * r;
-                } else {
-                    path.push({
-                        phi: phi,
-                        r: r,
-                        relX: Math.sin(phi) * r,
-                        relY: -Math.cos(phi) * r
-                    });
-                }
-                pathIdx++;
-
-                // Optimized RK4 Integrator - Inlined to avoid object allocation
-                for (let j = 0; j < maxSteps; j++) {
-                    // k1
-                    const g1 = MU / (r * r);
-                    const k1_dvr = (vphi * vphi) / r - g1;
-                    const k1_dvphi = -(vr * vphi) / r;
-                    const k1_dr = vr;
-                    const k1_dphi = vphi / r;
-
-                    // k2
-                    const r_k2 = r + k1_dr * dtPred * 0.5;
-                    const vr_k2 = vr + k1_dvr * dtPred * 0.5;
-                    const vphi_k2 = vphi + k1_dvphi * dtPred * 0.5;
-
-                    const g2 = MU / (r_k2 * r_k2);
-                    const k2_dvr = (vphi_k2 * vphi_k2) / r_k2 - g2;
-                    const k2_dvphi = -(vr_k2 * vphi_k2) / r_k2;
-                    const k2_dr = vr_k2;
-                    const k2_dphi = vphi_k2 / r_k2;
-
-                    // k3
-                    const r_k3 = r + k2_dr * dtPred * 0.5;
-                    const vr_k3 = vr + k2_dvr * dtPred * 0.5;
-                    const vphi_k3 = vphi + k2_dvphi * dtPred * 0.5;
-
-                    const g3 = MU / (r_k3 * r_k3);
-                    const k3_dvr = (vphi_k3 * vphi_k3) / r_k3 - g3;
-                    const k3_dvphi = -(vr_k3 * vphi_k3) / r_k3;
-                    const k3_dr = vr_k3;
-                    const k3_dphi = vphi_k3 / r_k3;
-
-                    // k4
-                    const r_k4 = r + k3_dr * dtPred;
-                    const vr_k4 = vr + k3_dvr * dtPred;
-                    const vphi_k4 = vphi + k3_dvphi * dtPred;
-
-                    const g4 = MU / (r_k4 * r_k4);
-                    const k4_dvr = (vphi_k4 * vphi_k4) / r_k4 - g4;
-                    const k4_dvphi = -(vr_k4 * vphi_k4) / r_k4;
-                    const k4_dr = vr_k4;
-                    const k4_dphi = vphi_k4 / r_k4;
-
-                    // Update State
-                    r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred) / 6;
-                    phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred) / 6;
-                    vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred) / 6;
-                    vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred) / 6;
-
-                    // Stop if hit ground
-                    if (r <= R_EARTH) {
-                        break;
-                    }
-
-                    // Store point (sparse)
-                    if (j % 10 === 0) {
-                        if (pathIdx < path.length) {
-                            const p = path[pathIdx];
-                            p.phi = phi;
-                            p.r = r;
-                            p.relX = Math.sin(phi) * r;
-                            p.relY = -Math.cos(phi) * r;
-                        } else {
-                            path.push({
-                                phi: phi,
-                                r: r,
-                                relX: Math.sin(phi) * r,
-                                relY: -Math.cos(phi) * r
-                            });
-                        }
-                        pathIdx++;
-                    }
-                }
-                // Ensure final point is added
-                if (pathIdx < path.length) {
-                    const p = path[pathIdx];
-                    p.phi = phi;
-                    p.r = r;
-                    p.relX = Math.sin(phi) * r;
-                    p.relY = -Math.cos(phi) * r;
-                } else {
-                    path.push({
-                        phi: phi,
-                        r: r,
-                        relX: Math.sin(phi) * r,
-                        relY: -Math.cos(phi) * r
-                    });
-                }
-                pathIdx++;
-
-                // Trim excess points
-                if (pathIdx < path.length) {
-                    path.length = pathIdx;
-                }
+                predictOrbitPath(r0, phi0, vr0, vphi0, path, maxSteps, dtPred);
             }
         }
 
