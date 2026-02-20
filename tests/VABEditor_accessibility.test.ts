@@ -62,4 +62,27 @@ describe('VABEditor Accessibility', () => {
             expect(icon.textContent?.trim()).not.toBe('');
         });
     });
+
+    it('should have an accessible label for the rocket name input', () => {
+        const onLaunch = vi.fn();
+        const editor = new VABEditor('vab-container', onLaunch);
+        (editor as any).render();
+
+        const input = container.querySelector('.vab-name-input');
+        expect(input).not.toBeNull();
+        expect(input?.hasAttribute('aria-label')).toBe(true);
+        expect(input?.getAttribute('aria-label')).toBe('Rocket Name');
+    });
+
+    it('should display friendly empty state for stages', () => {
+        const onLaunch = vi.fn();
+        const editor = new VABEditor('vab-container', onLaunch);
+        // Empty the blueprint
+        (editor as any).blueprint.stages = [];
+        (editor as any).render();
+
+        const noStages = container.querySelector('.vab-no-stages');
+        expect(noStages).not.toBeNull();
+        expect(noStages?.textContent).toContain('🚀');
+    });
 });

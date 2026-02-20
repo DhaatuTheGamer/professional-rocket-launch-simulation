@@ -74,7 +74,7 @@ export class VABEditor {
             <div class="vab-editor">
                 <div class="vab-header">
                     <h2>Vehicle Assembly Building</h2>
-                    <input type="text" class="vab-name-input" placeholder="Rocket Name" value="">
+                    <input type="text" class="vab-name-input" placeholder="Rocket Name" value="" aria-label="Rocket Name">
                 </div>
                 
                 <div class="vab-main">
@@ -193,7 +193,7 @@ export class VABEditor {
         const parts = getPartsByCategory(this.selectedCategory);
 
         if (parts.length === 0) {
-            return '<div class="vab-no-parts">No parts in this category</div>';
+            return '<div class="vab-no-parts">🚫 No parts in this category</div>';
         }
 
         return parts
@@ -310,7 +310,7 @@ export class VABEditor {
      */
     private renderStagesList(): string {
         if (this.blueprint.stages.length === 0) {
-            return '<div class="vab-no-stages">No stages yet. Click "Add Stage" to begin.</div>';
+            return '<div class="vab-no-stages">🚀 No stages yet. Click "Add Stage" to begin assembly.</div>';
         }
 
         const selectedPart = this.selectedPartId ? PARTS_CATALOG.find((p) => p.id === this.selectedPartId) : null;
