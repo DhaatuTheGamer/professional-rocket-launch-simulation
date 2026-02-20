@@ -14,7 +14,7 @@ import {
     ManeuverPlan,
     MU
 } from '../physics/OrbitalMechanics';
-import { vec2 } from '../types';
+import { vec2, IVessel } from '../types';
 import { PIXELS_PER_METER, R_EARTH } from '../config/Constants';
 
 export class ManeuverPlanner {
@@ -161,6 +161,14 @@ export class ManeuverPlanner {
         else this.show();
     }
 
+    private getCurrentOrbitalElements(vessel: IVessel): KeplerianElements {
+        const altitude = (this.game.groundY - vessel.y - vessel.h) / PIXELS_PER_METER;
+        const r = R_EARTH + altitude;
+        const rVec = vec2(0, r);
+        const vVec = vec2(vessel.vx, -vessel.vy);
+        return calculateOrbitalElements(rVec, vVec);
+    }
+
     /**
      * Update current orbit statistics display
      */
@@ -211,22 +219,7 @@ export class ManeuverPlanner {
         // BUT, for the purpose of this "Planner", we can pretend we are in a central force field
         // where r = R_EARTH + altitude, and v_tangential = vx, v_radial = -vy.
 
-        const altitude = (this.game.groundY - vessel.y - vessel.h) / 10; // PIXELS_PER_METER = 10
-        const r = R_EARTH + altitude;
-
-        // Velocity (vx is horizontal/tangential, vy is vertical/radial)
-        // define state vector relative to Earth center
-        // Let's define Earth Center at (0, 0)
-        // Vessel Position: (0, r)
-        // Vessel Velocity: (vessel.vx, -vessel.vy)  (vy is positive down, so -vy is up/radial)
-
-        // Position vector r (meters)
-        // We place ship at (0, r) for calculation simplicity
-        const rVec = vec2(0, r);
-        // Velocity vector v (m/s)
-        const vVec = vec2(vessel.vx, -vessel.vy);
-
-        const elements = calculateOrbitalElements(rVec, vVec);
+        const elements = this.getCurrentOrbitalElements(vessel);
 
         const statsDiv = document.getElementById('planner-orbit-stats');
         if (statsDiv) {
@@ -249,11 +242,7 @@ export class ManeuverPlanner {
         if (!vessel) return;
 
         // Recalculate elements (should ideally cache this)
-        const altitude = (this.game.groundY - vessel.y - vessel.h) / 10;
-        const r = R_EARTH + altitude;
-        const rVec = vec2(0, r);
-        const vVec = vec2(vessel.vx, -vessel.vy);
-        const elements = calculateOrbitalElements(rVec, vVec);
+        const elements = this.getCurrentOrbitalElements(vessel);
 
         const select = document.getElementById('maneuver-type-select') as HTMLSelectElement;
         const type = select.value;
