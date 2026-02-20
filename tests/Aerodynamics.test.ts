@@ -6,10 +6,24 @@ import {
     calculateDragCoefficient,
     calculateCenterOfMass,
     calculateCenterOfPressure,
+    calculateAerodynamicDamageRate,
+    type AerodynamicState,
     DEFAULT_AERO_CONFIG
 } from '../src/physics/Aerodynamics';
 
 describe('Aerodynamics', () => {
+    function createMockAeroState(overrides: Partial<AerodynamicState> = {}): AerodynamicState {
+        return {
+            aoa: 0,
+            sideslip: 0,
+            cp: 0,
+            com: 0,
+            stabilityMargin: 0.1,
+            isStable: true,
+            ...overrides
+        };
+    }
+
     describe('calculateAngleOfAttack', () => {
         it('should return 0 when velocity aligns with body', () => {
             // Velocity up (-y), Body up (0)
@@ -104,6 +118,68 @@ describe('Aerodynamics', () => {
 
             // We want it to be 10 (0.20 * 50)
             expect(cp).toBeCloseTo(10.0, 2);
+        });
+    });
+
+    describe('calculateAerodynamicDamageRate', () => {
+        it('should return 0 when dynamic pressure is low (< 1000)', () => {
+            const state = createMockAeroState({ aoa: 1.0 }); // High AoA
+            const damage = calculateAerodynamicDamageRate(state, 999);
+            expect(damage).toBe(0);
+        });
+
+        it('should return 0 when AoA is low (< 0.1)', () => {
+            const state = createMockAeroState({ aoa: 0.09 });
+            const damage = calculateAerodynamicDamageRate(state, 100000); // High Q
+            expect(damage).toBe(0);
+        });
+
+        it('should calculate damage for stable flight', () => {
+            // Formula: damageRate = aoaFactor * stabilityFactor * qFactor * 50
+            // aoaFactor = 0.2
+            // stabilityFactor = 1.0 (isStable: true)
+            // qFactor = 1.0 (10000 / 10000)
+            // Expected: 0.2 * 1.0 * 1.0 * 50 = 10
+            const state = createMockAeroState({
+                aoa: 0.2,
+                isStable: true
+            });
+            const damage = calculateAerodynamicDamageRate(state, 10000);
+            expect(damage).toBeCloseTo(10);
+        });
+
+        it('should amplify damage for unstable flight', () => {
+            // stabilityFactor = 1.0 - stabilityMargin * 2
+            // Margin = -0.1 => Factor = 1.0 - (-0.2) = 1.2
+            // Expected: 0.2 * 1.2 * 1.0 * 50 = 12
+            const state = createMockAeroState({
+                aoa: 0.2,
+                isStable: false,
+                stabilityMargin: -0.1
+            });
+            const damage = calculateAerodynamicDamageRate(state, 10000);
+            expect(damage).toBeCloseTo(12);
+        });
+
+        it('should scale damage with dynamic pressure', () => {
+            // qFactor = 2.0 (20000 / 10000)
+            // Expected: 0.2 * 1.0 * 2.0 * 50 = 20
+            const state = createMockAeroState({
+                aoa: 0.2,
+                isStable: true
+            });
+            const damage = calculateAerodynamicDamageRate(state, 20000);
+            expect(damage).toBeCloseTo(20);
+        });
+
+        it('should cap maximum damage at 200', () => {
+            // Expected raw: 1.0 * 1.0 * 10.0 * 50 = 500
+            const state = createMockAeroState({
+                aoa: 1.0,
+                isStable: true
+            });
+            const damage = calculateAerodynamicDamageRate(state, 100000);
+            expect(damage).toBe(200);
         });
     });
 });
