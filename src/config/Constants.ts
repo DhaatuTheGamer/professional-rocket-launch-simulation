@@ -163,7 +163,7 @@ export function getAtmosphericDensity(altitude: number): number {
     const alpha = scaled - index;
 
     // Linear interpolation: y = y0 * (1 - alpha) + y1 * alpha
-    return DENSITY_LUT[index] * (1 - alpha) + DENSITY_LUT[index + 1] * alpha;
+    return DENSITY_LUT[index]! * (1 - alpha) + DENSITY_LUT[index + 1]! * alpha;
 }
 
 /**

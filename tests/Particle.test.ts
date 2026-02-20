@@ -137,8 +137,8 @@ describe('Particle Class', () => {
         it('should create multiple particles', () => {
             const particles = createParticles(5, 0, 0, 'fire');
             expect(particles).toHaveLength(5);
-            expect(particles[0]).toBeInstanceOf(Particle);
-            expect(particles[0].type).toBe('fire');
+            expect(particles[0]!).toBeInstanceOf(Particle);
+            expect(particles[0]!.type).toBe('fire');
         });
     });
 });

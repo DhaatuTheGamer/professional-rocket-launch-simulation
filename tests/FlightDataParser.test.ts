@@ -10,7 +10,7 @@ describe('FlightDataParser', () => {
             const frames = FlightDataParser.parseCSV(csv);
 
             expect(frames).toHaveLength(1);
-            const frame = frames[0];
+            const frame = frames[0]!;
             expect(frame.timestamp).toBe(1000);
             expect(frame.missionTime).toBe(10.5);
             expect(frame.altitude).toBe(500.2);
@@ -31,9 +31,9 @@ describe('FlightDataParser', () => {
             const frames = FlightDataParser.parseCSV(csv);
 
             expect(frames).toHaveLength(1);
-            expect(frames[0].missionTime).toBe(20.5);
-            expect(frames[0].altitude).toBe(1000.5);
-            expect(frames[0].timestamp).toBeUndefined();
+            expect(frames[0]!.missionTime).toBe(20.5);
+            expect(frames[0]!.altitude).toBe(1000.5);
+            expect(frames[0]!.timestamp).toBeUndefined();
         });
 
         it('should handle extra whitespace', () => {
@@ -42,8 +42,8 @@ describe('FlightDataParser', () => {
             const frames = FlightDataParser.parseCSV(csv);
 
             expect(frames).toHaveLength(1);
-            expect(frames[0].missionTime).toBe(30.5);
-            expect(frames[0].altitude).toBe(1500.5);
+            expect(frames[0]!.missionTime).toBe(30.5);
+            expect(frames[0]!.altitude).toBe(1500.5);
         });
 
         it('should return empty array for empty or invalid CSV', () => {
@@ -58,7 +58,7 @@ describe('FlightDataParser', () => {
             const frames = FlightDataParser.parseCSV(csv);
 
             expect(frames).toHaveLength(1);
-            expect(frames[0].missionTime).toBe(40.5);
+            expect(frames[0]!.missionTime).toBe(40.5);
         });
 
         it('should parse non-numeric values as NaN', () => {
@@ -67,8 +67,8 @@ abc,def`;
             const frames = FlightDataParser.parseCSV(csv);
 
             expect(frames).toHaveLength(1);
-            expect(frames[0].missionTime).toBeNaN();
-            expect(frames[0].altitude).toBeNaN();
+            expect(frames[0]!.missionTime).toBeNaN();
+            expect(frames[0]!.altitude).toBeNaN();
         });
     });
 
@@ -81,8 +81,8 @@ abc,def`;
             const frames = FlightDataParser.parseJSON(json);
 
             expect(frames).toHaveLength(2);
-            expect(frames[0].missionTime).toBe(10.5);
-            expect(frames[1].altitude).toBe(510.2);
+            expect(frames[0]!.missionTime).toBe(10.5);
+            expect(frames[1]!.altitude).toBe(510.2);
         });
 
         it('should parse JSON object with frames property', () => {
@@ -95,13 +95,13 @@ abc,def`;
             const frames = FlightDataParser.parseJSON(json);
 
             expect(frames).toHaveLength(1);
-            expect(frames[0].missionTime).toBe(10.5);
+            expect(frames[0]!.missionTime).toBe(10.5);
         });
 
         it('should return empty array for invalid JSON syntax', () => {
             const json = `{ "missionTime": 10.5 `; // Missing closing brace
             // Silence console.error for this test as it's expected
-            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             const frames = FlightDataParser.parseJSON(json);
 

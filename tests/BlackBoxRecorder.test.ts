@@ -140,7 +140,7 @@ describe('BlackBoxRecorder', () => {
             recorder.record(mockVessel, missionTime);
 
             expect(recorder.getFrameCount()).toBe(1);
-            const frame = recorder.getFrames()[0];
+            const frame = recorder.getFrames()[0]!;
 
             expect(frame.t).toBe(missionTime);
             // Calculate expected altitude: (groundY - y - h) / PIXELS_PER_METER
@@ -191,7 +191,7 @@ describe('BlackBoxRecorder', () => {
             const frames = recorder.getFrames();
             expect(frames).toHaveLength(2);
 
-            const frame2 = frames[1];
+            const frame2 = frames[1]!;
             expect(frame2.accelX).toBeCloseTo(100);
             expect(frame2.accelY).toBeCloseTo(0);
 
@@ -216,7 +216,7 @@ describe('BlackBoxRecorder', () => {
 
             const summary = recorder.getSummary();
             expect(summary.maxAltitude).toBeCloseTo(990 / PIXELS_PER_METER);
-            expect(summary.maxVelocity).toBeCloseTo(Math.sqrt(100*100 + 100*100));
+            expect(summary.maxVelocity).toBeCloseTo(Math.sqrt(100 * 100 + 100 * 100));
             expect(summary.maxQ).toBe(500);
         });
     });

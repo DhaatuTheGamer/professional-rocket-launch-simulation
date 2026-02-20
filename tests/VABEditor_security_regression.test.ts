@@ -62,7 +62,7 @@ describe('VABEditor XSS Vulnerability Regression', () => {
 
         // Inject malicious payload into instanceId of the part we just added
         const maliciousId = '"><script>alert("XSS")</script>';
-        blueprint.stages[0].parts[0].instanceId = maliciousId;
+        blueprint.stages[0]!.parts[0]!.instanceId = maliciousId;
 
         // Update the editor's blueprint
         (editor as any).blueprint = blueprint;

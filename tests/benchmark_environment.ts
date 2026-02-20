@@ -19,7 +19,7 @@ class OptimizedEnvironmentSystem extends EnvironmentSystem {
 
         while (low <= high) {
             const mid = (low + high) >>> 1;
-            const layer = layers[mid];
+            const layer = layers[mid]!;
 
             if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
                 layerIndex = mid;
@@ -35,7 +35,7 @@ class OptimizedEnvironmentSystem extends EnvironmentSystem {
             return { speed: 0, direction: 0 };
         }
 
-        const layer = layers[layerIndex];
+        const layer = layers[layerIndex]!;
 
         // Interpolate within the layer for smooth transitions
         const layerProgress =
@@ -86,18 +86,18 @@ optEnv.setWindLayers(manyLayers);
 console.log(`Benchmarking Wind Lookup (${ITERATIONS} iterations) with ${manyLayers.length} layers`);
 
 const altitudes: number[] = [];
-for(let i=0; i<ITERATIONS; i++) {
+for (let i = 0; i < ITERATIONS; i++) {
     altitudes.push(Math.random() * 100000);
 }
 
 // Warmup
-for(let i=0; i<1000; i++) env.getWindAtAltitude(altitudes[i]);
-for(let i=0; i<1000; i++) optEnv.getWindPolar(altitudes[i]);
+for (let i = 0; i < 1000; i++) env.getWindAtAltitude(altitudes[i]!);
+for (let i = 0; i < 1000; i++) optEnv.getWindPolar(altitudes[i]!);
 
 const startOrig = performance.now();
 let dummy1 = 0;
 for (let i = 0; i < ITERATIONS; i++) {
-    const v = env.getWindAtAltitude(altitudes[i]);
+    const v = env.getWindAtAltitude(altitudes[i]!);
     // Simulate Game.ts usage: converting back to speed/angle
     const speed = Math.sqrt(v.x * v.x + v.y * v.y);
     const angle = Math.atan2(v.y, v.x);
@@ -108,7 +108,7 @@ const timeOrig = performance.now() - startOrig;
 const startOpt = performance.now();
 let dummy2 = 0;
 for (let i = 0; i < ITERATIONS; i++) {
-    const p = optEnv.getWindPolar(altitudes[i]);
+    const p = optEnv.getWindPolar(altitudes[i]!);
     // Simulate Game.ts usage: using speed/angle directly
     // Angle needs adjustment to match atan2 result (wind FROM vs WHERE)
     // original: atan2(-sin * speed, -cos * speed)

@@ -188,7 +188,7 @@ export class EnvironmentSystem {
 
         while (low <= high) {
             const mid = (low + high) >>> 1;
-            const layer = layers[mid];
+            const layer = layers[mid]!;
 
             if (safeAlt >= layer.altitudeMin && safeAlt < layer.altitudeMax) {
                 layerIndex = mid;
@@ -206,7 +206,7 @@ export class EnvironmentSystem {
             return result;
         }
 
-        const layer = layers[layerIndex];
+        const layer = layers[layerIndex]!;
 
         // Interpolate within the layer for smooth transitions
         const layerProgress =

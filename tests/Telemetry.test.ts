@@ -19,7 +19,7 @@ const mockCanvas = {
 };
 
 // @ts-ignore
-global.document = {
+(globalThis as any).document = {
     getElementById: (id: string) => (id === 'graph-canvas' ? mockCanvas : null)
 };
 
@@ -76,7 +76,7 @@ describe('TelemetrySystem', () => {
 
         // If optimization is applied, maxAlt should be 100 (minimum max)
         if (t.maxAlt !== undefined) {
-             expect(t.maxAlt).toBe(100);
+            expect(t.maxAlt).toBe(100);
         }
 
         // Add a spike (200)

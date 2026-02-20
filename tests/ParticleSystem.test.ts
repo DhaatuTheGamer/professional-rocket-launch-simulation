@@ -16,7 +16,7 @@ vi.mock('../src/core/State', () => ({
 // Mock Particle class
 vi.mock('../src/physics/Particle', () => {
     return {
-        Particle: vi.fn().mockImplementation(function(x, y, type, vx, vy) {
+        Particle: vi.fn().mockImplementation(function (this: any, x, y, type, vx, vy) {
             this.x = x;
             this.y = y;
             this.type = type;

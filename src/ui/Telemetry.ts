@@ -50,13 +50,13 @@ export class TelemetrySystem {
         // Throttle sampling
         if (time - this.lastSample > this.sampleInterval) {
             // Update monotonic queues for altitude
-            while (this.maxAltDeque.length > 0 && this.maxAltDeque[this.maxAltDeque.length - 1] < alt) {
+            while (this.maxAltDeque.length > 0 && this.maxAltDeque[this.maxAltDeque.length - 1]! < alt) {
                 this.maxAltDeque.pop();
             }
             this.maxAltDeque.push(alt);
 
             // Update monotonic queues for velocity
-            while (this.maxVelDeque.length > 0 && this.maxVelDeque[this.maxVelDeque.length - 1] < vel) {
+            while (this.maxVelDeque.length > 0 && this.maxVelDeque[this.maxVelDeque.length - 1]! < vel) {
                 this.maxVelDeque.pop();
             }
             this.maxVelDeque.push(vel);

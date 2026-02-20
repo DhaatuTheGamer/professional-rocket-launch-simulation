@@ -221,7 +221,7 @@ export class FlightComputer {
         // Optimized: iterate backwards to avoid array allocation
         const commands = this.state.script.commands;
         for (let i = commands.length - 1; i >= 0; i--) {
-            const cmd = commands[i];
+            const cmd = commands[i]!;
             if (cmd.state === 'active' || cmd.state === 'completed') {
                 return cmd.rawText.substring(0, 40) + (cmd.rawText.length > 40 ? '...' : '');
             }
@@ -349,16 +349,16 @@ export class FlightComputer {
         // Optimized: direct boolean computation without array allocation
         if (condition.clauses.length === 0) return false;
 
-        const firstClause = condition.clauses[0];
+        const firstClause = condition.clauses[0]!;
         const val0 = telemetry[firstClause.variable];
         let combined = this.evaluateComparison(val0, firstClause.operator, firstClause.value);
 
         for (let i = 1; i < condition.clauses.length; i++) {
-            const clause = condition.clauses[i];
+            const clause = condition.clauses[i]!;
             const val = telemetry[clause.variable];
             const result = this.evaluateComparison(val, clause.operator, clause.value);
 
-            const op = condition.logicalOperators[i - 1];
+            const op = condition.logicalOperators[i - 1]!;
             if (op === 'AND') {
                 combined = combined && result;
             } else if (op === 'OR') {

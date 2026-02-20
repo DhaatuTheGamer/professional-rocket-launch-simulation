@@ -73,7 +73,7 @@ describe('VABEditor Security', () => {
 
         // Check for script tag presence
         const scripts = container.getElementsByTagName('script');
-        expect(scripts.length).toBe(0, 'Script tag found in DOM, XSS successful!');
+        expect(scripts.length).toBe(0);
 
         // Also ensure the HTML string doesn't look suspicious
         // If vulnerable: <input ... value=""><script>...</script>" ...>
