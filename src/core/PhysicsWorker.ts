@@ -7,6 +7,7 @@ import { EnvironmentSystem } from '../physics/Environment';
 import { FlightTerminationSystem } from '../safety/FlightTermination';
 import { FaultInjector } from '../safety/FaultInjector';
 import { FlightComputer } from '../guidance/FlightComputer';
+import { STAGING_CONFIG } from '../config/Constants';
 import { HEADER_SIZE, ENTITY_STRIDE, HeaderOffset, EntityOffset, EngineStateCode } from './PhysicsBuffer';
 
 // State
@@ -189,10 +190,15 @@ function performStaging() {
 
         const booster = new Booster(tracked.x, tracked.y, tracked.vx, tracked.vy);
         booster.angle = tracked.angle;
-        booster.fuel = 0.05;
+        booster.fuel = STAGING_CONFIG.BOOSTER_SEPARATION_FUEL;
         booster.active = true;
 
-        const upper = new UpperStage(tracked.x, tracked.y - 60, tracked.vx, tracked.vy + 2);
+        const upper = new UpperStage(
+            tracked.x,
+            tracked.y + STAGING_CONFIG.UPPER_STAGE_OFFSET_Y,
+            tracked.vx,
+            tracked.vy + STAGING_CONFIG.UPPER_STAGE_VELOCITY_Y
+        );
         upper.angle = tracked.angle;
         upper.active = true;
         upper.throttle = 1.0;
@@ -207,12 +213,24 @@ function performStaging() {
         if (!tracked.fairingsDeployed) {
             tracked.fairingsDeployed = true;
 
-            const fL = new Fairing(tracked.x - 12, tracked.y - 40, tracked.vx - 10, tracked.vy, -1);
-            fL.angle = tracked.angle - 0.5;
+            const fL = new Fairing(
+                tracked.x - STAGING_CONFIG.FAIRING_OFFSET_X,
+                tracked.y + STAGING_CONFIG.FAIRING_OFFSET_Y,
+                tracked.vx - STAGING_CONFIG.FAIRING_VELOCITY_X,
+                tracked.vy,
+                -1
+            );
+            fL.angle = tracked.angle - STAGING_CONFIG.FAIRING_ANGLE_OFFSET;
             entities.push(fL);
 
-            const fR = new Fairing(tracked.x + 12, tracked.y - 40, tracked.vx + 10, tracked.vy, 1);
-            fR.angle = tracked.angle + 0.5;
+            const fR = new Fairing(
+                tracked.x + STAGING_CONFIG.FAIRING_OFFSET_X,
+                tracked.y + STAGING_CONFIG.FAIRING_OFFSET_Y,
+                tracked.vx + STAGING_CONFIG.FAIRING_VELOCITY_X,
+                tracked.vy,
+                1
+            );
+            fR.angle = tracked.angle + STAGING_CONFIG.FAIRING_ANGLE_OFFSET;
             entities.push(fR);
 
             self.postMessage({ type: 'EVENT', payload: { name: 'FAIRING_SEP' } });
@@ -220,7 +238,12 @@ function performStaging() {
             tracked.active = false;
             tracked.throttle = 0;
 
-            const payload = new Payload(tracked.x, tracked.y - 20, tracked.vx, tracked.vy + 1);
+            const payload = new Payload(
+                tracked.x,
+                tracked.y + STAGING_CONFIG.PAYLOAD_OFFSET_Y,
+                tracked.vx,
+                tracked.vy + STAGING_CONFIG.PAYLOAD_VELOCITY_Y
+            );
             payload.angle = tracked.angle;
             entities.push(payload);
 
