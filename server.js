@@ -17,6 +17,15 @@ const MIME_TYPES = {
     '.wasm': 'application/wasm'
 };
 
+const SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+    'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';",
+    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains'
+};
+
 http.createServer((req, res) => {
     console.log(`${req.method} ${req.url}`);
 
@@ -35,7 +44,10 @@ http.createServer((req, res) => {
         // This prevents access to files outside the project root
         if (!filePath.startsWith(ROOT_DIR) ||
             (filePath.length > ROOT_DIR.length && filePath[ROOT_DIR.length] !== path.sep)) {
-            res.writeHead(403, { 'Content-Type': 'text/plain' });
+            res.writeHead(403, {
+                'Content-Type': 'text/plain',
+                ...SECURITY_HEADERS
+            });
             res.end('Forbidden');
             return;
         }
@@ -48,25 +60,33 @@ http.createServer((req, res) => {
                 if (error.code === 'ENOENT') {
                     const errorPage = path.join(ROOT_DIR, '404.html');
                     fs.readFile(errorPage, (err, content404) => {
-                        res.writeHead(404, { 'Content-Type': 'text/html' });
+                        res.writeHead(404, {
+                            'Content-Type': 'text/html',
+                            ...SECURITY_HEADERS
+                        });
                         res.end(content404 || '404 Not Found', 'utf-8');
                     });
                 } else {
-                    res.writeHead(500);
+                    res.writeHead(500, {
+                        ...SECURITY_HEADERS
+                    });
                     res.end('Server Error: ' + error.code);
                 }
             } else {
                 res.writeHead(200, {
                     'Content-Type': contentType,
                     'Cross-Origin-Opener-Policy': 'same-origin',
-                    'Cross-Origin-Embedder-Policy': 'require-corp'
+                    'Cross-Origin-Embedder-Policy': 'require-corp',
+                    ...SECURITY_HEADERS
                 });
                 res.end(content, 'utf-8');
             }
         });
     } catch (e) {
         console.error('Request processing error:', e);
-        res.writeHead(400);
+        res.writeHead(400, {
+            ...SECURITY_HEADERS
+        });
         res.end('Bad Request');
     }
 
