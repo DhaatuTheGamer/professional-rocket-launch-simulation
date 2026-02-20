@@ -26,7 +26,49 @@ const SECURITY_HEADERS = {
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains'
 };
 
+// Rate Limiting Configuration
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute window
+const RATE_LIMIT_MAX_REQUESTS = 200; // Max requests per window per IP
+const requestCounts = new Map();
+
+// Periodic cleanup of expired rate limit entries (every 1 minute)
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, data] of requestCounts.entries()) {
+        if (now - data.startTime > RATE_LIMIT_WINDOW_MS) {
+            requestCounts.delete(ip);
+        }
+    }
+}, RATE_LIMIT_WINDOW_MS);
+
 http.createServer((req, res) => {
+    const ip = req.socket.remoteAddress;
+    const now = Date.now();
+
+    // Rate Limiting Logic
+    let requestData = requestCounts.get(ip);
+
+    if (!requestData || (now - requestData.startTime > RATE_LIMIT_WINDOW_MS)) {
+        // Reset window if new IP or window expired
+        requestData = { count: 0, startTime: now };
+        requestCounts.set(ip, requestData);
+    }
+
+    requestData.count++;
+
+    if (requestData.count > RATE_LIMIT_MAX_REQUESTS) {
+        if (requestData.count === RATE_LIMIT_MAX_REQUESTS + 1) {
+            console.warn(`Rate limit exceeded for IP: ${ip}`);
+        }
+        res.writeHead(429, {
+            'Content-Type': 'text/plain',
+            'Retry-After': Math.ceil((requestData.startTime + RATE_LIMIT_WINDOW_MS - now) / 1000),
+            ...SECURITY_HEADERS
+        });
+        res.end('Too Many Requests');
+        return;
+    }
+
     console.log(`${req.method} ${req.url}`);
 
     // Security: Prevent Directory Traversal
