@@ -121,9 +121,6 @@ function step(inputs: any) {
                 const err = fcOut.pitchAngle - v.angle;
                 v.gimbalAngle = Math.max(-0.5, Math.min(0.5, err * 2));
             }
-            if (fcOut.stage) {
-                // callback handles it
-            }
             if (fcOut.abort) {
                 v.throttle = 0;
                 v.active = false;
