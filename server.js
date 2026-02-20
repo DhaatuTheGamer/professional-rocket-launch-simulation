@@ -67,10 +67,11 @@ http.createServer((req, res) => {
                         res.end(content404 || '404 Not Found', 'utf-8');
                     });
                 } else {
+                    console.error('Server Error:', error);
                     res.writeHead(500, {
                         ...SECURITY_HEADERS
                     });
-                    res.end('Server Error: ' + error.code);
+                    res.end('Server Error: Internal Server Error');
                 }
             } else {
                 res.writeHead(200, {
