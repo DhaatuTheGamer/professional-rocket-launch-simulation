@@ -270,15 +270,17 @@ export class ManeuverPlanner {
         const mass = vessel.mass; // kg
 
         try {
+            // Clear previous results
+            resultDiv.innerHTML = '';
+
             let plan: ManeuverPlan | null = null;
-            let planText = '';
 
             if (type === 'circularize-apo') {
                 plan = calculateCircularizationFromElements(elements, true, thrust, mass);
-                planText = this.formatPlan(plan);
+                this.renderManeuverPlan(plan, resultDiv);
             } else if (type === 'circularize-peri') {
                 plan = calculateCircularizationFromElements(elements, false, thrust, mass);
-                planText = this.formatPlan(plan);
+                this.renderManeuverPlan(plan, resultDiv);
             } else if (type === 'hohmann') {
                 const targetAltKm =
                     parseFloat((document.getElementById('target-alt-input') as HTMLInputElement).value) || 500;
@@ -301,20 +303,9 @@ export class ManeuverPlanner {
                 const r1 = elements.semiMajorAxis;
                 const hResult = calculateHohmannTransfer(r1, targetR, thrust, mass);
 
-                planText = `
-                    <strong>Hohmann Transfer to ${targetAltKm} km</strong><br>
-                    <hr style="border: 0; border-top: 1px solid #555; margin: 5px 0;">
-                    <div>Transfer Time: ${(hResult.transferTime / 60).toFixed(1)} min</div>
-                    <div style="margin-top: 5px; color: #f39c12;">Burn 1 (Departure):</div>
-                    <div>ΔV: ${hResult.deltaV1.toFixed(1)} m/s</div>
-                    <div>Duration: ${hResult.burnTime1.toFixed(1)} s</div>
-                    <div style="margin-top: 5px; color: #f39c12;">Burn 2 (Arrival):</div>
-                    <div>ΔV: ${hResult.deltaV2.toFixed(1)} m/s</div>
-                    <div>Total ΔV: ${(hResult.deltaV1 + hResult.deltaV2).toFixed(1)} m/s</div>
-                `;
+                this.renderHohmannPlan(hResult, targetAltKm, resultDiv);
             }
 
-            resultDiv.innerHTML = planText;
         } catch (e: any) {
             resultDiv.innerHTML = '';
             const errorSpan = document.createElement('span');
@@ -324,18 +315,83 @@ export class ManeuverPlanner {
         }
     }
 
-    private formatPlan(plan: ManeuverPlan): string {
-        return `
-            <strong>${plan.description}</strong><br>
-            <hr style="border: 0; border-top: 1px solid #555; margin: 5px 0;">
-            <div>Target Orbit: ${(plan.targetOrbit.apoapsis / 1000).toFixed(0)} x ${(plan.targetOrbit.periapsis / 1000).toFixed(0)} km</div>
-            <div style="margin-top: 8px;">
-                <span style="color: #3498db; font-size: 1.2em;">ΔV: ${plan.deltaV.toFixed(1)} m/s</span>
-            </div>
-            <div>Burn Duration: ${plan.burnTime.toFixed(1)} s</div>
-            <div style="font-size: 0.8em; color: #888; margin-top: 5px;">
-                Wait for ${plan.description.includes('Apoapsis') ? 'Apoapsis' : 'Periapsis'} to execute.
-            </div>
-        `;
+    private renderManeuverPlan(plan: ManeuverPlan, container: HTMLElement): void {
+        const strong = document.createElement('strong');
+        strong.textContent = plan.description;
+        container.appendChild(strong);
+
+        container.appendChild(document.createElement('br'));
+
+        const hr = document.createElement('hr');
+        hr.style.cssText = "border: 0; border-top: 1px solid #555; margin: 5px 0;";
+        container.appendChild(hr);
+
+        const targetDiv = document.createElement('div');
+        targetDiv.textContent = `Target Orbit: ${(plan.targetOrbit.apoapsis / 1000).toFixed(0)} x ${(plan.targetOrbit.periapsis / 1000).toFixed(0)} km`;
+        container.appendChild(targetDiv);
+
+        const dvDiv = document.createElement('div');
+        dvDiv.style.marginTop = '8px';
+        const dvSpan = document.createElement('span');
+        dvSpan.style.color = '#3498db';
+        dvSpan.style.fontSize = '1.2em';
+        dvSpan.textContent = `ΔV: ${plan.deltaV.toFixed(1)} m/s`;
+        dvDiv.appendChild(dvSpan);
+        container.appendChild(dvDiv);
+
+        const burnDiv = document.createElement('div');
+        burnDiv.textContent = `Burn Duration: ${plan.burnTime.toFixed(1)} s`;
+        container.appendChild(burnDiv);
+
+        const waitDiv = document.createElement('div');
+        waitDiv.style.fontSize = '0.8em';
+        waitDiv.style.color = '#888';
+        waitDiv.style.marginTop = '5px';
+        waitDiv.textContent = `Wait for ${plan.description.includes('Apoapsis') ? 'Apoapsis' : 'Periapsis'} to execute.`;
+        container.appendChild(waitDiv);
+    }
+
+    private renderHohmannPlan(hResult: any, targetAltKm: number, container: HTMLElement): void {
+        const strong = document.createElement('strong');
+        strong.textContent = `Hohmann Transfer to ${targetAltKm} km`;
+        container.appendChild(strong);
+
+        container.appendChild(document.createElement('br'));
+
+        const hr = document.createElement('hr');
+        hr.style.cssText = "border: 0; border-top: 1px solid #555; margin: 5px 0;";
+        container.appendChild(hr);
+
+        const timeDiv = document.createElement('div');
+        timeDiv.textContent = `Transfer Time: ${(hResult.transferTime / 60).toFixed(1)} min`;
+        container.appendChild(timeDiv);
+
+        const burn1Header = document.createElement('div');
+        burn1Header.style.marginTop = '5px';
+        burn1Header.style.color = '#f39c12';
+        burn1Header.textContent = 'Burn 1 (Departure):';
+        container.appendChild(burn1Header);
+
+        const dv1Div = document.createElement('div');
+        dv1Div.textContent = `ΔV: ${hResult.deltaV1.toFixed(1)} m/s`;
+        container.appendChild(dv1Div);
+
+        const dur1Div = document.createElement('div');
+        dur1Div.textContent = `Duration: ${hResult.burnTime1.toFixed(1)} s`;
+        container.appendChild(dur1Div);
+
+        const burn2Header = document.createElement('div');
+        burn2Header.style.marginTop = '5px';
+        burn2Header.style.color = '#f39c12';
+        burn2Header.textContent = 'Burn 2 (Arrival):';
+        container.appendChild(burn2Header);
+
+        const dv2Div = document.createElement('div');
+        dv2Div.textContent = `ΔV: ${hResult.deltaV2.toFixed(1)} m/s`;
+        container.appendChild(dv2Div);
+
+        const totalDvDiv = document.createElement('div');
+        totalDvDiv.textContent = `Total ΔV: ${(hResult.deltaV1 + hResult.deltaV2).toFixed(1)} m/s`;
+        container.appendChild(totalDvDiv);
     }
 }
