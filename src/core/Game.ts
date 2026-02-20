@@ -6,7 +6,16 @@
  */
 
 import { CameraMode, MissionState, OrbitalElements, IVessel } from '../types';
-import { CONFIG, PIXELS_PER_METER, R_EARTH, getAtmosphericDensity } from '../config/Constants';
+import {
+    CONFIG,
+    PIXELS_PER_METER,
+    R_EARTH,
+    getAtmosphericDensity,
+    VISUAL_CORRIDOR_WIDTH_BASE,
+    VISUAL_CORRIDOR_WIDTH_EXPANSION,
+    VISUAL_CORRIDOR_TARGET_ALTITUDE,
+    VISUAL_CORRIDOR_DRAW_STEP
+} from '../config/Constants';
 import { MU } from '../physics/OrbitalMechanics';
 import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from './State';
 import { InputManager } from './InputManager';
@@ -780,8 +789,9 @@ export class Game {
 
         this.ctx.beginPath();
         // Left boundary
-        for (let alt = startAlt; alt <= endAlt; alt += 1000) {
-            const width = 500 + (alt / 50000) * 4500;
+        for (let alt = startAlt; alt <= endAlt; alt += VISUAL_CORRIDOR_DRAW_STEP) {
+            const width =
+                VISUAL_CORRIDOR_WIDTH_BASE + (alt / VISUAL_CORRIDOR_TARGET_ALTITUDE) * VISUAL_CORRIDOR_WIDTH_EXPANSION;
             const y = this.groundY - alt * PIXELS_PER_METER;
             const x = this.width / 2 - width * PIXELS_PER_METER;
             if (alt === startAlt) this.ctx.moveTo(x, y);
@@ -791,8 +801,9 @@ export class Game {
 
         this.ctx.beginPath();
         // Right boundary
-        for (let alt = startAlt; alt <= endAlt; alt += 1000) {
-            const width = 500 + (alt / 50000) * 4500;
+        for (let alt = startAlt; alt <= endAlt; alt += VISUAL_CORRIDOR_DRAW_STEP) {
+            const width =
+                VISUAL_CORRIDOR_WIDTH_BASE + (alt / VISUAL_CORRIDOR_TARGET_ALTITUDE) * VISUAL_CORRIDOR_WIDTH_EXPANSION;
             const y = this.groundY - alt * PIXELS_PER_METER;
             const x = this.width / 2 + width * PIXELS_PER_METER;
             if (alt === startAlt) this.ctx.moveTo(x, y);
