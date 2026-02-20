@@ -6,7 +6,9 @@ import {
     calculateDragCoefficient,
     calculateCenterOfMass,
     calculateCenterOfPressure,
-    DEFAULT_AERO_CONFIG
+    calculateAerodynamicForces,
+    DEFAULT_AERO_CONFIG,
+    type AerodynamicState
 } from '../src/physics/Aerodynamics';
 
 describe('Aerodynamics', () => {
@@ -104,6 +106,131 @@ describe('Aerodynamics', () => {
 
             // We want it to be 10 (0.20 * 50)
             expect(cp).toBeCloseTo(10.0, 2);
+        });
+    });
+
+    describe('calculateAerodynamicForces', () => {
+        const mockAeroState: AerodynamicState = {
+            aoa: 0,
+            sideslip: 0,
+            cp: 10,
+            com: 20,
+            stabilityMargin: 0.2,
+            isStable: true
+        };
+
+        it('should return zero forces when velocity is zero', () => {
+            const forces = calculateAerodynamicForces(
+                DEFAULT_AERO_CONFIG,
+                mockAeroState,
+                0, // altitude
+                0, // velocity
+                0, // vx
+                0 // vy
+            );
+
+            expect(forces.lift).toBe(0);
+            expect(forces.drag).toBe(0);
+            expect(forces.forceX).toBe(0);
+            expect(forces.forceY).toBe(0);
+        });
+
+        it('should return drag opposite to velocity', () => {
+            // Velocity up (negative y)
+            const vy = -100;
+            const velocity = 100;
+            const forces = calculateAerodynamicForces(
+                DEFAULT_AERO_CONFIG,
+                mockAeroState,
+                0,
+                velocity,
+                0,
+                vy
+            );
+
+            // Drag should be positive Y (down) to oppose negative Y velocity
+            expect(forces.drag).toBeGreaterThan(0);
+            expect(forces.lift).toBeCloseTo(0); // 0 AoA
+            expect(forces.forceX).toBeCloseTo(0);
+            expect(forces.forceY).toBeGreaterThan(0);
+        });
+
+        it('should return lift perpendicular to velocity', () => {
+            // Velocity purely horizontal (right)
+            const vx = 100;
+            const velocity = 100;
+            // Positive AoA -> Body angle > Velocity Angle.
+            // Velocity Angle (Right) = PI/2.
+            // Body Angle > PI/2 (Pointing Down-ish).
+            // Expect Lift Down (Positive Y).
+            const stateWithAoA: AerodynamicState = { ...mockAeroState, aoa: 0.1 };
+
+            const forces = calculateAerodynamicForces(
+                DEFAULT_AERO_CONFIG,
+                stateWithAoA,
+                0,
+                velocity,
+                vx,
+                0
+            );
+
+            expect(forces.lift).toBeGreaterThan(0);
+            // With positive AoA (Nose "down" relative to flow from right), lift is Down (+Y)
+            expect(forces.forceY).toBeGreaterThan(0);
+            // Drag should be opposite to velocity (Left, -X)
+            expect(forces.forceX).toBeLessThan(0);
+        });
+
+        it('should calculate forces correctly at altitude', () => {
+            const velocity = 100;
+
+            const forcesSeaLevel = calculateAerodynamicForces(
+                DEFAULT_AERO_CONFIG,
+                mockAeroState,
+                0,
+                velocity,
+                0,
+                -100
+            );
+
+            const forcesHighAlt = calculateAerodynamicForces(
+                DEFAULT_AERO_CONFIG,
+                mockAeroState,
+                10000, // 10km
+                velocity,
+                0,
+                -100
+            );
+
+            // Density at 10km is lower, so forces should be lower
+            expect(forcesHighAlt.drag).toBeLessThan(forcesSeaLevel.drag);
+        });
+
+        it('should handle supersonic drag', () => {
+             const velocity = 340; // Mach 1 at sea level
+
+             const forcesSubsonic = calculateAerodynamicForces(
+                 DEFAULT_AERO_CONFIG,
+                 mockAeroState,
+                 0,
+                 velocity,
+                 0,
+                 -velocity,
+                 0.5 // Force Mach 0.5 calculation
+             );
+
+             const forcesSupersonic = calculateAerodynamicForces(
+                DEFAULT_AERO_CONFIG,
+                mockAeroState,
+                0,
+                velocity,
+                0,
+                -velocity,
+                1.5 // Force Mach 1.5 calculation
+            );
+
+            // Supersonic drag coeff should be higher due to wave drag
+            expect(forcesSupersonic.drag).toBeGreaterThan(forcesSubsonic.drag);
         });
     });
 });
