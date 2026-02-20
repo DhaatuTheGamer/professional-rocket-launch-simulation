@@ -79,7 +79,8 @@ describe('Game HUD Logic', () => {
 
         // 1. Trigger Warning
         envState.maxQWindWarning = true;
-        (game as any).updateEnvironmentHUD(envState);
+        (game as any).lastEnvState = envState;
+        (game as any).drawHUD();
 
         expect(hudMaxQ.style.display).toBe('block');
         expect(hudMaxQ.textContent).toContain('HIGH WIND SHEAR');
@@ -87,7 +88,8 @@ describe('Game HUD Logic', () => {
 
         // 2. Clear Warning
         envState.maxQWindWarning = false;
-        (game as any).updateEnvironmentHUD(envState);
+        (game as any).lastEnvState = envState;
+        (game as any).drawHUD();
 
         expect(hudMaxQ.style.display).toBe('none');
         expect((game as any).lastHUDState.maxQWarning).toBe(false);

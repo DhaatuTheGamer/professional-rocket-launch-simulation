@@ -28,7 +28,7 @@ import { TelemetrySystem } from '../ui/Telemetry';
 import { Particle } from '../physics/Particle';
 import { FullStack, Booster, UpperStage, Payload, Fairing } from '../physics/RocketComponents';
 import { BlackBoxRecorder } from '../telemetry/BlackBoxRecorder';
-import { EnvironmentSystem, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
+import { EnvironmentSystem, EnvironmentState, formatTimeOfDay, getWindDirectionString } from '../physics/Environment';
 import { setWindVelocity, setDensityMultiplier } from './State';
 import { ManeuverPlanner } from '../ui/ManeuverPlanner';
 import { MissionControl } from '../ui/MissionControl';
@@ -99,6 +99,9 @@ export class Game {
     private readonly FIXED_DT: number = 1 / 60;
     public missionTime: number = 0;
     private lastStageTime: number = 0;
+
+    // Environment state for HUD (latest physics update)
+    private lastEnvState: EnvironmentState | null = null;
 
     // HUD state cache for minimizing DOM updates
     private lastHUDState = {
@@ -484,9 +487,10 @@ export class Game {
         if (envState) {
             setWindVelocity(envState.windVelocity);
             setDensityMultiplier(envState.densityMultiplier);
-            this.updateEnvironmentHUD(envState);
+            this.lastEnvState = envState;
         } else {
             this.environment.update(dt * this.timeScale); // Fallback
+            this.lastEnvState = this.environment.getState(0);
         }
 
         // Update Mission Control
@@ -528,81 +532,6 @@ export class Game {
         window.mainStack = this.mainStack;
     }
 
-    /**
-     * Update environment HUD elements
-     */
-    private updateEnvironmentHUD(envState: import('../physics/Environment').EnvironmentState): void {
-        // Optimized: Use cached DOM elements to avoid expensive getElementById calls
-        const hudWindSpeed = this.hudWindSpeed;
-        const hudWindDir = this.hudWindDir;
-        const hudTimeOfDay = this.hudTimeOfDay;
-        const hudLaunchStatus = this.hudLaunchStatus;
-        const last = this.lastHUDState;
-
-        if (hudWindSpeed) {
-            const speed = Math.round(envState.surfaceWindSpeed);
-            if (last.windSpeed !== speed) {
-                last.windSpeed = speed;
-                hudWindSpeed.textContent = speed + ' m/s';
-
-                // Color coding based on wind limits
-                if (speed > 15) {
-                    hudWindSpeed.style.color = UI_COLORS.RED;
-                } else if (speed > 10) {
-                    hudWindSpeed.style.color = UI_COLORS.YELLOW;
-                } else {
-                    hudWindSpeed.style.color = UI_COLORS.GREEN;
-                }
-            }
-        }
-
-        if (hudWindDir) {
-            const dirStr = getWindDirectionString(envState.surfaceWindDirection);
-            if (last.windDir !== dirStr) {
-                last.windDir = dirStr;
-                hudWindDir.textContent = dirStr;
-            }
-        }
-
-        if (hudTimeOfDay) {
-            const timeStr = formatTimeOfDay(envState.timeOfDay);
-            if (last.timeOfDay !== timeStr) {
-                last.timeOfDay = timeStr;
-                hudTimeOfDay.textContent = timeStr;
-            }
-        }
-
-        if (hudLaunchStatus) {
-            const statusStr = envState.isLaunchSafe ? 'GO' : 'NO GO';
-
-            if (last.launchStatus !== statusStr) {
-                last.launchStatus = statusStr;
-                hudLaunchStatus.textContent = statusStr;
-
-                if (envState.isLaunchSafe) {
-                    hudLaunchStatus.style.color = UI_COLORS.GREEN;
-                    hudLaunchStatus.className = 'go-status';
-                } else {
-                    hudLaunchStatus.style.color = UI_COLORS.RED;
-                    hudLaunchStatus.className = 'no-go-status';
-                }
-            }
-
-            // Add Max-Q warning
-            if (envState.maxQWindWarning !== last.maxQWarning) {
-                last.maxQWarning = envState.maxQWindWarning;
-                const hudMaxQ = this.hudMaxQ;
-                if (hudMaxQ) {
-                    if (envState.maxQWindWarning) {
-                        hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
-                        hudMaxQ.style.display = 'block';
-                    } else {
-                        hudMaxQ.style.display = 'none';
-                    }
-                }
-            }
-        }
-    }
 
     /**
      * Update orbit prediction paths
@@ -1081,6 +1010,80 @@ export class Game {
      * Performance: ~1.74x faster than uncached DOM access (benchmark tests/benchmark_full_hud.ts).
      */
     private drawHUD(): void {
+        // Update Environment HUD
+        const envState = this.lastEnvState;
+        const last = this.lastHUDState;
+
+        if (envState) {
+            const hudWindSpeed = this.hudWindSpeed;
+            if (hudWindSpeed) {
+                const speed = Math.round(envState.surfaceWindSpeed);
+                if (last.windSpeed !== speed) {
+                    last.windSpeed = speed;
+                    hudWindSpeed.textContent = speed + ' m/s';
+
+                    // Color coding based on wind limits
+                    if (speed > 15) {
+                        hudWindSpeed.style.color = UI_COLORS.RED;
+                    } else if (speed > 10) {
+                        hudWindSpeed.style.color = UI_COLORS.YELLOW;
+                    } else {
+                        hudWindSpeed.style.color = UI_COLORS.GREEN;
+                    }
+                }
+            }
+
+            const hudWindDir = this.hudWindDir;
+            if (hudWindDir) {
+                const dirStr = getWindDirectionString(envState.surfaceWindDirection);
+                if (last.windDir !== dirStr) {
+                    last.windDir = dirStr;
+                    hudWindDir.textContent = dirStr;
+                }
+            }
+
+            const hudTimeOfDay = this.hudTimeOfDay;
+            if (hudTimeOfDay) {
+                const timeStr = formatTimeOfDay(envState.timeOfDay);
+                if (last.timeOfDay !== timeStr) {
+                    last.timeOfDay = timeStr;
+                    hudTimeOfDay.textContent = timeStr;
+                }
+            }
+
+            const hudLaunchStatus = this.hudLaunchStatus;
+            if (hudLaunchStatus) {
+                const statusStr = envState.isLaunchSafe ? 'GO' : 'NO GO';
+
+                if (last.launchStatus !== statusStr) {
+                    last.launchStatus = statusStr;
+                    hudLaunchStatus.textContent = statusStr;
+
+                    if (envState.isLaunchSafe) {
+                        hudLaunchStatus.style.color = UI_COLORS.GREEN;
+                        hudLaunchStatus.className = 'go-status';
+                    } else {
+                        hudLaunchStatus.style.color = UI_COLORS.RED;
+                        hudLaunchStatus.className = 'no-go-status';
+                    }
+                }
+
+                // Add Max-Q warning
+                if (envState.maxQWindWarning !== last.maxQWarning) {
+                    last.maxQWarning = envState.maxQWindWarning;
+                    const hudMaxQ = this.hudMaxQ;
+                    if (hudMaxQ) {
+                        if (envState.maxQWindWarning) {
+                            hudMaxQ.textContent = '⚠ HIGH WIND SHEAR';
+                            hudMaxQ.style.display = 'block';
+                        } else {
+                            hudMaxQ.style.display = 'none';
+                        }
+                    }
+                }
+            }
+        }
+
         if (!this.trackedEntity) return;
 
         const velAngle = Math.atan2(this.trackedEntity.vx, -this.trackedEntity.vy);
@@ -1101,7 +1104,6 @@ export class Game {
         const gaugeThrust = this.gaugeThrust;
         const hudAoa = this.hudAoa;
         const hudStability = this.hudStability;
-        const last = this.lastHUDState;
 
         if (hudAlt) {
             const altStr = (alt / 1000).toFixed(1);
