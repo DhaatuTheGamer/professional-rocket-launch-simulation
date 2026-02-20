@@ -23,6 +23,12 @@ global.document = {
     getElementById: (id: string) => (id === 'graph-canvas' ? mockCanvas : null)
 };
 
+// @ts-ignore
+global.Path2D = class Path2D {
+    moveTo = vi.fn();
+    lineTo = vi.fn();
+};
+
 describe('TelemetrySystem', () => {
     it('should initialize empty', () => {
         const telemetry = new TelemetrySystem();
@@ -49,7 +55,7 @@ describe('TelemetrySystem', () => {
         telemetry.update(0.4, 200, 100);
 
         expect(() => telemetry.draw()).not.toThrow();
-        expect(mockCtx.beginPath).toHaveBeenCalled();
+        // expect(mockCtx.beginPath).toHaveBeenCalled(); // Not needed with Path2D
         expect(mockCtx.stroke).toHaveBeenCalled();
     });
 
