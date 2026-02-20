@@ -6,6 +6,7 @@
  */
 
 import type { TelemetryDataPoint } from '../types/index.ts';
+import { Deque } from '../utils/Deque.ts';
 
 export class TelemetrySystem {
     /** Canvas element */
@@ -15,7 +16,7 @@ export class TelemetrySystem {
     private ctx: CanvasRenderingContext2D | null;
 
     /** Recorded data points */
-    private data: TelemetryDataPoint[] = [];
+    private data: Deque<TelemetryDataPoint>;
 
     /** Maximum number of data points to store */
     private readonly maxDataPoints: number = 300;
@@ -31,12 +32,19 @@ export class TelemetrySystem {
     private maxVel: number = 100;
 
     /** Monotonic queues for O(1) max retrieval */
-    private maxAltDeque: number[] = [];
-    private maxVelDeque: number[] = [];
+    private maxAltDeque: Deque<number>;
+    private maxVelDeque: Deque<number>;
 
     constructor() {
         this.canvas = document.getElementById('graph-canvas') as HTMLCanvasElement | null;
         this.ctx = this.canvas?.getContext('2d') ?? null;
+
+        // Initialize with capacity slightly larger than maxDataPoints to avoid frequent resizing
+        // But Deque handles resizing automatically.
+        // Initial capacity 300 is good.
+        this.data = new Deque<TelemetryDataPoint>(this.maxDataPoints + 16);
+        this.maxAltDeque = new Deque<number>(this.maxDataPoints + 16);
+        this.maxVelDeque = new Deque<number>(this.maxDataPoints + 16);
     }
 
     /**
@@ -50,13 +58,14 @@ export class TelemetrySystem {
         // Throttle sampling
         if (time - this.lastSample > this.sampleInterval) {
             // Update monotonic queues for altitude
-            while (this.maxAltDeque.length > 0 && this.maxAltDeque[this.maxAltDeque.length - 1] < alt) {
+            // Remove elements from back that are smaller than current
+            while (this.maxAltDeque.size() > 0 && this.maxAltDeque.peekBack()! < alt) {
                 this.maxAltDeque.pop();
             }
             this.maxAltDeque.push(alt);
 
             // Update monotonic queues for velocity
-            while (this.maxVelDeque.length > 0 && this.maxVelDeque[this.maxVelDeque.length - 1] < vel) {
+            while (this.maxVelDeque.size() > 0 && this.maxVelDeque.peekBack()! < vel) {
                 this.maxVelDeque.pop();
             }
             this.maxVelDeque.push(vel);
@@ -64,14 +73,15 @@ export class TelemetrySystem {
             this.data.push({ t: time, alt, vel });
 
             // Limit data size
-            if (this.data.length > this.maxDataPoints) {
+            if (this.data.size() > this.maxDataPoints) {
                 const removed = this.data.shift();
 
                 if (removed) {
-                    if (removed.alt === this.maxAltDeque[0]) {
+                    // Check against front of deque (max value)
+                    if (removed.alt === this.maxAltDeque.peekFront()) {
                         this.maxAltDeque.shift();
                     }
-                    if (removed.vel === this.maxVelDeque[0]) {
+                    if (removed.vel === this.maxVelDeque.peekFront()) {
                         this.maxVelDeque.shift();
                     }
                 }
@@ -79,8 +89,8 @@ export class TelemetrySystem {
 
             // Update cached max values
             // Use 100 as minimum scale
-            this.maxAlt = Math.max(100, this.maxAltDeque[0] ?? 0);
-            this.maxVel = Math.max(100, this.maxVelDeque[0] ?? 0);
+            this.maxAlt = Math.max(100, this.maxAltDeque.peekFront() ?? 0);
+            this.maxVel = Math.max(100, this.maxVelDeque.peekFront() ?? 0);
 
             this.lastSample = time;
         }
@@ -97,7 +107,7 @@ export class TelemetrySystem {
 
         this.ctx.clearRect(0, 0, w, h);
 
-        const len = this.data.length;
+        const len = this.data.size();
         if (len < 2) return;
 
         // Draw altitude line (green)
@@ -111,7 +121,7 @@ export class TelemetrySystem {
         const yAltScale = h / maxAlt;
 
         for (let i = 0; i < len; i++) {
-            const d = this.data[i];
+            const d = this.data.get(i);
             if (!d) continue;
             const x = i * xStep;
             const y = h - d.alt * yAltScale;
@@ -132,7 +142,7 @@ export class TelemetrySystem {
         const yVelScale = h / maxVel;
 
         for (let i = 0; i < len; i++) {
-            const d = this.data[i];
+            const d = this.data.get(i);
             if (!d) continue;
             const x = i * xStep;
             const y = h - d.vel * yVelScale;
@@ -151,9 +161,9 @@ export class TelemetrySystem {
      * Clear all recorded data
      */
     clear(): void {
-        this.data = [];
-        this.maxAltDeque = [];
-        this.maxVelDeque = [];
+        this.data.clear();
+        this.maxAltDeque.clear();
+        this.maxVelDeque.clear();
         this.lastSample = 0;
         this.maxAlt = 100;
         this.maxVel = 100;
@@ -163,13 +173,13 @@ export class TelemetrySystem {
      * Get current data
      */
     getData(): readonly TelemetryDataPoint[] {
-        return this.data;
+        return this.data.toArray();
     }
 
     /**
      * Get latest data point
      */
     getLatest(): TelemetryDataPoint | undefined {
-        return this.data[this.data.length - 1];
+        return this.data.peekBack();
     }
 }
