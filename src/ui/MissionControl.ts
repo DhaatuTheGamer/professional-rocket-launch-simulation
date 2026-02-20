@@ -7,18 +7,24 @@
 
 import { Game } from '../core/Game';
 import { calculateGroundTrack, LAUNCH_SITE } from '../physics/OrbitalMechanics';
-import { PIXELS_PER_METER } from '../config/Constants';
+
+interface PathPoint {
+    lat: number;
+    lon: number;
+    relX: number;
+    relY: number;
+}
 
 export class MissionControl {
     private game: Game;
     private isVisible: boolean = false;
-    private pathPoints: { lat: number; lon: number }[] = [];
+    private pathPoints: PathPoint[] = [];
     private lastPathUpdate: number = 0;
 
     constructor(game: Game) {
         this.game = game;
         // Pre-fill path with launch site
-        this.pathPoints.push({ lat: LAUNCH_SITE.lat, lon: LAUNCH_SITE.lon });
+        this.addPathPoint(LAUNCH_SITE.lat, LAUNCH_SITE.lon);
     }
 
     toggle(): void {
@@ -37,7 +43,7 @@ export class MissionControl {
             // Every 1 sec
             const downrange = this.game.trackedEntity.x;
             const track = calculateGroundTrack(downrange, time);
-            this.pathPoints.push(track);
+            this.addPathPoint(track.lat, track.lon);
             this.lastPathUpdate = time;
 
             // Limit path length to prevent memory leak (e.g. last 1000 points)
@@ -46,6 +52,12 @@ export class MissionControl {
                 this.pathPoints.shift();
             }
         }
+    }
+
+    private addPathPoint(lat: number, lon: number): void {
+        const relX = this.lonToRel(lon);
+        const relY = this.latToRel(lat);
+        this.pathPoints.push({ lat, lon, relX, relY });
     }
 
     draw(ctx: CanvasRenderingContext2D, width: number, height: number): void {
@@ -116,16 +128,16 @@ export class MissionControl {
             // Handle wrapping? Simple drawing for now, might draw lines across map if wrapping.
             // Improve: Break line if dLon > PI
 
-            let moved = false;
             for (let i = 0; i < this.pathPoints.length; i++) {
                 const p = this.pathPoints[i];
                 if (!p) continue;
-                const px = this.lonToMask(p.lon, mapX, mapW);
-                const py = this.latToMask(p.lat, mapY, mapH);
+
+                // Optimization: Use pre-calculated relative coordinates
+                const px = mapX + p.relX * mapW;
+                const py = mapY + p.relY * mapH;
 
                 if (i === 0) {
                     ctx.moveTo(px, py);
-                    moved = true;
                 } else {
                     const prev = this.pathPoints[i - 1];
                     // Check for wrapping (dateline crossing)
@@ -168,8 +180,6 @@ export class MissionControl {
             ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
             ctx.beginPath();
             ctx.moveTo(cx, cy);
-            // arrow length scaling
-            const velMag = Math.sqrt(this.game.trackedEntity.vx ** 2 + this.game.trackedEntity.vy ** 2);
             // simple heading estimation (not quite right but visual)
             // heading derived from lat/lon change?
             // No, just draw a small leader line
@@ -192,15 +202,14 @@ export class MissionControl {
         }
     }
 
-    // Helper: Longitude to Screen X (Mercator)
-    private lonToMask(lon: number, mapX: number, mapW: number): number {
+    // Helper: Longitude to Relative X [0, 1]
+    private lonToRel(lon: number): number {
         // lon in [-PI, PI] -> [0, 1] relative
-        const rel = (lon + Math.PI) / (2 * Math.PI);
-        return mapX + rel * mapW;
+        return (lon + Math.PI) / (2 * Math.PI);
     }
 
-    // Helper: Latitude to Screen Y (Mercator)
-    private latToMask(lat: number, mapY: number, mapH: number): number {
+    // Helper: Latitude to Relative Y [0, 1]
+    private latToRel(lat: number): number {
         // lat in [-85 deg, 85 deg] to avoid infinity
         // y = ln(tan(PI/4 + lat/2))
         const MAX_LAT = (85 * Math.PI) / 180;
@@ -212,7 +221,16 @@ export class MissionControl {
 
         // Map [-MAX_MERC, MAX_MERC] to [height, 0] (Top is North)
         // rel from 0 (North) to 1 (South)
-        const rel = 1 - (mercN + MAX_MERC) / (2 * MAX_MERC);
-        return mapY + rel * mapH;
+        return 1 - (mercN + MAX_MERC) / (2 * MAX_MERC);
+    }
+
+    // Helper: Longitude to Screen X (Mercator)
+    private lonToMask(lon: number, mapX: number, mapW: number): number {
+        return mapX + this.lonToRel(lon) * mapW;
+    }
+
+    // Helper: Latitude to Screen Y (Mercator)
+    private latToMask(lat: number, mapY: number, mapH: number): number {
+        return mapY + this.latToRel(lat) * mapH;
     }
 }
