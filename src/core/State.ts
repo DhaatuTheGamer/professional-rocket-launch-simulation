@@ -35,12 +35,7 @@ export const state: GameState = {
     audio: null,
     missionLog: null,
     assets: undefined
-
-    // Store properties not originally in GameState but present in Store State
-    // (We only map what GameState interface defines)
-    // GameState defined in types.ts must be compatible.
-    // ... we rely on interface matching.
-} as GameState; // Cast to satisfy strictness if mismatch
+} as GameState;
 
 /**
  * Current wind velocity - updated by store subscription
