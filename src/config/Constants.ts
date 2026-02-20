@@ -85,6 +85,43 @@ export const CONFIG: PhysicsConfig = {
 };
 
 // ============================================================================
+// Staging Configuration
+// ============================================================================
+
+/**
+ * Configuration for stage separation events.
+ * Defines offsets, initial velocities, and fuel states for newly spawned vessels.
+ */
+export const STAGING_CONFIG = {
+    /** Fuel fraction remaining in booster after separation (0.0 to 1.0) */
+    BOOSTER_SEPARATION_FUEL: 0.05,
+
+    /** Y offset for upper stage spawn relative to booster (-60 pixels) */
+    UPPER_STAGE_OFFSET_Y: -60,
+
+    /** Additional upward velocity for upper stage relative to booster (m/s) */
+    UPPER_STAGE_VELOCITY_Y: 2,
+
+    /** Lateral offset for fairing halves (+/- 12 pixels) */
+    FAIRING_OFFSET_X: 12,
+
+    /** Y offset for fairing spawn (-40 pixels) */
+    FAIRING_OFFSET_Y: -40,
+
+    /** Lateral velocity for fairing separation (+/- 10 m/s) */
+    FAIRING_VELOCITY_X: 10,
+
+    /** Angular offset for fairing rotation (+/- 0.5 radians) */
+    FAIRING_ANGLE_OFFSET: 0.5,
+
+    /** Y offset for payload spawn (-20 pixels) */
+    PAYLOAD_OFFSET_Y: -20,
+
+    /** Additional upward velocity for payload relative to upper stage (m/s) */
+    PAYLOAD_VELOCITY_Y: 1
+};
+
+// ============================================================================
 // Derived Constants
 // ============================================================================
 
