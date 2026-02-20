@@ -64,7 +64,7 @@ vi.stubGlobal('Worker', class {
 // Mock Game to access private drawHUD
 class TestGame extends Game {
     public testDrawHUD() {
-        (this as any).drawHUD();
+        this.hud.update();
     }
 
     public setTrackedEntity(entity: any) {

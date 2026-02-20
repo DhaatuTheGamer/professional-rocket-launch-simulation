@@ -63,8 +63,8 @@ describe('Game HUD Logic', () => {
 
         // Setup initial state
         const hudMaxQ = { style: { display: 'none' }, textContent: '' };
-        (game as any).hudMaxQ = hudMaxQ;
-        (game as any).lastHUDState.maxQWarning = false;
+        (game.hud as any).hudMaxQ = hudMaxQ;
+        (game.hud as any).lastHUDState.maxQWarning = false;
 
         // Create dummy envState
         const envState = {
@@ -79,17 +79,17 @@ describe('Game HUD Logic', () => {
 
         // 1. Trigger Warning
         envState.maxQWindWarning = true;
-        (game as any).updateEnvironmentHUD(envState);
+        game.hud.updateEnvironment(envState);
 
         expect(hudMaxQ.style.display).toBe('block');
         expect(hudMaxQ.textContent).toContain('HIGH WIND SHEAR');
-        expect((game as any).lastHUDState.maxQWarning).toBe(true);
+        expect((game.hud as any).lastHUDState.maxQWarning).toBe(true);
 
         // 2. Clear Warning
         envState.maxQWindWarning = false;
-        (game as any).updateEnvironmentHUD(envState);
+        game.hud.updateEnvironment(envState);
 
         expect(hudMaxQ.style.display).toBe('none');
-        expect((game as any).lastHUDState.maxQWarning).toBe(false);
+        expect((game.hud as any).lastHUDState.maxQWarning).toBe(false);
     });
 });
