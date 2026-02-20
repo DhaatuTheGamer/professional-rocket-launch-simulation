@@ -921,13 +921,6 @@ export class Game {
 
         // Camera follow
         if (this.trackedEntity) {
-            // DEBUG: Log coordinates occasionally
-            // if (Math.random() < 0.01) {
-            //     console.log(
-            //         `Tracked Pos: ${this.trackedEntity.x.toFixed(2)}, ${this.trackedEntity.y.toFixed(2)} | CamY: ${this.cameraY.toFixed(2)} | Zoom: ${this.ZOOM}`
-            //     );
-            // }
-
             let targetY = this.trackedEntity.y - (this.height * 0.6) / this.ZOOM;
             if (this.cameraMode === 'ROCKET') {
                 targetY = this.trackedEntity.y - this.height / 2 / this.ZOOM;
