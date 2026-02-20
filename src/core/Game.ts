@@ -128,6 +128,16 @@ export class Game {
         ftsStateColor: ''
     };
 
+    // Sky Gradient Cache
+    private skyGradientCache = {
+        lastHeight: -1,
+        lastRBot: -1,
+        lastGBot: -1,
+        lastBBot: -1,
+        lastBTop: -1,
+        gradient: null as CanvasGradient | null
+    };
+
     // HUD element cache
     private hudWindSpeed: HTMLElement | null = null;
     private hudWindDir: HTMLElement | null = null;
@@ -908,15 +918,36 @@ export class Game {
         const alt = -this.cameraY;
         const spaceRatio = Math.min(Math.max(alt / 60000, 0), 1);
 
-        const grd = this.ctx.createLinearGradient(0, 0, 0, this.height);
         const rBot = Math.floor(135 * (1 - spaceRatio));
         const gBot = Math.floor(206 * (1 - spaceRatio));
         const bBot = Math.floor(235 * (1 - spaceRatio));
         const bTop = Math.floor(20 * (1 - spaceRatio));
 
-        grd.addColorStop(0, `rgb(0, 0, ${bTop})`);
-        grd.addColorStop(1, `rgb(${rBot}, ${gBot}, ${bBot})`);
-        this.ctx.fillStyle = grd;
+        // Optimized: Reuse gradient if parameters haven't changed
+        if (
+            this.skyGradientCache.gradient &&
+            this.skyGradientCache.lastHeight === this.height &&
+            this.skyGradientCache.lastRBot === rBot &&
+            this.skyGradientCache.lastGBot === gBot &&
+            this.skyGradientCache.lastBBot === bBot &&
+            this.skyGradientCache.lastBTop === bTop
+        ) {
+            this.ctx.fillStyle = this.skyGradientCache.gradient;
+        } else {
+            const grd = this.ctx.createLinearGradient(0, 0, 0, this.height);
+            grd.addColorStop(0, `rgb(0, 0, ${bTop})`);
+            grd.addColorStop(1, `rgb(${rBot}, ${gBot}, ${bBot})`);
+            this.ctx.fillStyle = grd;
+
+            // Update cache
+            this.skyGradientCache.gradient = grd;
+            this.skyGradientCache.lastHeight = this.height;
+            this.skyGradientCache.lastRBot = rBot;
+            this.skyGradientCache.lastGBot = gBot;
+            this.skyGradientCache.lastBBot = bBot;
+            this.skyGradientCache.lastBTop = bTop;
+        }
+
         this.ctx.fillRect(0, 0, this.width, this.height);
 
         // Camera follow
