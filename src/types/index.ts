@@ -293,6 +293,9 @@ export interface IVessel {
     prevY: number;
     prevAngle: number;
 
+    // Optimized Type Identification
+    type: number;
+
     applyPhysics(dt: number, keys: Record<string, boolean>): void;
     spawnExhaust(timeScale: number): void;
     draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void;

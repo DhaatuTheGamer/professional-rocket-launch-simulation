@@ -157,7 +157,7 @@ export class PhysicsProxy {
             let view = this.viewEntities[i];
 
             // Check if view exists and matches type
-            if (!view || this.mapTypeToClass(view) !== typeCode) {
+            if (!view || view.type !== typeCode) {
                 view = this.createViewEntity(typeCode, 0, 0);
                 this.viewEntities[i] = view;
             }
@@ -192,15 +192,6 @@ export class PhysicsProxy {
             (view as any).engineState = this.mapEngineStateCode(engStateCode);
             (view as any).ignitersRemaining = this.sharedView[base + EntityOffset.IGNITERS] || 0;
         }
-    }
-
-    private mapTypeToClass(v: Vessel): number {
-        if (v instanceof FullStack) return EntityType.FULLSTACK;
-        if (v instanceof Booster) return EntityType.BOOSTER;
-        if (v instanceof UpperStage) return EntityType.UPPER_STAGE;
-        if (v instanceof Fairing) return EntityType.FAIRING;
-        if (v instanceof Payload) return EntityType.PAYLOAD;
-        return EntityType.UNKNOWN;
     }
 
     private mapEngineStateCode(code: number): string {

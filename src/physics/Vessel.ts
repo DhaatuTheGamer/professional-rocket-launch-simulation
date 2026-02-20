@@ -12,6 +12,7 @@
  */
 
 import { IVessel, PhysicsState, Derivatives, OrbitalElements } from '../types';
+import { EntityType } from '../core/PhysicsBuffer';
 import {
     CONFIG,
     PIXELS_PER_METER,
@@ -77,6 +78,7 @@ export class Vessel implements IVessel {
     public prevAngle: number = 0;
 
     // Physical properties
+    public readonly type: number = EntityType.UNKNOWN;
     public mass: number = 1000;
     public w: number = 40; // Width (pixels)
     public h: number = 100; // Height (pixels)
