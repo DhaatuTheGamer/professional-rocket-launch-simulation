@@ -200,11 +200,11 @@ export class Game {
         this.faultInjector = new FaultInjector('fis-panel');
         this.transmitter = new TelemetryTransmitter();
 
-        (window as any).PIXELS_PER_METER = PIXELS_PER_METER;
-        (window as any).R_EARTH = R_EARTH;
-        (window as any).navball = this.navball;
-        (window as any).missionLog = this.missionLog;
-        (window as any).audio = this.audio;
+        window.PIXELS_PER_METER = PIXELS_PER_METER;
+        window.R_EARTH = R_EARTH;
+        window.navball = this.navball;
+        window.missionLog = this.missionLog;
+        window.audio = this.audio;
 
         this.initHUDCache();
     }
@@ -297,8 +297,8 @@ export class Game {
         });
 
         // Legacy globals (will be synced next frame)
-        (window as any).mainStack = null;
-        (window as any).trackedEntity = null;
+        window.mainStack = null;
+        window.trackedEntity = null;
     }
 
     /**
@@ -475,8 +475,8 @@ export class Game {
 
         // Sync globals for legacy/UI
         state.entities = this.entities as any;
-        (window as any).trackedEntity = this.trackedEntity;
-        (window as any).mainStack = this.mainStack;
+        window.trackedEntity = this.trackedEntity;
+        window.mainStack = this.mainStack;
 
         // Update Environment (View)
         // Worker sends environment state?
@@ -524,8 +524,8 @@ export class Game {
         }
 
         // Sync globals
-        (window as any).trackedEntity = this.trackedEntity;
-        (window as any).mainStack = this.mainStack;
+        window.trackedEntity = this.trackedEntity;
+        window.mainStack = this.mainStack;
     }
 
     /**
