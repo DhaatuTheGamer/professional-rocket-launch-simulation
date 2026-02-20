@@ -40,7 +40,7 @@ export const state: GameState = {
     // (We only map what GameState interface defines)
     // GameState defined in types.ts must be compatible.
     // ... we rely on interface matching.
-} as GameState; // Cast to satisfy strictness if mismatch
+};
 
 /**
  * Current wind velocity - updated by store subscription
