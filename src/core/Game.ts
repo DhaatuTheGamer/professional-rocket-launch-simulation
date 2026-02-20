@@ -453,7 +453,7 @@ export class Game {
         };
 
         // Step Physics logic in Worker
-        this.physics.step(dt, { timeScale: this.timeScale, controls });
+        this.physics.step(dt, { timeScale: this.timeScale, controls, autopilotEnabled: state.autopilotEnabled });
 
         // Sync State
         this.entities = this.physics.getEntities();

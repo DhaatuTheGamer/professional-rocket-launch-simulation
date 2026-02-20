@@ -245,6 +245,20 @@ export interface GameState {
 // ============================================================================
 
 /**
+ * Physics Simulation Context
+ * Passed to entities during physics updates to avoid global state access
+ */
+export interface PhysicsContext {
+    groundY: number;
+    windVelocity: Vector2D;
+    densityMultiplier: number;
+    missionLog: IMissionLog | null;
+    audio: IAudioEngine | null;
+    autopilotEnabled: boolean;
+    addParticle: (p: IParticle) => void;
+}
+
+/**
  * Vessel interface for type-safe references
  */
 export interface IVessel {
@@ -296,10 +310,10 @@ export interface IVessel {
     // Optimized Type Identification
     type: number;
 
-    applyPhysics(dt: number, keys: Record<string, boolean>): void;
-    spawnExhaust(timeScale: number): void;
+    applyPhysics(dt: number, keys: Record<string, boolean>, context: PhysicsContext): void;
+    spawnExhaust(timeScale: number, context: PhysicsContext): void;
     draw(ctx: CanvasRenderingContext2D, camY: number, alpha: number): void;
-    explode(): void;
+    explode(context: PhysicsContext): void;
 }
 
 /**

@@ -8,6 +8,7 @@ import { FlightTerminationSystem } from '../safety/FlightTermination';
 import { FaultInjector } from '../safety/FaultInjector';
 import { FlightComputer } from '../guidance/FlightComputer';
 import { HEADER_SIZE, ENTITY_STRIDE, HeaderOffset, EntityOffset, EngineStateCode } from './PhysicsBuffer';
+import { PhysicsContext, IParticle } from '../types';
 
 // State
 let entities: Vessel[] = [];
@@ -82,9 +83,28 @@ function step(inputs: any) {
     const dt = inputs.dt || FIXED_DT;
     const timeScale = inputs.timeScale || 1;
     const simDt = dt * timeScale;
+    const autopilotEnabled = inputs.autopilotEnabled || false;
 
     // 1. Update Environment
     environment.update(simDt);
+
+    // Construct Physics Context
+    const baseWind = environment.getWindAtAltitude(0);
+    const gust = environment.getCurrentGust();
+    const windVelocity = { x: baseWind.x + gust.x, y: baseWind.y + gust.y };
+
+    const context: PhysicsContext = {
+        groundY: groundY,
+        windVelocity: windVelocity,
+        densityMultiplier: environment.getDensityMultiplier(),
+        missionLog: null,
+        audio: null,
+        autopilotEnabled: autopilotEnabled,
+        addParticle: (p: IParticle) => {
+            // Particles spawned in worker are currently ignored/local only
+            // Future improvement: collect and send to main thread
+        }
+    };
 
     // 2. Apply Controls
     const v = entities[trackedIndex];
@@ -135,7 +155,7 @@ function step(inputs: any) {
 
     // 3. Physics Integration
     entities.forEach((e) => {
-        e.applyPhysics(simDt, {});
+        e.applyPhysics(simDt, {}, context);
     });
 
     // 4. Fault Injector (if active)

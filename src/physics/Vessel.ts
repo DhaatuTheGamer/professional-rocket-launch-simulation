@@ -11,7 +11,7 @@
  * - Centrifugal acceleration for orbital motion
  */
 
-import { IVessel, PhysicsState, Derivatives, OrbitalElements } from '../types';
+import { IVessel, PhysicsState, Derivatives, OrbitalElements, PhysicsContext } from '../types';
 import { EntityType } from '../core/PhysicsBuffer';
 import {
     CONFIG,
@@ -26,8 +26,6 @@ import {
     getMachNumber,
     DT
 } from '../config/Constants';
-import { state, currentWindVelocity, currentDensityMultiplier } from '../core/State';
-import { addParticle } from '../core/State';
 import { Particle } from './Particle';
 import {
     AerodynamicsConfig,
@@ -155,21 +153,22 @@ export class Vessel implements IVessel {
      * @param s - Current state
      * @param t - Current time (unused, for interface)
      * @param dt - Time step
+     * @param context - Physics simulation context
      * @returns Derivatives for integration
      */
-    protected getDerivatives(s: PhysicsState, t: number, dt: number): Derivatives {
-        const altitude = (state.groundY - s.y * PIXELS_PER_METER - this.h) / PIXELS_PER_METER;
+    protected getDerivatives(s: PhysicsState, t: number, dt: number, context: PhysicsContext): Derivatives {
+        const altitude = (context.groundY - s.y * PIXELS_PER_METER - this.h) / PIXELS_PER_METER;
         const safeAlt = Math.max(0, altitude);
 
         // Atmospheric density
         const rho = getAtmosphericDensity(safeAlt);
 
         // Velocity magnitude (relative to wind for aerodynamic calculations)
-        const relVx = s.vx - currentWindVelocity.x;
-        const relVy = s.vy - currentWindVelocity.y;
+        const relVx = s.vx - context.windVelocity.x;
+        const relVy = s.vy - context.windVelocity.y;
         const vSq = relVx * relVx + relVy * relVy;
         const v = Math.sqrt(vSq);
-        const q = getDynamicPressure(rho * currentDensityMultiplier, v);
+        const q = getDynamicPressure(rho * context.densityMultiplier, v);
         const mach = getMachNumber(v);
 
         // Calculate aerodynamic state using relative velocity (AoA, CP, CoM, stability)
@@ -248,13 +247,14 @@ export class Vessel implements IVessel {
      *
      * @param dt - Time step (seconds)
      * @param keys - Input keys (legacy compatibility)
+     * @param context - Physics simulation context
      */
-    applyPhysics(dt: number, keys: Record<string, boolean>): void {
+    applyPhysics(dt: number, keys: Record<string, boolean>, context: PhysicsContext): void {
         if (this.crashed) return;
 
         // Apply control input
         const isBooster = this.constructor.name === 'Booster';
-        this.control(dt, keys, isBooster);
+        this.control(dt, keys, isBooster, context);
 
         // Store previous state for interpolation BEFORE integration
         this.prevX = this.x;
@@ -262,15 +262,15 @@ export class Vessel implements IVessel {
         this.prevAngle = this.angle;
 
         // Run physics integration
-        this.updatePhysics(dt);
+        this.updatePhysics(dt, context);
     }
 
     /**
      * Control input handling (can be overridden by subclasses)
      */
-    protected control(dt: number, keys: Record<string, boolean>, isBooster: boolean): void {
-        if (state.autopilotEnabled && isBooster) {
-            this.runAutopilot(dt);
+    protected control(dt: number, keys: Record<string, boolean>, isBooster: boolean, context: PhysicsContext): void {
+        if (context.autopilotEnabled && isBooster) {
+            this.runAutopilot(dt, context);
         } else {
             let targetGimbal = 0;
             if (keys['ArrowLeft']) targetGimbal = 0.2;
@@ -287,14 +287,14 @@ export class Vessel implements IVessel {
     /**
      * Autopilot (can be overridden by subclasses like Booster)
      */
-    protected runAutopilot(dt: number): void {
+    protected runAutopilot(dt: number, context: PhysicsContext): void {
         // Default: no autopilot
     }
 
     /**
      * RK4 integration step
      */
-    protected updatePhysics(dt: number): void {
+    protected updatePhysics(dt: number, context: PhysicsContext): void {
         if (this.crashed) return;
 
         // Convert to meters for physics
@@ -315,7 +315,7 @@ export class Vessel implements IVessel {
                 vy: s.vy + (d ? d.dvy * dt : 0),
                 mass: s.mass
             };
-            return this.getDerivatives(tempState, t, dt);
+            return this.getDerivatives(tempState, t, dt, context);
         };
 
         // RK4 integration
@@ -344,31 +344,31 @@ export class Vessel implements IVessel {
         }
 
         // Update dynamic pressure
-        const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
+        const altitude = (context.groundY - this.y - this.h) / PIXELS_PER_METER;
         const rho = getAtmosphericDensity(altitude);
         const v = Math.sqrt(this.vx ** 2 + this.vy ** 2);
         this.q = getDynamicPressure(rho, v);
 
         // Update propulsion state (spool-up/down, ullage, igniters)
-        this.updatePropulsionState(v, altitude, dt);
+        this.updatePropulsionState(v, altitude, dt, context);
 
         // Update thermal state
-        this.updateThermalState(v, Math.max(0, altitude), dt);
+        this.updateThermalState(v, Math.max(0, altitude), dt, context);
 
         // Update reliability state
-        this.updateReliability(dt);
+        this.updateReliability(dt, context);
 
         // Aerodynamic stress damage
-        this.checkAerodynamicStress(v, altitude);
+        this.checkAerodynamicStress(v, altitude, context);
 
         // Ground collision
-        this.checkGroundCollision();
+        this.checkGroundCollision(context);
     }
 
     /**
      * Update thermal protection system state
      */
-    private updateThermalState(velocity: number, altitude: number, dt: number): void {
+    private updateThermalState(velocity: number, altitude: number, dt: number, context: PhysicsContext): void {
         // Update thermal state using TPS module
         this.thermalState = updateThermalState(this.tpsConfig, this.thermalState, velocity, altitude, this.aoa, dt);
 
@@ -385,21 +385,21 @@ export class Vessel implements IVessel {
 
             // Spawn debris when taking thermal damage
             if (Math.random() > 0.9) {
-                addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                context.addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
             }
 
             // Log thermal warning
-            if (this.isThermalCritical && state.missionLog) {
-                state.missionLog.log(`THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`, 'warn');
+            if (this.isThermalCritical && context.missionLog) {
+                context.missionLog.log(`THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`, 'warn');
             }
         }
 
         // Structural failure from thermal overload
         if (this.health <= 0 && this.thermalState.thermalDamage > 50) {
-            if (state.missionLog) {
-                state.missionLog.log('STRUCTURAL FAILURE: THERMAL OVERLOAD', 'warn');
+            if (context.missionLog) {
+                context.missionLog.log('STRUCTURAL FAILURE: THERMAL OVERLOAD', 'warn');
             }
-            this.explode();
+            this.explode(context);
         }
     }
 
@@ -407,7 +407,7 @@ export class Vessel implements IVessel {
      * Update propulsion state machine
      * Handles engine spool-up/down, ullage, and igniter management
      */
-    private updatePropulsionState(velocity: number, altitude: number, dt: number): void {
+    private updatePropulsionState(velocity: number, altitude: number, dt: number, context: PhysicsContext): void {
         // Calculate current acceleration for ullage check
         const g = getGravity(Math.max(0, altitude));
         const currentAccel = this.actualThrottle > 0 ? (this.actualThrottle * this.maxThrust) / this.mass - g : g; // On ground, gravity settles fuel
@@ -430,8 +430,8 @@ export class Vessel implements IVessel {
 
         // Log ignition failures
         const failureMsg = getIgnitionFailureMessage(this.propState);
-        if (failureMsg && state.missionLog) {
-            state.missionLog.log(failureMsg, 'warn');
+        if (failureMsg && context.missionLog) {
+            context.missionLog.log(failureMsg, 'warn');
             // Reset the failure message after logging
             this.propState.lastIgnitionResult = 'none';
         }
@@ -440,7 +440,7 @@ export class Vessel implements IVessel {
     /**
      * Check for aerodynamic overstress using advanced stability analysis
      */
-    private checkAerodynamicStress(velocity: number, altitude: number): void {
+    private checkAerodynamicStress(velocity: number, altitude: number, context: PhysicsContext): void {
         // Use the aerodynamic state if available for advanced damage calculation
         if (this.aeroState) {
             const damageRate = calculateAerodynamicDamageRate(this.aeroState, this.q);
@@ -451,12 +451,12 @@ export class Vessel implements IVessel {
 
                 // Spawn debris particles when taking damage
                 if (Math.random() > 0.8) {
-                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                    context.addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
                 }
 
                 // Log instability warning once when stability margin goes negative
-                if (!this.isAeroStable && this.q > 5000 && state.missionLog) {
-                    state.missionLog.log(
+                if (!this.isAeroStable && this.q > 5000 && context.missionLog) {
+                    context.missionLog.log(
                         `STABILITY WARNING: AoA=${((Math.abs(this.aoa) * 180) / Math.PI).toFixed(1)}° Margin=${(this.stabilityMargin * 100).toFixed(1)}%`,
                         'warn'
                     );
@@ -474,29 +474,29 @@ export class Vessel implements IVessel {
             if (this.q > 5000 && alpha > 0.2) {
                 this.health -= 100 * (1 / 60);
                 if (Math.random() > 0.8) {
-                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                    context.addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
                 }
             }
         }
 
         if (this.health <= 0) {
-            if (state.missionLog) {
-                state.missionLog.log('STRUCTURAL FAILURE DUE TO AERO FORCES', 'warn');
+            if (context.missionLog) {
+                context.missionLog.log('STRUCTURAL FAILURE DUE TO AERO FORCES', 'warn');
             }
-            this.explode();
+            this.explode(context);
         }
     }
 
     /**
      * Check for ground collision
      */
-    private checkGroundCollision(): void {
-        if (this.y + this.h > state.groundY) {
-            this.y = state.groundY - this.h;
+    private checkGroundCollision(context: PhysicsContext): void {
+        if (this.y + this.h > context.groundY) {
+            this.y = context.groundY - this.h;
 
             // Check landing velocity and angle
             if (this.vy > 15 || Math.abs(this.angle) > 0.3) {
-                this.explode();
+                this.explode(context);
             } else {
                 // Successful landing
                 this.vy = 0;
@@ -513,28 +513,28 @@ export class Vessel implements IVessel {
     /**
      * Explode the vessel
      */
-    explode(): void {
+    explode(context: PhysicsContext): void {
         if (this.crashed) return;
 
         this.crashed = true;
         this.active = false;
         this.throttle = 0;
 
-        if (state.audio) {
-            state.audio.playExplosion();
+        if (context.audio) {
+            context.audio.playExplosion();
         }
 
         // Spawn explosion particles
         for (let i = 0; i < 30; i++) {
-            addParticle(new Particle(this.x + Math.random() * 20 - 10, this.y + this.h - Math.random() * 20, 'fire'));
-            addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+            context.addParticle(new Particle(this.x + Math.random() * 20 - 10, this.y + this.h - Math.random() * 20, 'fire'));
+            context.addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
         }
     }
 
     /**
      * Update reliability system
      */
-    private updateReliability(dt: number): void {
+    private updateReliability(dt: number, context: PhysicsContext): void {
         if (!this.active || this.crashed) return;
 
         // Calculate stress factor
@@ -564,13 +564,13 @@ export class Vessel implements IVessel {
                     break;
 
                 case 'ENGINE_EXPLOSION':
-                    this.explode();
+                    this.explode(context);
                     break;
 
                 case 'STRUCTURAL_FATIGUE':
                     // Immediate structural failure
                     this.health = 0;
-                    this.explode();
+                    this.explode(context);
                     break;
 
                 case 'GIMBAL_LOCK':
@@ -585,8 +585,9 @@ export class Vessel implements IVessel {
      * Spawn exhaust particles
      *
      * @param timeScale - Time warp multiplier
+     * @param context - Physics simulation context
      */
-    spawnExhaust(timeScale: number): void {
+    spawnExhaust(timeScale: number, context: PhysicsContext): void {
         if (this.throttle <= 0 || this.fuel <= 0 || this.crashed) return;
 
         const rawCount = Math.ceil(this.throttle * 5 * timeScale);
@@ -602,7 +603,7 @@ export class Vessel implements IVessel {
             sizeScale = Math.sqrt(rawCount / count);
         }
 
-        const altitude = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
+        const altitude = (context.groundY - this.y - this.h) / PIXELS_PER_METER;
         const vacuumFactor = Math.min(Math.max(0, altitude) / 30000, 1.0);
 
         // Exhaust spreads more in vacuum
@@ -632,7 +633,7 @@ export class Vessel implements IVessel {
             if (vacuumFactor > 0.8) {
                 p.decay *= 0.5; // Particles last longer in vacuum
             }
-            addParticle(p);
+            context.addParticle(p);
 
             // Add smoke at lower altitudes
             if (Math.random() > 0.5 && vacuumFactor < 0.5) {
@@ -640,7 +641,7 @@ export class Vessel implements IVessel {
                 if (sizeScale > 1.0) {
                     s.size *= sizeScale;
                 }
-                addParticle(s);
+                context.addParticle(s);
             }
         }
     }

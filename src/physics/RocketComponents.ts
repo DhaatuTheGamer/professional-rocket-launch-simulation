@@ -10,7 +10,7 @@ import { EntityType } from '../core/PhysicsBuffer';
 import { CONFIG, PIXELS_PER_METER, ISP_TO_VELOCITY } from '../config/Constants';
 import { state } from '../core/State';
 import { PIDController } from '../utils/PIDController';
-import { StageSeparation } from '../types';
+import { StageSeparation, PhysicsContext } from '../types';
 import { DEFAULT_AERO_CONFIG, BOOSTER_AERO_CONFIG, UPPER_STAGE_AERO_CONFIG, PAYLOAD_AERO_CONFIG } from './Aerodynamics';
 import {
     DEFAULT_TPS_CONFIG,
@@ -178,15 +178,15 @@ export class Booster extends Vessel {
         };
     }
 
-    applyPhysics(dt: number, keys: Record<string, boolean>): void {
-        if (state.autopilotEnabled && this.active && !this.crashed) {
-            this.runAutopilot(dt);
+    applyPhysics(dt: number, keys: Record<string, boolean>, context: PhysicsContext): void {
+        if (context.autopilotEnabled && this.active && !this.crashed) {
+            this.runAutopilot(dt, context);
         }
-        super.applyPhysics(dt, keys);
+        super.applyPhysics(dt, keys, context);
     }
 
-    protected override runAutopilot(dt: number): void {
-        const alt = (state.groundY - this.y - this.h) / PIXELS_PER_METER;
+    protected override runAutopilot(dt: number, context: PhysicsContext): void {
+        const alt = (context.groundY - this.y - this.h) / PIXELS_PER_METER;
 
         // 1. Angle control - keep vertical
         const tiltOutput = this.pidTilt.update(this.angle, dt);
