@@ -27,11 +27,12 @@ const SECURITY_HEADERS = {
 };
 
 http.createServer((req, res) => {
-    console.log(`${req.method} ${req.url}`);
-
     // Security: Prevent Directory Traversal
     try {
-        const safeUrl = new URL(req.url, `http://${req.headers.host}`);
+        const safeUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        // Log only the method and pathname, excluding query parameters to prevent sensitive data leakage
+        console.log(`${req.method} ${safeUrl.pathname}`);
+
         let pathname = decodeURIComponent(safeUrl.pathname);
 
         if (pathname === '/') {
