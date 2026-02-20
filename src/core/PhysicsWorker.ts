@@ -98,8 +98,8 @@ function step(inputs: any) {
 
             if (inputs.controls.ignition) {
                 v.active = true;
-                if ((v as any).engineState === 'off') {
-                    (v as any).engineState = 'starting';
+                if (v.engineState === 'off') {
+                    v.engineState = 'starting';
                 }
             }
             if (inputs.controls.cutoff) {
@@ -139,8 +139,8 @@ function step(inputs: any) {
     // 4. Fault Injector (if active)
     const trackedVessel = entities[trackedIndex];
     if (trackedVessel) {
-        if ((trackedVessel as any).reliability) {
-            faultInjector.update(trackedVessel, (trackedVessel as any).reliability, groundY, simDt);
+        if (trackedVessel.reliability) {
+            faultInjector.update(trackedVessel, trackedVessel.reliability, groundY, simDt);
         }
     }
 
@@ -299,8 +299,8 @@ function postState() {
             sharedView[base + EntityOffset.FUEL] = e.fuel;
             sharedView[base + EntityOffset.ACTIVE] = e.active ? 1 : 0;
 
-            sharedView[base + EntityOffset.ENGINE_STATE] = mapEngineState((e as any).engineState);
-            sharedView[base + EntityOffset.IGNITERS] = (e as any).ignitersRemaining || 0;
+            sharedView[base + EntityOffset.ENGINE_STATE] = mapEngineState(e.engineState);
+            sharedView[base + EntityOffset.IGNITERS] = e.ignitersRemaining || 0;
 
             sharedView[base + EntityOffset.WIDTH] = e.w;
             sharedView[base + EntityOffset.HEIGHT] = e.h;
@@ -309,7 +309,7 @@ function postState() {
             sharedView[base + EntityOffset.SKIN_TEMP] = e.skinTemp;
             sharedView[base + EntityOffset.HEAT_SHIELD] = e.heatShieldRemaining;
             sharedView[base + EntityOffset.ABLATING] = e.isAblating ? 1 : 0;
-            sharedView[base + EntityOffset.FAIRING_DEP] = (e as any).fairingsDeployed ? 1 : 0;
+            sharedView[base + EntityOffset.FAIRING_DEP] = (e instanceof UpperStage && e.fairingsDeployed) ? 1 : 0;
             sharedView[base + EntityOffset.MASS] = e.mass;
             sharedView[base + EntityOffset.APOGEE] = e.apogee;
         }
