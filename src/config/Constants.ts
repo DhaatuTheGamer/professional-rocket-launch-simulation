@@ -182,3 +182,19 @@ export function getTransonicDragMultiplier(mach: number): number {
 
     return baseline + divergence;
 }
+
+// ============================================================================
+// Visualization Constants
+// ============================================================================
+
+/** Initial half-width of the safe flight corridor visualization at ground level (meters) */
+export const VISUAL_CORRIDOR_WIDTH_BASE = 500;
+
+/** Expansion of the visual corridor half-width at the expansion altitude (meters) */
+export const VISUAL_CORRIDOR_WIDTH_EXPANSION = 4500;
+
+/** Altitude at which the visual corridor reaches full expansion (meters) */
+export const VISUAL_CORRIDOR_TARGET_ALTITUDE = 50000;
+
+/** Step size for drawing the visual corridor lines (meters) */
+export const VISUAL_CORRIDOR_DRAW_STEP = 1000;
