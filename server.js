@@ -26,7 +26,45 @@ const SECURITY_HEADERS = {
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains'
 };
 
+// Rate Limiting
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_WINDOW = 200;
+const requestCounts = new Map(); // ip -> { count, startTime }
+
+// Garbage collection for rate limit map
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, data] of requestCounts.entries()) {
+        if (now - data.startTime > RATE_LIMIT_WINDOW_MS) {
+            requestCounts.delete(ip);
+        }
+    }
+}, RATE_LIMIT_WINDOW_MS);
+
 http.createServer((req, res) => {
+    // Rate Limiting Check
+    const clientIp = req.socket.remoteAddress;
+    const now = Date.now();
+
+    let requestData = requestCounts.get(clientIp);
+
+    // Initialize or reset if window expired
+    if (!requestData || now - requestData.startTime > RATE_LIMIT_WINDOW_MS) {
+        requestData = { count: 0, startTime: now };
+        requestCounts.set(clientIp, requestData);
+    }
+
+    requestData.count++;
+
+    if (requestData.count > MAX_REQUESTS_PER_WINDOW) {
+        res.writeHead(429, {
+            'Content-Type': 'text/plain',
+            ...SECURITY_HEADERS
+        });
+        res.end('Too Many Requests');
+        return;
+    }
+
     // Security: Prevent Directory Traversal
     try {
         const safeUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
