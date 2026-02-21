@@ -169,30 +169,38 @@ export class Particle implements IParticle {
         debris: Array.from({ length: 20 }, () => [])
     };
 
+    private static BATCH_TYPES: ParticleType[] = ['smoke', 'fire', 'spark', 'debris'];
+
     /**
      * Batch render multiple particles
      * Optimizes performance by grouping particles with similar visual properties
      */
     static drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]): void {
-        if (particles.length === 0) return;
+        const len = particles.length;
+        if (len === 0) return;
+
+        const batches = Particle.batches;
+        const types = Particle.BATCH_TYPES;
 
         // Clear existing batches
-        for (const type in Particle.batches) {
-            // Safety cast as we know keys match ParticleType
-            const buckets = Particle.batches[type as ParticleType];
-            for (const bucket of buckets) {
-                bucket.length = 0;
+        // Optimized: Avoid for...in loop and object.keys overhead
+        for (let i = 0; i < types.length; i++) {
+            const buckets = batches[types[i]];
+            for (let j = 0; j < 20; j++) {
+                buckets[j].length = 0;
             }
         }
 
         // Group particles into batches
-        for (const p of particles) {
+        for (let i = 0; i < len; i++) {
+            const p = particles[i];
             // Quantize life into 20 steps (0.05 increments)
             // Clamp between 0 and 19 (for life 0.0 to 1.0)
-            const lifeIndex = Math.max(0, Math.min(19, Math.floor(p.life * 20)));
+            // Optimized: Use bitwise OR for faster floor
+            const lifeIndex = Math.max(0, Math.min(19, (p.life * 20) | 0));
 
             // Direct access is safe because ParticleType is exhausted in batches initialization
-            const buckets = Particle.batches[p.type];
+            const buckets = batches[p.type];
             if (buckets) {
                 const bucket = buckets[lifeIndex];
                 if (bucket) {
@@ -205,19 +213,17 @@ export class Particle implements IParticle {
         }
 
         // Render each batch
-        // Explicitly iterate known types
-        const types: ParticleType[] = ['smoke', 'fire', 'spark', 'debris'];
-
-        for (const type of types) {
-            const buckets = Particle.batches[type];
+        for (let i = 0; i < types.length; i++) {
+            const type = types[i];
+            const buckets = batches[type];
             if (!buckets) continue;
 
-            for (let i = 0; i < 20; i++) {
-                const group = buckets[i];
+            for (let j = 0; j < 20; j++) {
+                const group = buckets[j];
                 if (!group || group.length === 0) continue;
 
                 // Use center of the quantization bucket for smoother visual transition
-                const life = (i + 0.5) / 20;
+                const life = (j + 0.5) / 20;
 
                 // Set style once per batch based on type and life
                 // We use the first particle to get type-specific properties if needed (like color for smoke)

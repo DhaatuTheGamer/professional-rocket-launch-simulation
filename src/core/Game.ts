@@ -17,7 +17,7 @@ import {
     VISUAL_CORRIDOR_DRAW_STEP
 } from '../config/Constants';
 import { MU } from '../physics/OrbitalMechanics';
-import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle } from './State';
+import { state, updateDimensions, setAudioEngine, setMissionLog, setAssetLoader, addParticle, clearParticles } from './State';
 import { InputManager } from './InputManager';
 import { AudioEngine } from '../utils/AudioEngine';
 import { AssetLoader } from '../utils/AssetLoader';
@@ -39,6 +39,7 @@ import { FaultInjector } from '../safety/FaultInjector';
 import { Vessel } from '../physics/Vessel';
 import { PhysicsProxy } from './PhysicsProxy';
 import { TelemetryTransmitter } from '../telemetry/TelemetryTransmitter';
+import { ParticleSystem } from '../physics/ParticleSystem';
 
 export class Game {
     // Canvas and rendering
@@ -68,7 +69,6 @@ export class Game {
     // Game state
     public entities: IVessel[] = [];
     private nextOrbitUpdateIndex: number = 0;
-    public particles: Particle[] = [];
     private cameraY: number = 0;
     private cameraMode: CameraMode = 'ROCKET';
     private cameraShakeX: number = 0;
@@ -277,7 +277,7 @@ export class Game {
      */
     reset(): void {
         this.entities = [];
-        this.particles = [];
+        clearParticles();
         this.cameraY = 0;
         this.timeScale = 1;
         this.missionState = { liftoff: false, supersonic: false, maxq: false };
@@ -527,6 +527,33 @@ export class Game {
         // Sync globals
         window.trackedEntity = this.trackedEntity;
         window.mainStack = this.mainStack;
+
+        // Particle System Update (Zero-allocation loop)
+        // 1. Spawn exhaust for all entities with throttle > 0
+        // Optimized: standard for loop avoids closure allocation of forEach
+        for (let i = 0; i < this.entities.length; i++) {
+            ParticleSystem.spawnExhaust(this.entities[i], this.timeScale);
+        }
+
+        // 2. Update and prune particles
+        const particles = state.particles;
+        let activeCount = 0;
+        const len = particles.length;
+
+        for (let i = 0; i < len; i++) {
+            const p = particles[i];
+            p.update(this.groundY, this.timeScale);
+            if (p.life > 0) {
+                if (i !== activeCount) {
+                    particles[activeCount] = p;
+                }
+                activeCount++;
+            }
+        }
+        // Truncate array to remove dead particles without allocation
+        if (activeCount < len) {
+            particles.length = activeCount;
+        }
     }
 
 
@@ -986,7 +1013,7 @@ export class Game {
         this.ctx.fillRect(-50000, this.groundY, 100000, 500);
 
         // Particles
-        Particle.drawParticles(this.ctx, this.particles);
+        Particle.drawParticles(this.ctx, state.particles);
 
         // Entities
         this.entities.forEach((e) => e.draw(this.ctx, 0, alpha));
