@@ -15,16 +15,23 @@ vi.mock('../src/core/State', () => ({
 
 // Mock Particle class
 vi.mock('../src/physics/Particle', () => {
+    const MockParticle = vi.fn().mockImplementation(function (this: any, x, y, type, vx, vy) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.vx = vx;
+        this.vy = vy;
+        this.size = 5;
+        this.decay = 0.1;
+    });
+
+    // Add static create method
+    (MockParticle as any).create = vi.fn().mockImplementation((x, y, type, vx, vy) => {
+        return new MockParticle(x, y, type, vx, vy);
+    });
+
     return {
-        Particle: vi.fn().mockImplementation(function (this: any, x, y, type, vx, vy) {
-            this.x = x;
-            this.y = y;
-            this.type = type;
-            this.vx = vx;
-            this.vy = vy;
-            this.size = 5;
-            this.decay = 0.1;
-        })
+        Particle: MockParticle
     };
 });
 
@@ -49,6 +56,7 @@ describe('ParticleSystem', () => {
             // ... other props not needed for spawnExhaust
         } as unknown as IVessel;
 
+        // Reset Math.random spy
         vi.spyOn(Math, 'random').mockReturnValue(0.5);
     });
 
@@ -63,7 +71,7 @@ describe('ParticleSystem', () => {
 
         // Expected count: ceil(throttle * 5 * timeScale) = ceil(1.0 * 5 * 1.0) = 5
         expect(addParticle).toHaveBeenCalledTimes(5);
-        expect(Particle).toHaveBeenCalledTimes(5);
+        expect(Particle.create).toHaveBeenCalledTimes(5);
     });
 
     it('should not spawn particles if throttle is 0', () => {
@@ -91,6 +99,7 @@ describe('ParticleSystem', () => {
         ParticleSystem.spawnExhaust(mockVessel, 1.0);
 
         expect(addParticle).toHaveBeenCalledTimes(20);
+        expect(Particle.create).toHaveBeenCalledTimes(20);
     });
 
     it('should add smoke particles at low altitude', () => {
@@ -103,5 +112,6 @@ describe('ParticleSystem', () => {
 
         // Should spawn 5 fire particles + 5 smoke particles = 10
         expect(addParticle).toHaveBeenCalledTimes(10);
+        expect(Particle.create).toHaveBeenCalledTimes(10);
     });
 });

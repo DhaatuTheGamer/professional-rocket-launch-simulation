@@ -61,6 +61,28 @@ export class Particle implements IParticle {
     private color: number;
     private alpha: number;
 
+    // Object Pool
+    private static pool: Particle[] = [];
+
+    /**
+     * Create a new particle or reuse one from the pool
+     */
+    static create(x: number, y: number, type: ParticleType, vx: number = 0, vy: number = 0): Particle {
+        const p = Particle.pool.pop();
+        if (p) {
+            p.reset(x, y, type, vx, vy);
+            return p;
+        }
+        return new Particle(x, y, type, vx, vy);
+    }
+
+    /**
+     * Release a particle back to the pool
+     */
+    static release(p: Particle): void {
+        Particle.pool.push(p);
+    }
+
     /**
      * Create a new particle
      *
@@ -71,6 +93,27 @@ export class Particle implements IParticle {
      * @param vy - Initial Y velocity (pixels/frame)
      */
     constructor(x: number, y: number, type: ParticleType, vx: number = 0, vy: number = 0) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.vx = vx;
+        this.vy = vy;
+
+        // Initialize with default values to satisfy TS, then call reset
+        this.life = 0;
+        this.size = 0;
+        this.decay = 0;
+        this.growRate = 0;
+        this.color = 0;
+        this.alpha = 0;
+
+        this.reset(x, y, type, vx, vy);
+    }
+
+    /**
+     * Reset particle state
+     */
+    reset(x: number, y: number, type: ParticleType, vx: number, vy: number): void {
         this.x = x;
         this.y = y;
         this.type = type;
@@ -299,7 +342,7 @@ export function createParticles(
 ): Particle[] {
     const particles: Particle[] = [];
     for (let i = 0; i < count; i++) {
-        particles.push(new Particle(x, y, type, baseVx, baseVy));
+        particles.push(Particle.create(x, y, type, baseVx, baseVy));
     }
     return particles;
 }

@@ -375,7 +375,7 @@ export class Game {
             // Create staging particles (Visual only)
             for (let i = 0; i < 30; i++) {
                 addParticle(
-                    new Particle(
+                    Particle.create(
                         e.x + (Math.random() - 0.5) * 20,
                         e.y + 80,
                         'smoke',
@@ -548,6 +548,8 @@ export class Game {
                     particles[activeCount] = p;
                 }
                 activeCount++;
+            } else if (p instanceof Particle) {
+                Particle.release(p);
             }
         }
         // Truncate array to remove dead particles without allocation
