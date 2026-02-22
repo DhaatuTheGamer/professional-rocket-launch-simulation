@@ -170,6 +170,18 @@ export class ManeuverPlanner {
     }
 
     /**
+     * Helper to create stat element
+     */
+    private createStat(label: string, value: string, unit: string = ''): HTMLElement {
+        const div = document.createElement('div');
+        const strong = document.createElement('strong');
+        strong.textContent = label + ':';
+        div.appendChild(strong);
+        div.appendChild(document.createTextNode(` ${value}${unit ? ' ' + unit : ''}`));
+        return div;
+    }
+
+    /**
      * Update current orbit statistics display
      */
     private updateOrbitStats(): KeplerianElements | null {
@@ -223,12 +235,13 @@ export class ManeuverPlanner {
 
         const statsDiv = document.getElementById('planner-orbit-stats');
         if (statsDiv) {
-            statsDiv.innerHTML = `
-                <div><strong>Apoapsis:</strong> ${(elements.apoapsis / 1000).toFixed(1)} km</div>
-                <div><strong>Periapsis:</strong> ${(elements.periapsis / 1000).toFixed(1)} km</div>
-                <div><strong>Period:</strong> ${(elements.period / 60).toFixed(1)} min</div>
-                <div><strong>Eccentricity:</strong> ${elements.eccentricity.toFixed(3)}</div>
-            `;
+            // Security: Use DOM methods instead of innerHTML to prevent XSS
+            statsDiv.textContent = ''; // Clear existing content
+
+            statsDiv.appendChild(this.createStat('Apoapsis', (elements.apoapsis / 1000).toFixed(1), 'km'));
+            statsDiv.appendChild(this.createStat('Periapsis', (elements.periapsis / 1000).toFixed(1), 'km'));
+            statsDiv.appendChild(this.createStat('Period', (elements.period / 60).toFixed(1), 'min'));
+            statsDiv.appendChild(this.createStat('Eccentricity', elements.eccentricity.toFixed(3)));
         }
 
         return elements;
