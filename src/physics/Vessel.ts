@@ -386,7 +386,7 @@ export class Vessel implements IVessel {
 
             // Spawn debris when taking thermal damage
             if (Math.random() > 0.9) {
-                addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                addParticle(Particle.create(this.x, this.y + this.h / 2, 'debris'));
             }
 
             // Log thermal warning
@@ -452,7 +452,7 @@ export class Vessel implements IVessel {
 
                 // Spawn debris particles when taking damage
                 if (Math.random() > 0.8) {
-                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                    addParticle(Particle.create(this.x, this.y + this.h / 2, 'debris'));
                 }
 
                 // Log instability warning once when stability margin goes negative
@@ -475,7 +475,7 @@ export class Vessel implements IVessel {
             if (this.q > 5000 && alpha > 0.2) {
                 this.health -= 100 * (1 / 60);
                 if (Math.random() > 0.8) {
-                    addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+                    addParticle(Particle.create(this.x, this.y + this.h / 2, 'debris'));
                 }
             }
         }
@@ -527,8 +527,8 @@ export class Vessel implements IVessel {
 
         // Spawn explosion particles
         for (let i = 0; i < 30; i++) {
-            addParticle(new Particle(this.x + Math.random() * 20 - 10, this.y + this.h - Math.random() * 20, 'fire'));
-            addParticle(new Particle(this.x, this.y + this.h / 2, 'debris'));
+            addParticle(Particle.create(this.x + Math.random() * 20 - 10, this.y + this.h - Math.random() * 20, 'fire'));
+            addParticle(Particle.create(this.x, this.y + this.h / 2, 'debris'));
         }
     }
 

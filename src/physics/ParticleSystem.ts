@@ -53,7 +53,7 @@ export class ParticleSystem {
             const rocketVxPx = vessel.vx * PIXELS_PER_METER * DT;
             const rocketVyPx = vessel.vy * PIXELS_PER_METER * DT;
 
-            const p = new Particle(exX, exY, 'fire', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
+            const p = Particle.create(exX, exY, 'fire', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
 
             // Apply visual scaling
             if (sizeScale > 1.0) {
@@ -67,7 +67,7 @@ export class ParticleSystem {
 
             // Add smoke at lower altitudes
             if (Math.random() > 0.5 && vacuumFactor < 0.5) {
-                const s = new Particle(exX, exY, 'smoke', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
+                const s = Particle.create(exX, exY, 'smoke', rocketVxPx + ejectVx, rocketVyPx + ejectVy);
                 if (sizeScale > 1.0) {
                     s.size *= sizeScale;
                 }
