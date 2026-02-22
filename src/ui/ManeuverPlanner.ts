@@ -44,14 +44,17 @@ export class ManeuverPlanner {
             <div class="script-editor-content maneuver-planner-content">
                 <div class="script-editor-header">
                     <h2>Orbital Maneuver Planner</h2>
-                    <button id="planner-close-btn" class="script-close-btn">×</button>
+                    <button id="planner-close-btn" class="script-close-btn" aria-label="Close Maneuver Planner">×</button>
                 </div>
                 
                 <div class="script-editor-body maneuver-planner-body">
                     <div class="maneuver-section">
                         <h3>Current Orbit</h3>
                         <div id="planner-orbit-stats" class="stats-grid">
-                            Loading...
+                            <div><strong>Apoapsis:</strong> <span id="planner-stat-apo">Loading...</span></div>
+                            <div><strong>Periapsis:</strong> <span id="planner-stat-peri">Loading...</span></div>
+                            <div><strong>Period:</strong> <span id="planner-stat-period">Loading...</span></div>
+                            <div><strong>Eccentricity:</strong> <span id="planner-stat-ecc">Loading...</span></div>
                         </div>
                     </div>
 
@@ -221,17 +224,17 @@ export class ManeuverPlanner {
 
         const elements = this.getCurrentOrbitalElements(vessel);
 
-        const statsDiv = document.getElementById('planner-orbit-stats');
-        if (statsDiv) {
-            statsDiv.innerHTML = `
-                <div><strong>Apoapsis:</strong> ${(elements.apoapsis / 1000).toFixed(1)} km</div>
-                <div><strong>Periapsis:</strong> ${(elements.periapsis / 1000).toFixed(1)} km</div>
-                <div><strong>Period:</strong> ${(elements.period / 60).toFixed(1)} min</div>
-                <div><strong>Eccentricity:</strong> ${elements.eccentricity.toFixed(3)}</div>
-            `;
-        }
+        this.updateStat('planner-stat-apo', `${(elements.apoapsis / 1000).toFixed(1)} km`);
+        this.updateStat('planner-stat-peri', `${(elements.periapsis / 1000).toFixed(1)} km`);
+        this.updateStat('planner-stat-period', `${(elements.period / 60).toFixed(1)} min`);
+        this.updateStat('planner-stat-ecc', elements.eccentricity.toFixed(3));
 
         return elements;
+    }
+
+    private updateStat(id: string, value: string): void {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
     }
 
     /**
