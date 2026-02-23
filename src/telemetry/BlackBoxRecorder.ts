@@ -219,7 +219,11 @@ export class BlackBoxRecorder {
             accelX = (vessel.vx - this.prevVx) / dt;
             accelY = (vessel.vy - this.prevVy) / dt;
         }
-        const gForce = Math.sqrt(accelX * accelX + accelY * accelY) / 9.81;
+        // Proper acceleration includes the normal force counteracting gravity.
+        // Gravity accelerates downward at 9.81 m/s², so we subtract 9.81 from accelY.
+        const properAccelX = accelX;
+        const properAccelY = accelY - 9.81;
+        const gForce = Math.sqrt(properAccelX * properAccelX + properAccelY * properAccelY) / 9.81;
 
         // Create frame
         const frame: FlightDataFrame = {

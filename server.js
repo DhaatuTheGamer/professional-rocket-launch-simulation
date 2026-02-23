@@ -51,10 +51,11 @@ http.createServer((req, res) => {
 
     // Initialize or reset if window expired
     if (!requestData || now - requestData.startTime > RATE_LIMIT_WINDOW_MS) {
-        // DoS Protection: If map is full and this is a new IP, clear the map
+        // DoS Protection: If map is full and this is a new IP, evict the oldest IP
         if (requestCounts.size >= MAX_TRACKED_IPS && !requestCounts.has(clientIp)) {
-            console.warn(`[WARN] Rate limit map full (${requestCounts.size} IPs). Clearing to prevent DoS.`);
-            requestCounts.clear();
+            console.warn(`[WARN] Rate limit map full (${requestCounts.size} IPs). Evicting oldest IP to prevent DoS.`);
+            const oldestIp = requestCounts.keys().next().value;
+            requestCounts.delete(oldestIp);
         }
 
         requestData = { count: 0, startTime: now };

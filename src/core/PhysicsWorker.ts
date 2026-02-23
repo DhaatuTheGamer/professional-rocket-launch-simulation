@@ -25,6 +25,9 @@ let trackedIndex = 0;
 // Shared Memory
 let sharedView: Float64Array | null = null;
 
+// Debounce state for staging
+let prevStageInput = false;
+
 // Constants
 const FIXED_DT = 0.02;
 
@@ -108,7 +111,7 @@ function step(inputs: any) {
                     v.active = false;
                 }
                 // Only trigger stage on the first substep if commanded
-                if (inputs.controls.stage && stepIdx === 0) {
+                if (inputs.controls.stage && !prevStageInput && stepIdx === 0) {
                     performStaging();
                 }
             }
@@ -139,15 +142,18 @@ function step(inputs: any) {
             e.applyPhysics(simDt, {});
         });
 
-        // 4. Fault Injector (if active)
-        const trackedVessel = entities[trackedIndex];
-        if (trackedVessel) {
-            if (trackedVessel.reliability) {
-                faultInjector.update(trackedVessel, trackedVessel.reliability, groundY, simDt);
+        // 4. Fault Injector
+        entities.forEach(vessel => {
+            if (vessel.reliability) {
+                faultInjector.update(vessel, vessel.reliability, groundY, simDt);
             }
-        }
+        });
 
         missionTime += simDt;
+    }
+
+    if (inputs.controls !== undefined) {
+        prevStageInput = !!inputs.controls.stage;
     }
 
     postState();

@@ -378,8 +378,8 @@ export function calculateAerodynamicForces(
         // For 2D: perpendicular vector is (-uy, ux) or (uy, -ux)
         // Choose direction based on sign of AoA
         const liftSign = aeroState.aoa > 0 ? 1 : -1;
-        forceX += liftMagnitude * uy * liftSign;
-        forceY += liftMagnitude * -ux * liftSign;
+        forceX += liftMagnitude * -uy * liftSign;
+        forceY += liftMagnitude * ux * liftSign;
     }
 
     return {
