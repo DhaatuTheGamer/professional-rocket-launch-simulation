@@ -244,14 +244,17 @@ export class Particle implements IParticle {
         // Clear existing batches
         for (let i = 0; i < 4; i++) {
             const buckets = batches[i];
+            if (!buckets) continue;
             for (let j = 0; j < 20; j++) {
-                buckets[j].length = 0;
+                const bucket = buckets[j];
+                if (bucket) bucket.length = 0;
             }
         }
 
         // Group particles into batches
         for (let i = 0; i < len; i++) {
             const p = particles[i];
+            if (!p) continue;
             // Quantize life into 20 steps (0.05 increments)
             // Clamp between 0 and 19 (for life 0.0 to 1.0)
             // Optimized: Use bitwise OR for faster floor

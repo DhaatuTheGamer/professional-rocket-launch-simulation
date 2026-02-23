@@ -540,7 +540,10 @@ export class Game {
         // 1. Spawn exhaust for all entities with throttle > 0
         // Optimized: standard for loop avoids closure allocation of forEach
         for (let i = 0; i < this.entities.length; i++) {
-            ParticleSystem.spawnExhaust(this.entities[i], this.timeScale);
+            const entity = this.entities[i];
+            if (entity) {
+                ParticleSystem.spawnExhaust(entity, this.timeScale);
+            }
         }
 
         // 2. Update and prune particles
@@ -550,6 +553,8 @@ export class Game {
 
         for (let i = 0; i < len; i++) {
             const p = particles[i];
+            if (!p) continue;
+
             p.update(this.groundY, this.timeScale);
             if (p.life > 0) {
                 if (i !== activeCount) {
@@ -1022,7 +1027,7 @@ export class Game {
         this.ctx.fillRect(-50000, this.groundY, 100000, 500);
 
         // Particles
-        Particle.drawParticles(this.ctx, state.particles);
+        Particle.drawParticles(this.ctx, state.particles as Particle[]);
 
         // Entities
         this.entities.forEach((e) => e.draw(this.ctx, 0, alpha));
