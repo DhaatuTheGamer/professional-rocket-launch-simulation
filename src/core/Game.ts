@@ -92,7 +92,7 @@ export class Game {
     // Command state (User Input)
     public commandThrottle: number = 0;
     public stagingCommand: boolean = false;
-    private readonly ZOOM: number = 2.5;
+    private readonly ZOOM: number = 1.2;
 
     // Mission state
     private missionState: MissionState = {
@@ -195,6 +195,7 @@ export class Game {
         this.input = new InputManager();
         this.audio = new AudioEngine();
         this.assets = new AssetLoader();
+        setAssetLoader(this.assets);
         this.navball = new Navball();
         this.telemetry = new TelemetrySystem();
         this.missionLog = new MissionLog();
@@ -483,14 +484,20 @@ export class Game {
         window.mainStack = this.mainStack;
 
         // Update Environment (View)
-        // Worker sends environment state?
+        // Worker sends wind/density via buffer; other env fields come from main-thread EnvironmentSystem
+        this.environment.update(dt * this.timeScale);
         const envState = this.physics.getEnvironmentState();
         if (envState) {
+            // Merge environment data not available in the shared buffer
+            const localEnv = this.environment.getState(0);
+            envState.timeOfDay = localEnv.timeOfDay;
+            envState.isLaunchSafe = localEnv.isLaunchSafe;
+            envState.maxQWindWarning = localEnv.maxQWindWarning;
+
             setWindVelocity(envState.windVelocity);
             setDensityMultiplier(envState.densityMultiplier);
             this.lastEnvState = envState;
         } else {
-            this.environment.update(dt * this.timeScale); // Fallback
             this.lastEnvState = this.environment.getState(0);
         }
 
@@ -995,7 +1002,7 @@ export class Game {
 
             // Smoothly update cameraY (altitude tracking)
             // We want RocketY - CamY to be constant-ish
-            const targetCamY = trackedY - (this.height * 0.7) / this.ZOOM;
+            const targetCamY = trackedY - (this.height * 0.5) / this.ZOOM;
 
             // Clamp camera: Don't show below ground too much
             // Ground is at this.groundY.
@@ -1004,7 +1011,7 @@ export class Game {
 
             // Interpolate
             const diff = targetCamY - this.cameraY;
-            this.cameraY += diff * 0.1;
+            this.cameraY = targetCamY;
 
             // Hard clamp to not show under-ground void
             // Actually, allowed for crash debris, but let's keep it reasonable

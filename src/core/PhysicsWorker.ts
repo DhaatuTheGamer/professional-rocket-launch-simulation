@@ -9,6 +9,7 @@ import { FaultInjector } from '../safety/FaultInjector';
 import { FlightComputer } from '../guidance/FlightComputer';
 import { STAGING_CONFIG } from '../config/Constants';
 import { HEADER_SIZE, ENTITY_STRIDE, HeaderOffset, EntityOffset, EngineStateCode } from './PhysicsBuffer';
+import { state, setWindVelocity, setDensityMultiplier, updateDimensions } from './State';
 
 // State
 let entities: Vessel[] = [];
@@ -54,6 +55,7 @@ function init(config: any) {
 
     const width = config.width || 1920;
     groundY = config.groundY || 1000;
+    updateDimensions(config.width || 1920, config.height || 1080, groundY);
 
     // Initialize Shared Buffer View
     if (config.sharedBuffer) {
@@ -91,6 +93,9 @@ function step(inputs: any) {
     for (let stepIdx = 0; stepIdx < substeps; stepIdx++) {
         // 1. Update Environment
         environment.update(simDt);
+        const wind = environment.getWindAtAltitude(0);
+        setWindVelocity({ x: wind.x + environment.getCurrentGust().x, y: wind.y + environment.getCurrentGust().y });
+        setDensityMultiplier(environment.getDensityMultiplier());
 
         // 2. Apply Controls
         const v = entities[trackedIndex];
@@ -323,6 +328,9 @@ function postState() {
             sharedView[base + EntityOffset.FAIRING_DEP] = e instanceof UpperStage && e.fairingsDeployed ? 1 : 0;
             sharedView[base + EntityOffset.MASS] = e.mass;
             sharedView[base + EntityOffset.APOGEE] = e.apogee;
+            sharedView[base + EntityOffset.AOA] = e.aoa;
+            sharedView[base + EntityOffset.STABILITY_MARGIN] = e.stabilityMargin;
+            sharedView[base + EntityOffset.IS_AERO_STABLE] = e.isAeroStable ? 1 : 0;
         }
     }
 
