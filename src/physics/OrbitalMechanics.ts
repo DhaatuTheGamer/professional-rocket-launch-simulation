@@ -93,8 +93,8 @@ export function calculateOrbitalElements(r: Vector2D, v: Vector2D): KeplerianEle
     }
 
     // 5. Apoapsis and Periapsis radii
-    const rp = a * (1 - e);
-    const ra = a * (1 + e);
+    const rp = a === Infinity ? (h * h) / (2 * MU) : a * (1 - e);
+    const ra = a === Infinity ? Infinity : a * (1 + e);
 
     // Altitudes (subtract Earth radius)
     const periapsisAlt = rp - R_EARTH;

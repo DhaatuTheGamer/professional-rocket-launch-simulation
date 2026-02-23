@@ -472,10 +472,6 @@ export class Game {
         // Step Physics logic in Worker
         this.physics.step(dt, { timeScale: this.timeScale, controls });
 
-        // Sync State
-        this.entities = this.physics.getEntities();
-        this.missionTime = this.physics.getMissionTime();
-
         // Update references
         const trackedIdx = this.physics.getTrackedIndex();
         this.trackedEntity = this.entities[trackedIdx] || null;
@@ -1405,7 +1401,12 @@ export class Game {
             this.accumulator -= this.FIXED_DT;
         }
 
-        const alpha = this.accumulator / this.FIXED_DT;
+        // Sync and interpolate states from worker buffer
+        this.physics.syncView(deltaTime, this.timeScale);
+        this.entities = this.physics.getEntities();
+        this.missionTime = this.physics.getMissionTime();
+
+        const alpha = this.physics.getInterpolationAlpha();
 
         if (this.cameraMode === 'MAP') {
             this.updateOrbitPaths(currentTime);

@@ -82,69 +82,74 @@ function init(config: any) {
 function step(inputs: any) {
     const dt = inputs.dt || FIXED_DT;
     const timeScale = inputs.timeScale || 1;
-    const simDt = dt * timeScale;
+    const substeps = Math.ceil(timeScale);
+    const simDt = (dt * timeScale) / substeps;
 
-    // 1. Update Environment
-    environment.update(simDt);
+    for (let stepIdx = 0; stepIdx < substeps; stepIdx++) {
+        // 1. Update Environment
+        environment.update(simDt);
 
-    // 2. Apply Controls
-    const v = entities[trackedIndex];
-    if (v) {
-        // Base manual controls
-        if (inputs.controls) {
-            v.throttle = inputs.controls.throttle;
-            // Gimbal is cumulative or absolute? Game.ts sends absolute gimbalAngle
-            v.gimbalAngle = inputs.controls.gimbalAngle;
+        // 2. Apply Controls
+        const v = entities[trackedIndex];
+        if (v) {
+            // Base manual controls
+            if (inputs.controls) {
+                v.throttle = inputs.controls.throttle;
+                // Gimbal is cumulative or absolute? Game.ts sends absolute gimbalAngle
+                v.gimbalAngle = inputs.controls.gimbalAngle;
 
-            if (inputs.controls.ignition) {
-                v.active = true;
-                if (v.engineState === 'off') {
-                    v.engineState = 'starting';
+                if (inputs.controls.ignition) {
+                    v.active = true;
+                    if (v.engineState === 'off') {
+                        v.engineState = 'starting';
+                    }
+                }
+                if (inputs.controls.cutoff) {
+                    v.active = false;
+                }
+                // Only trigger stage on the first substep if commanded
+                if (inputs.controls.stage && stepIdx === 0) {
+                    performStaging();
                 }
             }
-            if (inputs.controls.cutoff) {
-                v.active = false;
-            }
-            if (inputs.controls.stage) {
-                performStaging();
+
+            // Flight Computer Override
+            if (flightComputer && flightComputer.isActive()) {
+                const fcOut = flightComputer.update(v, simDt);
+
+                if (fcOut.throttle !== null) v.throttle = fcOut.throttle;
+                if (fcOut.pitchAngle !== null) {
+                    // Simple P-controller for gimbal to match pitch
+                    // In Game.ts it was: gimbal = (target - current) * 2 clamped
+                    const err = fcOut.pitchAngle - v.angle;
+                    v.gimbalAngle = Math.max(-0.5, Math.min(0.5, err * 2));
+                }
+                if (fcOut.abort) {
+                    v.throttle = 0;
+                    v.active = false;
+                    self.postMessage({ type: 'EVENT', payload: { name: 'ABORT' } });
+                }
+                // SAS mode is handled by SAS which FC might use,
+                // but for now FC output sasMode is informational or used by SAS utils
             }
         }
 
-        // Flight Computer Override
-        if (flightComputer && flightComputer.isActive()) {
-            const fcOut = flightComputer.update(v, simDt);
+        // 3. Physics Integration
+        entities.forEach((e) => {
+            e.applyPhysics(simDt, {});
+        });
 
-            if (fcOut.throttle !== null) v.throttle = fcOut.throttle;
-            if (fcOut.pitchAngle !== null) {
-                // Simple P-controller for gimbal to match pitch
-                // In Game.ts it was: gimbal = (target - current) * 2 clamped
-                const err = fcOut.pitchAngle - v.angle;
-                v.gimbalAngle = Math.max(-0.5, Math.min(0.5, err * 2));
+        // 4. Fault Injector (if active)
+        const trackedVessel = entities[trackedIndex];
+        if (trackedVessel) {
+            if (trackedVessel.reliability) {
+                faultInjector.update(trackedVessel, trackedVessel.reliability, groundY, simDt);
             }
-            if (fcOut.abort) {
-                v.throttle = 0;
-                v.active = false;
-                self.postMessage({ type: 'EVENT', payload: { name: 'ABORT' } });
-            }
-            // SAS mode is handled by SAS which FC might use,
-            // but for now FC output sasMode is informational or used by SAS utils
         }
+
+        missionTime += simDt;
     }
 
-    // 3. Physics Integration
-    entities.forEach((e) => {
-        e.applyPhysics(simDt, {});
-    });
-
-    // 4. Fault Injector (if active)
-    const trackedVessel = entities[trackedIndex];
-    if (trackedVessel) {
-        if (trackedVessel.reliability) {
-            faultInjector.update(trackedVessel, trackedVessel.reliability, groundY, simDt);
-        }
-    }
-
-    missionTime += simDt;
     postState();
 }
 
@@ -187,7 +192,7 @@ function performStaging() {
 
         const booster = new Booster(tracked.x, tracked.y, tracked.vx, tracked.vy);
         booster.angle = tracked.angle;
-        booster.fuel = STAGING_CONFIG.BOOSTER_SEPARATION_FUEL;
+        booster.fuel = tracked.fuel;
         booster.active = true;
 
         const upper = new UpperStage(

@@ -41,6 +41,12 @@ export class PhysicsProxy {
 
     private eventListeners: ((event: any) => void)[] = [];
 
+    // Interpolation state
+    private currentPhysicsTime: number = 0;
+    private previousPhysicsTime: number = 0;
+    private localRenderTime: number = 0;
+    private firstSync: boolean = true;
+
     constructor() {
         // Initialize Shared Buffer
         // 8 bytes per float
@@ -59,7 +65,7 @@ export class PhysicsProxy {
             const { type, payload } = e.data;
             if (type === 'STATE') {
                 this.latestState = payload;
-                this.syncView();
+                // syncView is now called by Game.ts
             } else if (type === 'EVENT') {
                 this.handleEvent(payload);
             }
@@ -140,58 +146,87 @@ export class PhysicsProxy {
         this.eventListeners.forEach((cb) => cb(event));
     }
 
-    private syncView() {
+    public syncView(dt: number, timeScale: number) {
         if (!this.sharedView) return;
 
-        const entityCount = this.sharedView[HeaderOffset.ENTITY_COUNT] || 0;
-
-        // Resize view array
-        while (this.viewEntities.length > entityCount) {
-            this.viewEntities.pop();
+        if (!this.firstSync) {
+            this.localRenderTime += dt * timeScale;
         }
 
-        for (let i = 0; i < entityCount; i++) {
-            const base = HEADER_SIZE + i * ENTITY_STRIDE;
-            const typeCode = this.sharedView[base + EntityOffset.TYPE] || 0;
+        const workerTime = this.sharedView[HeaderOffset.TIMESTAMP] || 0;
 
-            let view = this.viewEntities[i];
+        if (workerTime > this.currentPhysicsTime || this.firstSync) {
+            this.firstSync = false;
+            this.previousPhysicsTime = this.currentPhysicsTime;
+            this.currentPhysicsTime = workerTime;
 
-            // Check if view exists and matches type
-            if (!view || view.type !== typeCode) {
-                view = this.createViewEntity(typeCode, 0, 0);
-                this.viewEntities[i] = view;
+            if (this.localRenderTime < this.previousPhysicsTime || this.localRenderTime > this.currentPhysicsTime) {
+                this.localRenderTime = this.previousPhysicsTime;
             }
 
-            // Sync properties
-            view.x = this.sharedView[base + EntityOffset.X] || 0;
-            view.y = this.sharedView[base + EntityOffset.Y] || 0;
-            view.vx = this.sharedView[base + EntityOffset.VX] || 0;
-            view.vy = this.sharedView[base + EntityOffset.VY] || 0;
-            view.angle = this.sharedView[base + EntityOffset.ANGLE] || 0;
-            view.throttle = this.sharedView[base + EntityOffset.THROTTLE] || 0;
-            view.gimbalAngle = this.sharedView[base + EntityOffset.GIMBAL] || 0;
-            view.fuel = this.sharedView[base + EntityOffset.FUEL] || 0;
-            view.active = this.sharedView[base + EntityOffset.ACTIVE] === 1;
+            const entityCount = this.sharedView[HeaderOffset.ENTITY_COUNT] || 0;
 
-            view.w = this.sharedView[base + EntityOffset.WIDTH] || 0;
-            view.h = this.sharedView[base + EntityOffset.HEIGHT] || 0;
-            view.crashed = this.sharedView[base + EntityOffset.CRASHED] === 1;
-            view.mass = this.sharedView[base + EntityOffset.MASS] || 0;
-            view.apogee = this.sharedView[base + EntityOffset.APOGEE] || 0;
-
-            // Specifics
-            view.skinTemp = this.sharedView[base + EntityOffset.SKIN_TEMP] || 0;
-            view.heatShieldRemaining = this.sharedView[base + EntityOffset.HEAT_SHIELD] || 0;
-            view.isAblating = this.sharedView[base + EntityOffset.ABLATING] === 1;
-
-            if (typeCode === EntityType.UPPER_STAGE) {
-                (view as any).fairingsDeployed = this.sharedView[base + EntityOffset.FAIRING_DEP] === 1;
+            // Resize view array
+            while (this.viewEntities.length > entityCount) {
+                this.viewEntities.pop();
             }
 
-            const engStateCode = this.sharedView[base + EntityOffset.ENGINE_STATE] || 0;
-            (view as any).engineState = this.mapEngineStateCode(engStateCode);
-            (view as any).ignitersRemaining = this.sharedView[base + EntityOffset.IGNITERS] || 0;
+            for (let i = 0; i < entityCount; i++) {
+                const base = HEADER_SIZE + i * ENTITY_STRIDE;
+                const typeCode = this.sharedView[base + EntityOffset.TYPE] || 0;
+
+                let view = this.viewEntities[i];
+
+                // Check if view exists and matches type
+                if (!view || view.type !== typeCode) {
+                    view = this.createViewEntity(typeCode, 0, 0);
+                    view.prevX = this.sharedView[base + EntityOffset.X] || 0;
+                    view.prevY = this.sharedView[base + EntityOffset.Y] || 0;
+                    view.prevAngle = this.sharedView[base + EntityOffset.ANGLE] || 0;
+                    this.viewEntities[i] = view;
+                } else {
+                    view.prevX = view.x;
+                    view.prevY = view.y;
+                    view.prevAngle = view.angle;
+                }
+
+                // Sync properties
+                view.x = this.sharedView[base + EntityOffset.X] || 0;
+                view.y = this.sharedView[base + EntityOffset.Y] || 0;
+                view.vx = this.sharedView[base + EntityOffset.VX] || 0;
+                view.vy = this.sharedView[base + EntityOffset.VY] || 0;
+                view.angle = this.sharedView[base + EntityOffset.ANGLE] || 0;
+                view.throttle = this.sharedView[base + EntityOffset.THROTTLE] || 0;
+                view.gimbalAngle = this.sharedView[base + EntityOffset.GIMBAL] || 0;
+                view.fuel = this.sharedView[base + EntityOffset.FUEL] || 0;
+                view.active = this.sharedView[base + EntityOffset.ACTIVE] === 1;
+
+                view.w = this.sharedView[base + EntityOffset.WIDTH] || 0;
+                view.h = this.sharedView[base + EntityOffset.HEIGHT] || 0;
+                view.crashed = this.sharedView[base + EntityOffset.CRASHED] === 1;
+                view.mass = this.sharedView[base + EntityOffset.MASS] || 0;
+                view.apogee = this.sharedView[base + EntityOffset.APOGEE] || 0;
+
+                // Specifics
+                view.skinTemp = this.sharedView[base + EntityOffset.SKIN_TEMP] || 0;
+                view.heatShieldRemaining = this.sharedView[base + EntityOffset.HEAT_SHIELD] || 0;
+                view.isAblating = this.sharedView[base + EntityOffset.ABLATING] === 1;
+
+                if (typeCode === EntityType.UPPER_STAGE) {
+                    (view as any).fairingsDeployed = this.sharedView[base + EntityOffset.FAIRING_DEP] === 1;
+                }
+
+                const engStateCode = this.sharedView[base + EntityOffset.ENGINE_STATE] || 0;
+                (view as any).engineState = this.mapEngineStateCode(engStateCode);
+                (view as any).ignitersRemaining = this.sharedView[base + EntityOffset.IGNITERS] || 0;
+            }
         }
+    }
+
+    public getInterpolationAlpha(): number {
+        if (this.currentPhysicsTime === this.previousPhysicsTime) return 1.0;
+        let alpha = (this.localRenderTime - this.previousPhysicsTime) / (this.currentPhysicsTime - this.previousPhysicsTime);
+        return Math.max(0, Math.min(1, alpha));
     }
 
     private mapEngineStateCode(code: number): string {
