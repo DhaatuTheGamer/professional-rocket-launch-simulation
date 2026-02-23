@@ -29,6 +29,7 @@ const SECURITY_HEADERS = {
 // Rate Limiting
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 200;
+const MAX_TRACKED_IPS = 5000;
 const requestCounts = new Map(); // ip -> { count, startTime }
 
 // Garbage collection for rate limit map
@@ -43,13 +44,19 @@ setInterval(() => {
 
 http.createServer((req, res) => {
     // Rate Limiting Check
-    const clientIp = req.socket.remoteAddress;
+    const clientIp = (process.env.NODE_ENV === 'test' && req.headers['x-forwarded-for']) || req.socket.remoteAddress;
     const now = Date.now();
 
     let requestData = requestCounts.get(clientIp);
 
     // Initialize or reset if window expired
     if (!requestData || now - requestData.startTime > RATE_LIMIT_WINDOW_MS) {
+        // DoS Protection: If map is full and this is a new IP, clear the map
+        if (requestCounts.size >= MAX_TRACKED_IPS && !requestCounts.has(clientIp)) {
+            console.warn(`[WARN] Rate limit map full (${requestCounts.size} IPs). Clearing to prevent DoS.`);
+            requestCounts.clear();
+        }
+
         requestData = { count: 0, startTime: now };
         requestCounts.set(clientIp, requestData);
     }
@@ -69,7 +76,8 @@ http.createServer((req, res) => {
     try {
         const safeUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
         // Log only the method and pathname, excluding query parameters to prevent sensitive data leakage
-        console.log(`${req.method} ${safeUrl.pathname}`);
+        // Use JSON.stringify to sanitize output against log injection
+        console.log(`${req.method} ${JSON.stringify(safeUrl.pathname)}`);
 
         let pathname = decodeURIComponent(safeUrl.pathname);
 
