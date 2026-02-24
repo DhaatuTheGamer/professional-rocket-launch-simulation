@@ -82,6 +82,45 @@ http.createServer((req, res) => {
 
         let pathname = decodeURIComponent(safeUrl.pathname);
 
+        // Security: Block access to sensitive files and directories
+        const sensitiveDirs = ['src', 'tests', 'verification', 'node_modules', '.git', '.github', '.jules'];
+        const sensitiveFiles = ['server.js', 'package.json', 'package-lock.json', 'pnpm-lock.yaml', 'tsconfig.json', 'vitest.config.ts', 'eslint.config.js', 'README.md', 'LICENSE', '.gitignore', '.prettierrc'];
+
+        const pathParts = pathname.split('/').filter(p => p.length > 0);
+
+        // Check for hidden files/dirs (dotfiles)
+        if (pathParts.some(part => part.startsWith('.'))) {
+            console.warn(`[SECURITY] Blocked access to hidden file: ${pathname}`);
+            res.writeHead(403, {
+                'Content-Type': 'text/plain',
+                ...SECURITY_HEADERS
+            });
+            res.end('Forbidden');
+            return;
+        }
+
+        // Check for sensitive directories at the start of the path
+        if (pathParts.length > 0 && sensitiveDirs.includes(pathParts[0])) {
+            console.warn(`[SECURITY] Blocked access to sensitive directory: ${pathname}`);
+            res.writeHead(403, {
+                'Content-Type': 'text/plain',
+                ...SECURITY_HEADERS
+            });
+            res.end('Forbidden');
+            return;
+        }
+
+        // Check for specific files in root
+        if (pathParts.length === 1 && sensitiveFiles.includes(pathParts[0])) {
+            console.warn(`[SECURITY] Blocked access to sensitive file: ${pathname}`);
+            res.writeHead(403, {
+                'Content-Type': 'text/plain',
+                ...SECURITY_HEADERS
+            });
+            res.end('Forbidden');
+            return;
+        }
+
         if (pathname === '/') {
             pathname = '/index.html';
         }
