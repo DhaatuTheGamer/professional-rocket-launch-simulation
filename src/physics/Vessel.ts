@@ -394,7 +394,10 @@ export class Vessel implements IVessel {
 
             // Log thermal warning
             if (this.isThermalCritical && state.missionLog) {
-                state.missionLog.log(`THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`, 'warn');
+                if (state.missionTime - this.lastThermalLogTime > 2.0) {
+                    state.missionLog.log(`THERMAL WARNING: Skin temp ${Math.round(this.skinTemp - 273)}°C`, 'warn');
+                    this.lastThermalLogTime = state.missionTime;
+                }
             }
         }
 
