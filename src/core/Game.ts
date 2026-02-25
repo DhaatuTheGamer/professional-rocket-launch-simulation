@@ -626,8 +626,8 @@ export class Game {
                 let vr = -e.vy;
                 let vphi = e.vx;
 
-                const dtPred = 1.0; // 1s steps
-                const maxSteps = 2000; // 2000s prediction horizon
+                const dtPred = 5.0; // 5s steps (Optimized from 1s)
+                const maxSteps = 400; // 2000s prediction horizon (400 * 5)
 
                 // Store start point
                 if (pathIdx < path.length) {
@@ -646,61 +646,69 @@ export class Game {
                 }
                 pathIdx++;
 
+                const dtHalf = dtPred * 0.5;
+                const dtSixth = dtPred / 6.0;
+
                 // Optimized RK4 Integrator - Inlined to avoid object allocation
+                // Further optimized with algebraic simplification to reduce divisions
                 for (let j = 0; j < maxSteps; j++) {
                     // k1
-                    const g1 = MU / (r * r);
-                    const k1_dvr = (vphi * vphi) / r - g1;
-                    const k1_dvphi = -(vr * vphi) / r;
+                    const inv_r = 1.0 / r;
+                    const k1_dphi = vphi * inv_r;
+                    const g1 = MU * inv_r * inv_r;
+                    const k1_dvr = vphi * k1_dphi - g1;
+                    const k1_dvphi = -vr * k1_dphi;
                     const k1_dr = vr;
-                    const k1_dphi = vphi / r;
 
                     // k2
-                    const r_k2 = r + k1_dr * dtPred * 0.5;
-                    const vr_k2 = vr + k1_dvr * dtPred * 0.5;
-                    const vphi_k2 = vphi + k1_dvphi * dtPred * 0.5;
+                    const r_k2 = r + k1_dr * dtHalf;
+                    const inv_r_k2 = 1.0 / r_k2;
+                    const vr_k2 = vr + k1_dvr * dtHalf;
+                    const vphi_k2 = vphi + k1_dvphi * dtHalf;
 
-                    const g2 = MU / (r_k2 * r_k2);
-                    const k2_dvr = (vphi_k2 * vphi_k2) / r_k2 - g2;
-                    const k2_dvphi = -(vr_k2 * vphi_k2) / r_k2;
+                    const k2_dphi = vphi_k2 * inv_r_k2;
+                    const g2 = MU * inv_r_k2 * inv_r_k2;
+                    const k2_dvr = vphi_k2 * k2_dphi - g2;
+                    const k2_dvphi = -vr_k2 * k2_dphi;
                     const k2_dr = vr_k2;
-                    const k2_dphi = vphi_k2 / r_k2;
 
                     // k3
-                    const r_k3 = r + k2_dr * dtPred * 0.5;
-                    const vr_k3 = vr + k2_dvr * dtPred * 0.5;
-                    const vphi_k3 = vphi + k2_dvphi * dtPred * 0.5;
+                    const r_k3 = r + k2_dr * dtHalf;
+                    const inv_r_k3 = 1.0 / r_k3;
+                    const vr_k3 = vr + k2_dvr * dtHalf;
+                    const vphi_k3 = vphi + k2_dvphi * dtHalf;
 
-                    const g3 = MU / (r_k3 * r_k3);
-                    const k3_dvr = (vphi_k3 * vphi_k3) / r_k3 - g3;
-                    const k3_dvphi = -(vr_k3 * vphi_k3) / r_k3;
+                    const k3_dphi = vphi_k3 * inv_r_k3;
+                    const g3 = MU * inv_r_k3 * inv_r_k3;
+                    const k3_dvr = vphi_k3 * k3_dphi - g3;
+                    const k3_dvphi = -vr_k3 * k3_dphi;
                     const k3_dr = vr_k3;
-                    const k3_dphi = vphi_k3 / r_k3;
 
                     // k4
                     const r_k4 = r + k3_dr * dtPred;
+                    const inv_r_k4 = 1.0 / r_k4;
                     const vr_k4 = vr + k3_dvr * dtPred;
                     const vphi_k4 = vphi + k3_dvphi * dtPred;
 
-                    const g4 = MU / (r_k4 * r_k4);
-                    const k4_dvr = (vphi_k4 * vphi_k4) / r_k4 - g4;
-                    const k4_dvphi = -(vr_k4 * vphi_k4) / r_k4;
+                    const k4_dphi = vphi_k4 * inv_r_k4;
+                    const g4 = MU * inv_r_k4 * inv_r_k4;
+                    const k4_dvr = vphi_k4 * k4_dphi - g4;
+                    const k4_dvphi = -vr_k4 * k4_dphi;
                     const k4_dr = vr_k4;
-                    const k4_dphi = vphi_k4 / r_k4;
 
                     // Update State
-                    r += ((k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtPred) / 6;
-                    phi += ((k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtPred) / 6;
-                    vr += ((k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtPred) / 6;
-                    vphi += ((k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtPred) / 6;
+                    r += (k1_dr + 2 * k2_dr + 2 * k3_dr + k4_dr) * dtSixth;
+                    phi += (k1_dphi + 2 * k2_dphi + 2 * k3_dphi + k4_dphi) * dtSixth;
+                    vr += (k1_dvr + 2 * k2_dvr + 2 * k3_dvr + k4_dvr) * dtSixth;
+                    vphi += (k1_dvphi + 2 * k2_dvphi + 2 * k3_dvphi + k4_dvphi) * dtSixth;
 
                     // Stop if hit ground
                     if (r <= R_EARTH) {
                         break;
                     }
 
-                    // Store point (sparse)
-                    if (j % 10 === 0) {
+                    // Store point (sparse) - Every 2 steps (10s)
+                    if (j % 2 === 0) {
                         if (pathIdx < path.length) {
                             const p = path[pathIdx]!;
                             p.phi = phi;
@@ -795,9 +803,9 @@ export class Game {
 
         // Batches for each color category (stores vertices)
         // Format: [x1, y1, x2, y2, ...]
-        const lowWind: number[] = [];    // White (< 10 m/s)
-        const medWind: number[] = [];    // Yellow (10-30 m/s)
-        const highWind: number[] = [];   // Red (> 30 m/s)
+        const lowWind: number[] = []; // White (< 10 m/s)
+        const medWind: number[] = []; // Yellow (10-30 m/s)
+        const highWind: number[] = []; // Red (> 30 m/s)
 
         // Text batch: [speed, x, y]
         const windText: { text: string; x: number; y: number }[] = [];
@@ -820,15 +828,7 @@ export class Game {
 
                 // Arrow shape vertices (relative to origin)
                 const len = Math.min(50, speed * 2);
-                const vertices = [
-                    0, -2,
-                    len - 5, -2,
-                    len - 5, -5,
-                    len, 0,
-                    len - 5, 5,
-                    len - 5, 2,
-                    0, 2
-                ];
+                const vertices = [0, -2, len - 5, -2, len - 5, -5, len, 0, len - 5, 5, len - 5, 2, 0, 2];
 
                 // Transform vertices
                 for (let i = 0; i < vertices.length; i += 2) {
@@ -858,7 +858,8 @@ export class Game {
             if (points.length === 0) return;
             this.ctx.fillStyle = color;
             this.ctx.beginPath();
-            for (let i = 0; i < points.length; i += 14) { // 7 vertices * 2 coords
+            for (let i = 0; i < points.length; i += 14) {
+                // 7 vertices * 2 coords
                 this.ctx.moveTo(points[i], points[i + 1]);
                 for (let j = 2; j < 14; j += 2) {
                     this.ctx.lineTo(points[i + j], points[i + j + 1]);
