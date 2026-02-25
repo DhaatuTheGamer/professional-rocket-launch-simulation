@@ -82,8 +82,6 @@ export class ManeuverPlanner {
                 
                 <div class="script-editor-footer">
                     <button id="planner-refresh-btn" class="script-btn">Refresh</button>
-                    <!-- Future: Load to flight computer -->
-                    <!-- <button id="planner-program-btn" class="script-btn script-btn-primary">Program Flight Computer</button> -->
                 </div>
             </div>
         `;
