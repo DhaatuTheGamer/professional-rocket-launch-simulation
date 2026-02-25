@@ -1088,7 +1088,20 @@ export class Game {
      * Performance: ~1.74x faster than uncached DOM access (benchmark tests/benchmark_full_hud.ts).
      */
     private drawHUD(): void {
-        // Update Environment HUD
+        this.updateEnvironmentHUD();
+
+        if (!this.trackedEntity) return;
+
+        const velAngle = Math.atan2(this.trackedEntity.vx, -this.trackedEntity.vy);
+        this.navball.draw(this.trackedEntity.angle, velAngle);
+
+        this.updateFlightDataHUD();
+        this.updateThermalHUD();
+        this.updatePropulsionHUD();
+        this.updateFTSHUD();
+    }
+
+    private updateEnvironmentHUD(): void {
         const envState = this.lastEnvState;
         const last = this.lastHUDState;
 
@@ -1161,11 +1174,11 @@ export class Game {
                 }
             }
         }
+    }
 
+    private updateFlightDataHUD(): void {
         if (!this.trackedEntity) return;
-
-        const velAngle = Math.atan2(this.trackedEntity.vx, -this.trackedEntity.vy);
-        this.navball.draw(this.trackedEntity.angle, velAngle);
+        const last = this.lastHUDState;
 
         const alt = (this.groundY - this.trackedEntity.y - this.trackedEntity.h) / PIXELS_PER_METER;
         const vel = Math.sqrt(this.trackedEntity.vx ** 2 + this.trackedEntity.vy ** 2);
@@ -1271,6 +1284,11 @@ export class Game {
                 hudStability.style.color = color;
             }
         }
+    }
+
+    private updateThermalHUD(): void {
+        if (!this.trackedEntity) return;
+        const last = this.lastHUDState;
 
         // Thermal protection system display
         const hudSkinTemp = this.hudSkinTemp;
@@ -1331,6 +1349,11 @@ export class Game {
                 hudTpsStatus.style.color = color;
             }
         }
+    }
+
+    private updatePropulsionHUD(): void {
+        if (!this.trackedEntity) return;
+        const last = this.lastHUDState;
 
         // Propulsion system display
         const hudEngineStatus = this.hudEngineStatus;
@@ -1392,6 +1415,10 @@ export class Game {
                 }
             }
         }
+    }
+
+    private updateFTSHUD(): void {
+        const last = this.lastHUDState;
 
         // FTS Status display
         const hudFtsState = this.hudFtsState;
