@@ -9,3 +9,6 @@
 ## 2026-02-15 - Accessible Error Validation
 **Learning:** Custom form validation in `ScriptEditor` displayed errors in plain `div`s, failing to alert screen reader users of issues. This pattern likely exists elsewhere.
 **Action:** Ensure all dynamic validation messages use `role="alert"` or `aria-live` and are programmatically linked to their input fields via `aria-describedby` and `aria-invalid`.
+## 2026-02-28 - Added missing a11y labels to Maneuver Planner elements
+**Learning:** Found that some UI elements in Maneuver Planner lacked explicit `aria-label` for `select` inputs and `for` associations for `label` elements pointing to inputs, leading to poorer screen reader accessibility.
+**Action:** Always verify that generic inputs like `select` have descriptive `aria-label`s or are explicitly linked via a `label` `for` attribute.

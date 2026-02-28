@@ -100,7 +100,11 @@ export class ManeuverPlanner {
                         createElement('h3', { textContent: 'Select Maneuver' }),
                         createElement(
                             'select',
-                            { id: 'maneuver-type-select', className: 'script-select maneuver-select' },
+                            {
+                                id: 'maneuver-type-select',
+                                className: 'script-select maneuver-select',
+                                'aria-label': 'Select maneuver type'
+                            },
                             [
                                 createElement('option', {
                                     value: 'circularize-apo',
@@ -123,6 +127,7 @@ export class ManeuverPlanner {
                             [
                                 createElement('label', {
                                     className: 'maneuver-label',
+                                    htmlFor: 'target-alt-input',
                                     textContent: 'Target Altitude (km):'
                                 }),
                                 createElement('input', {

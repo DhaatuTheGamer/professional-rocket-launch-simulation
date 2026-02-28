@@ -20,6 +20,8 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
             element.className = String(value);
         } else if (key === 'textContent') {
             element.textContent = String(value);
+        } else if (key === 'htmlFor' && element instanceof HTMLLabelElement) {
+            element.htmlFor = String(value);
         } else if (key === 'style' && typeof value === 'object') {
             Object.assign(element.style, value);
         } else if (typeof value === 'boolean') {
