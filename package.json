@@ -35,8 +35,5 @@
         "physics",
         "typescript"
     ],
-    "license": "MIT",
-    "dependencies": {
-        "playwright": "^1.58.2"
-    }
+    "license": "MIT"
 }
