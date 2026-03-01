@@ -20,8 +20,36 @@ export class MissionLog implements IMissionLog {
     /** Maximum entries to keep in memory */
     private readonly maxHistory: number = 100;
 
+    /** Toggle button for collapsibility */
+    private toggleBtn: HTMLButtonElement | null;
+
+    /** Container element */
+    private container: HTMLElement | null;
+
     constructor() {
         this.el = document.getElementById('log-list') as HTMLUListElement | null;
+        this.toggleBtn = document.getElementById('log-toggle') as HTMLButtonElement | null;
+        this.container = document.getElementById('mission-log');
+
+        this.initToggle();
+    }
+
+    /**
+     * Initialize collapsible toggle functionality
+     */
+    private initToggle(): void {
+        if (!this.toggleBtn || !this.container) return;
+
+        this.toggleBtn.addEventListener('click', () => {
+            if (this.container) {
+                this.container.classList.toggle('collapsed');
+                const isCollapsed = this.container.classList.contains('collapsed');
+                if (this.toggleBtn) {
+                    this.toggleBtn.textContent = isCollapsed ? '+' : '−';
+                    this.toggleBtn.setAttribute('aria-expanded', String(!isCollapsed));
+                }
+            }
+        });
     }
 
     /**
