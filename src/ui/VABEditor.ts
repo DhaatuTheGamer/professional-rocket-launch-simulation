@@ -5,6 +5,7 @@
  */
 
 import { RocketPart, PartCategory, PARTS_CATALOG, getPartsByCategory } from '../vab/PartsCatalog';
+import { createElement } from './DOMUtils';
 import {
     VehicleBlueprint,
     VehicleStats,
@@ -70,71 +71,78 @@ export class VABEditor {
         const partsList = this.container.querySelector('#vab-parts-list');
         const scrollTop = partsList ? partsList.scrollTop : 0;
 
-        this.container.innerHTML = `
-            <div class="vab-editor">
-                <div class="vab-header">
-                    <h2>Vehicle Assembly Building</h2>
-                    <input type="text" class="vab-name-input" placeholder="Rocket Name" value="" aria-label="Rocket Name">
-                </div>
-                
-                <div class="vab-main">
-                    <!-- Parts Catalog -->
-                    <div class="vab-parts-panel">
-                        <h3>Parts Catalog</h3>
-                        <div class="vab-category-tabs" role="tablist">
-                            ${this.renderCategoryTabs()}
-                        </div>
-                        <div class="vab-parts-list" id="vab-parts-list" role="tabpanel" aria-labelledby="tab-${this.selectedCategory}">
-                            ${this.renderPartsList()}
-                        </div>
-                    </div>
-                    
-                    <!-- Vehicle Preview -->
-                    <div class="vab-preview-panel">
-                        <h3>Vehicle Preview</h3>
-                        <div class="vab-vehicle-display">
-                            ${this.renderVehiclePreview()}
-                        </div>
-                    </div>
-                    
-                    <!-- Stage Manager -->
-                    <div class="vab-stages-panel">
-                        <h3>Stages</h3>
-                        <div class="vab-stages-list">
-                            ${this.renderStagesList()}
-                        </div>
-                        <button class="vab-add-stage-btn">+ Add Stage</button>
-                    </div>
-                </div>
-                
-                <!-- Stats Bar -->
-                <div class="vab-stats-bar">
-                    ${this.renderStats(stats)}
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="vab-actions">
-                    <div class="vab-presets">
-                        <button class="vab-preset-btn" data-preset="falcon">Load Falcon 9</button>
-                        <button class="vab-preset-btn" data-preset="simple">Load Simple</button>
-                        <button class="vab-preset-btn" data-preset="new">New Rocket</button>
-                    </div>
-                    <div class="vab-main-actions">
-                        <button class="vab-save-btn">Save</button>
-                        <button class="vab-cancel-btn">Cancel</button>
-                        <button class="vab-launch-btn primary large">GO FOR LAUNCH</button>
-                    </div>
-                </div>
-            </div>
-        `;
+        // Clear container
+        this.container.textContent = '';
 
-        // Safely set user input value to prevent XSS
-        // We use the DOM property assignment instead of the value attribute
-        // to prevent stored XSS from malicious blueprint names.
-        const nameInput = this.container.querySelector('.vab-name-input') as HTMLInputElement;
-        if (nameInput) {
-            nameInput.value = this.blueprint.name;
-        }
+        const nameInput = createElement('input', {
+            type: 'text',
+            className: 'vab-name-input',
+            placeholder: 'Rocket Name',
+            value: '',
+            'aria-label': 'Rocket Name'
+        });
+        nameInput.value = this.blueprint.name;
+
+        const header = createElement('div', { className: 'vab-header' }, [
+            createElement('h2', {}, ['Vehicle Assembly Building']),
+            nameInput
+        ]);
+
+        const partsPanel = createElement('div', { className: 'vab-parts-panel' }, [
+            createElement('h3', {}, ['Parts Catalog']),
+            createElement('div', { className: 'vab-category-tabs', role: 'tablist' }, this.renderCategoryTabs()),
+            createElement('div', {
+                className: 'vab-parts-list',
+                id: 'vab-parts-list',
+                role: 'tabpanel',
+                'aria-labelledby': `tab-${this.selectedCategory}`
+            }, this.renderPartsList())
+        ]);
+
+        const previewPanel = createElement('div', { className: 'vab-preview-panel' }, [
+            createElement('h3', {}, ['Vehicle Preview']),
+            createElement('div', { className: 'vab-vehicle-display' }, this.renderVehiclePreview())
+        ]);
+
+        const stagesPanel = createElement('div', { className: 'vab-stages-panel' }, [
+            createElement('h3', {}, ['Stages']),
+            createElement('div', { className: 'vab-stages-list' }, this.renderStagesList()),
+            createElement('button', { className: 'vab-add-stage-btn' }, ['+ Add Stage'])
+        ]);
+
+        const mainPanel = createElement('div', { className: 'vab-main' }, [
+            partsPanel,
+            previewPanel,
+            stagesPanel
+        ]);
+
+        const statsBar = createElement('div', { className: 'vab-stats-bar' }, this.renderStats(stats));
+
+        const presetsDiv = createElement('div', { className: 'vab-presets' }, [
+            createElement('button', { className: 'vab-preset-btn', 'data-preset': 'falcon' }, ['Load Falcon 9']),
+            createElement('button', { className: 'vab-preset-btn', 'data-preset': 'simple' }, ['Load Simple']),
+            createElement('button', { className: 'vab-preset-btn', 'data-preset': 'new' }, ['New Rocket'])
+        ]);
+
+        const mainActionsDiv = createElement('div', { className: 'vab-main-actions' }, [
+            createElement('button', { className: 'vab-save-btn' }, ['Save']),
+            createElement('button', { className: 'vab-cancel-btn' }, ['Cancel']),
+            createElement('button', { className: 'vab-launch-btn primary large' }, ['GO FOR LAUNCH'])
+        ]);
+
+        const actionsDiv = createElement('div', { className: 'vab-actions' }, [
+            presetsDiv,
+            mainActionsDiv
+        ]);
+
+        const editorDiv = createElement('div', { className: 'vab-editor' }, [
+            header,
+            mainPanel,
+            statsBar,
+            actionsDiv
+        ]);
+
+        this.container.appendChild(editorDiv);
 
         // Restore scroll position
         const newPartsList = this.container.querySelector('#vab-parts-list');
@@ -146,21 +154,9 @@ export class VABEditor {
     }
 
     /**
-     * Escape HTML special characters to prevent XSS
-     */
-    private escapeHTML(text: string): string {
-        return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    /**
      * Render category tabs
      */
-    private renderCategoryTabs(): string {
+    private renderCategoryTabs(): HTMLElement[] {
         const categories: { id: PartCategory; icon: string; label: string }[] = [
             { id: 'engine', icon: '🔥', label: 'Engines' },
             { id: 'tank', icon: '⛽', label: 'Tanks' },
@@ -170,53 +166,47 @@ export class VABEditor {
             { id: 'srb', icon: '🚀', label: 'SRBs' }
         ];
 
-        return categories
-            .map(
-                (cat) => `
-            <button class="vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}"
-                    role="tab"
-                    aria-selected="${this.selectedCategory === cat.id}"
-                    aria-controls="vab-parts-list"
-                    id="tab-${cat.id}"
-                    data-category="${cat.id}">
-                <span class="tab-icon">${cat.icon}</span> ${cat.label}
-            </button>
-        `
-            )
-            .join('');
+        return categories.map((cat) => {
+            const iconSpan = createElement('span', { className: 'tab-icon' }, [cat.icon]);
+            return createElement('button', {
+                className: `vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}`,
+                role: 'tab',
+                'aria-selected': this.selectedCategory === cat.id ? 'true' : 'false',
+                'aria-controls': 'vab-parts-list',
+                id: `tab-${cat.id}`,
+                'data-category': cat.id
+            }, [iconSpan, ` ${cat.label}`]);
+        });
     }
 
     /**
      * Render parts list for selected category
      */
-    private renderPartsList(): string {
+    private renderPartsList(): HTMLElement[] {
         const parts = getPartsByCategory(this.selectedCategory);
 
         if (parts.length === 0) {
-            return '<div class="vab-no-parts">🚫 No parts in this category</div>';
+            return [createElement('div', { className: 'vab-no-parts' }, ['🚫 No parts in this category'])];
         }
 
-        return parts
-            .map(
-                (part) => `
-            <div class="vab-part-item ${this.selectedPartId === part.id ? 'selected' : ''}"
-                 data-part-id="${part.id}"
-                 role="button"
-                 tabindex="0"
-                 aria-label="Select ${this.escapeHTML(part.name)}">
-                <div class="vab-part-icon">${this.getPartIcon(part)}</div>
-                <div class="vab-part-info">
-                    <div class="vab-part-name">${this.escapeHTML(part.name)}</div>
-                    <div class="vab-part-desc">${this.escapeHTML(part.description)}</div>
-                    <div class="vab-part-stats">
-                        ${this.formatPartStats(part)}
-                    </div>
-                </div>
-                <div class="vab-part-cost">$${part.cost}</div>
-            </div>
-        `
-            )
-            .join('');
+        return parts.map((part) => {
+            const iconDiv = createElement('div', { className: 'vab-part-icon' }, [this.getPartIcon(part)]);
+
+            const nameDiv = createElement('div', { className: 'vab-part-name' }, [part.name]);
+            const descDiv = createElement('div', { className: 'vab-part-desc' }, [part.description]);
+            const statsDiv = createElement('div', { className: 'vab-part-stats' }, [this.formatPartStats(part)]);
+
+            const infoDiv = createElement('div', { className: 'vab-part-info' }, [nameDiv, descDiv, statsDiv]);
+            const costDiv = createElement('div', { className: 'vab-part-cost' }, [`$${part.cost}`]);
+
+            return createElement('div', {
+                className: `vab-part-item ${this.selectedPartId === part.id ? 'selected' : ''}`,
+                'data-part-id': part.id,
+                role: 'button',
+                tabindex: 0,
+                'aria-label': `Select ${part.name}`
+            }, [iconDiv, infoDiv, costDiv]);
+        });
     }
 
     /**
@@ -263,83 +253,108 @@ export class VABEditor {
     /**
      * Render vehicle preview
      */
-    private renderVehiclePreview(): string {
+    private renderVehiclePreview(): HTMLElement[] {
         if (this.blueprint.stages.length === 0) {
-            return '<div class="vab-empty-vehicle">Add stages and parts to build your rocket</div>';
+            return [createElement('div', { className: 'vab-empty-vehicle' }, ['Add stages and parts to build your rocket'])];
         }
 
-        // Build visual representation from top to bottom
-        let html = '';
+        const elements: HTMLElement[] = [];
+
         for (let i = this.blueprint.stages.length - 1; i >= 0; i--) {
             const stage = this.blueprint.stages[i];
             if (!stage) continue;
 
-            html += `<div class="vab-stage-preview" data-stage="${i}">`;
+            const stageElements: HTMLElement[] = [];
 
-            // Render parts in stage (top to bottom in visual order)
             for (let j = stage.parts.length - 1; j >= 0; j--) {
                 const inst = stage.parts[j];
                 if (!inst) continue;
-                html += `
-                    <div class="vab-part-preview" 
-                         data-instance="${this.escapeHTML(inst.instanceId)}"
-                         data-height="${inst.part.height}"
-                         data-width="${inst.part.width}">
-                        <span class="part-label">${this.escapeHTML(inst.part.name)}</span>
-                        <button class="remove-part"
-                                data-stage="${i}"
-                                data-instance="${this.escapeHTML(inst.instanceId)}"
-                                title="Remove ${this.escapeHTML(inst.part.name)}"
-                                aria-label="Remove ${this.escapeHTML(inst.part.name)}">×</button>
-                    </div>
-                `;
+
+                const labelSpan = createElement('span', { className: 'part-label' }, [inst.part.name]);
+                const removeBtn = createElement('button', {
+                    className: 'remove-part',
+                    'data-stage': i,
+                    'data-instance': inst.instanceId,
+                    title: `Remove ${inst.part.name}`,
+                    'aria-label': `Remove ${inst.part.name}`
+                }, ['×']);
+
+                const partDiv = createElement('div', {
+                    className: 'vab-part-preview',
+                    'data-instance': inst.instanceId,
+                    'data-height': inst.part.height,
+                    'data-width': inst.part.width
+                }, [labelSpan, removeBtn]);
+
+                stageElements.push(partDiv);
             }
 
-            // Show decoupler if present
             if (stage.hasDecoupler && i > 0) {
-                html += '<div class="vab-decoupler-marker">STAGE SEP</div>';
+                stageElements.push(createElement('div', { className: 'vab-decoupler-marker' }, ['STAGE SEP']));
             }
 
-            html += '</div>';
+            const stageDiv = createElement('div', {
+                className: 'vab-stage-preview',
+                'data-stage': i
+            }, stageElements);
+
+            elements.push(stageDiv);
         }
 
-        return html;
+        return elements;
     }
 
     /**
      * Render stages list
      */
-    private renderStagesList(): string {
+    private renderStagesList(): HTMLElement[] {
         if (this.blueprint.stages.length === 0) {
-            return '<div class="vab-no-stages">🚀 No stages yet. Click "Add Stage" to begin assembly.</div>';
+            return [createElement('div', { className: 'vab-no-stages' }, ['🚀 No stages yet. Click "Add Stage" to begin assembly.'])];
         }
 
         const selectedPart = this.selectedPartId ? PARTS_CATALOG.find((p) => p.id === this.selectedPartId) : null;
         const btnTitle = selectedPart
-            ? `Add ${this.escapeHTML(selectedPart.name)}`
+            ? `Add ${selectedPart.name}`
             : 'Select a part from the catalog first';
-        const btnDisabled = !selectedPart ? 'disabled' : '';
-        const btnText = selectedPart ? `+ Add ${this.escapeHTML(selectedPart.name)}` : '+ Add Selected Part';
+        const btnDisabled = !selectedPart;
+        const btnText = selectedPart ? `+ Add ${selectedPart.name}` : '+ Add Selected Part';
 
-        return this.blueprint.stages
-            .map((stage, i) => {
-                const stageStats = this.getStageStats(stage);
-                return `
-                <div class="vab-stage-item ${i === 0 ? 'first-stage' : ''}" data-stage="${i}">
-                    <div class="vab-stage-header">
-                        <span class="stage-number">Stage ${i + 1}</span>
-                        <span class="stage-info">${stage.parts.length} parts</span>
-                        ${i > 0 ? `<button class="remove-stage" data-stage="${i}" title="Remove Stage ${i + 1}" aria-label="Remove Stage ${i + 1}">REMOVE</button>` : ''}
-                    </div>
-                    <div class="vab-stage-stats">
-                        <span>Mass: ${(stageStats.mass / 1000).toFixed(1)}t</span>
-                        <span>ΔV: ${stageStats.deltaV.toFixed(0)} m/s</span>
-                    </div>
-                    <button class="vab-add-to-stage" data-stage="${i}" ${btnDisabled} title="${btnTitle}">${btnText}</button>
-                </div>
-            `;
-            })
-            .join('');
+        return this.blueprint.stages.map((stage, i) => {
+            const stageStats = this.getStageStats(stage);
+
+            const headerChildren: HTMLElement[] = [
+                createElement('span', { className: 'stage-number' }, [`Stage ${i + 1}`]),
+                createElement('span', { className: 'stage-info' }, [`${stage.parts.length} parts`])
+            ];
+
+            if (i > 0) {
+                headerChildren.push(createElement('button', {
+                    className: 'remove-stage',
+                    'data-stage': i,
+                    title: `Remove Stage ${i + 1}`,
+                    'aria-label': `Remove Stage ${i + 1}`
+                }, ['REMOVE']));
+            }
+
+            const header = createElement('div', { className: 'vab-stage-header' }, headerChildren);
+
+            const statsDiv = createElement('div', { className: 'vab-stage-stats' }, [
+                createElement('span', {}, [`Mass: ${(stageStats.mass / 1000).toFixed(1)}t`]),
+                createElement('span', {}, [`ΔV: ${stageStats.deltaV.toFixed(0)} m/s`])
+            ]);
+
+            const addBtn = createElement('button', {
+                className: 'vab-add-to-stage',
+                'data-stage': i,
+                disabled: btnDisabled,
+                title: btnTitle
+            }, [btnText]);
+
+            return createElement('div', {
+                className: `vab-stage-item ${i === 0 ? 'first-stage' : ''}`,
+                'data-stage': i
+            }, [header, statsDiv, addBtn]);
+        });
     }
 
     /**
@@ -375,46 +390,53 @@ export class VABEditor {
     /**
      * Render stats bar
      */
-    private renderStats(stats: VehicleStats): string {
+    private renderStats(stats: VehicleStats): HTMLElement[] {
         const twr = stats.stageTWR[0] || 0;
         const twrClass = twr > 1.2 ? 'good' : twr > 1.0 ? 'warning' : 'bad';
         const dvClass = stats.totalDeltaV > 9000 ? 'good' : stats.totalDeltaV > 5000 ? 'warning' : 'bad';
 
-        return `
-            <div class="vab-stat" title="Mass of the fully fueled vehicle">
-                <div class="vab-stat-label">Total Mass</div>
-                <div class="vab-stat-value">${(stats.wetMass / 1000).toFixed(1)}</div>
-                <div class="vab-stat-unit">tons</div>
-            </div>
-            <div class="vab-stat" title="Total change in velocity. Approx 9,400 m/s required for Low Earth Orbit.">
-                <div class="vab-stat-label">Total ΔV</div>
-                <div class="vab-stat-value ${dvClass}">${stats.totalDeltaV.toFixed(0)}</div>
-                <div class="vab-stat-unit">m/s</div>
-            </div>
-            <div class="vab-stat" title="Thrust-to-Weight Ratio. Must be > 1.0 to liftoff. Ideal is 1.3-1.5.">
-                <div class="vab-stat-label">TWR (Stage 1)</div>
-                <div class="vab-stat-value ${twrClass}">${twr.toFixed(2)}</div>
-                <div class="vab-stat-unit">ratio</div>
-            </div>
-            <div class="vab-stat" title="Number of stages in the vehicle stack">
-                <div class="vab-stat-label">Stages</div>
-                <div class="vab-stat-value">${this.blueprint.stages.length}</div>
-                <div class="vab-stat-unit">count</div>
-            </div>
-            <div class="vab-stat" title="Total construction cost">
-                <div class="vab-stat-label">Total Cost</div>
-                <div class="vab-stat-value">${stats.totalCost.toLocaleString()}</div>
-                <div class="vab-stat-unit">credits</div>
-            </div>
-            <div class="vab-stat">
-                <div class="vab-stat-indicator ${stats.hasAvionics ? 'ok' : 'warn'}" title="Flight computer guidance. Required for control.">
-                    ${stats.hasAvionics ? '[OK]' : '[MISSING]'} Avionics
-                </div>
-                <div class="vab-stat-indicator ${stats.hasFairing ? 'ok' : 'warn'}" title="Protects payload from aerodynamic stress during ascent.">
-                    ${stats.hasFairing ? '[OK]' : '[MISSING]'} Fairing
-                </div>
-            </div>
-        `;
+        const massStat = createElement('div', { className: 'vab-stat', title: 'Mass of the fully fueled vehicle' }, [
+            createElement('div', { className: 'vab-stat-label' }, ['Total Mass']),
+            createElement('div', { className: 'vab-stat-value' }, [(stats.wetMass / 1000).toFixed(1)]),
+            createElement('div', { className: 'vab-stat-unit' }, ['tons'])
+        ]);
+
+        const dvStat = createElement('div', { className: 'vab-stat', title: 'Total change in velocity. Approx 9,400 m/s required for Low Earth Orbit.' }, [
+            createElement('div', { className: 'vab-stat-label' }, ['Total ΔV']),
+            createElement('div', { className: `vab-stat-value ${dvClass}` }, [stats.totalDeltaV.toFixed(0)]),
+            createElement('div', { className: 'vab-stat-unit' }, ['m/s'])
+        ]);
+
+        const twrStat = createElement('div', { className: 'vab-stat', title: 'Thrust-to-Weight Ratio. Must be > 1.0 to liftoff. Ideal is 1.3-1.5.' }, [
+            createElement('div', { className: 'vab-stat-label' }, ['TWR (Stage 1)']),
+            createElement('div', { className: `vab-stat-value ${twrClass}` }, [twr.toFixed(2)]),
+            createElement('div', { className: 'vab-stat-unit' }, ['ratio'])
+        ]);
+
+        const stagesStat = createElement('div', { className: 'vab-stat', title: 'Number of stages in the vehicle stack' }, [
+            createElement('div', { className: 'vab-stat-label' }, ['Stages']),
+            createElement('div', { className: 'vab-stat-value' }, [this.blueprint.stages.length.toString()]),
+            createElement('div', { className: 'vab-stat-unit' }, ['count'])
+        ]);
+
+        const costStat = createElement('div', { className: 'vab-stat', title: 'Total construction cost' }, [
+            createElement('div', { className: 'vab-stat-label' }, ['Total Cost']),
+            createElement('div', { className: 'vab-stat-value' }, [stats.totalCost.toLocaleString()]),
+            createElement('div', { className: 'vab-stat-unit' }, ['credits'])
+        ]);
+
+        const indicatorsStat = createElement('div', { className: 'vab-stat' }, [
+            createElement('div', {
+                className: `vab-stat-indicator ${stats.hasAvionics ? 'ok' : 'warn'}`,
+                title: 'Flight computer guidance. Required for control.'
+            }, [`${stats.hasAvionics ? '[OK]' : '[MISSING]'} Avionics`]),
+            createElement('div', {
+                className: `vab-stat-indicator ${stats.hasFairing ? 'ok' : 'warn'}`,
+                title: 'Protects payload from aerodynamic stress during ascent.'
+            }, [`${stats.hasFairing ? '[OK]' : '[MISSING]'} Fairing`])
+        ]);
+
+        return [massStat, dvStat, twrStat, stagesStat, costStat, indicatorsStat];
     }
 
     /**
