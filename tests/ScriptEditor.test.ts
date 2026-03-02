@@ -130,3 +130,43 @@ describe('ScriptEditor Accessibility', () => {
         expect(html).toContain('aria-label="Script name"');
     });
 });
+
+describe('ScriptEditor Syntax Highlighting Error Path', () => {
+    let flightComputer: FlightComputer;
+    let editor: ScriptEditor;
+
+    beforeEach(() => {
+        // Reset DOM
+        mockDocument.body = new MockHTMLElement('BODY');
+
+        // Mock FlightComputer
+        flightComputer = {
+            state: { script: null },
+            loadScript: vi.fn(),
+        } as any;
+
+        const mockGame: any = {
+            flightComputer: flightComputer,
+            command: vi.fn(),
+            on: vi.fn(),
+            addPhysicsEventListener: vi.fn()
+        };
+
+        editor = new ScriptEditor(mockGame);
+    });
+
+    it('should test error path for catch block when localStorage parsing fails', () => {
+        // Mock localStorage to return invalid JSON, forcing the catch block at line 407 to execute
+        mockLocalStorage.getItem.mockReturnValue('{ invalid json payload }');
+
+        // Instantiating the editor triggers updateSavedScriptsList -> getSavedScripts
+        let newEditor: ScriptEditor | null = null;
+        expect(() => {
+            newEditor = new ScriptEditor((editor as any).game);
+        }).not.toThrow();
+
+        // Verify the fallback path inside the catch block was executed successfully, returning {}
+        expect((newEditor as any).getSavedScripts()).toEqual({});
+        expect(mockLocalStorage.getItem).toHaveBeenCalledWith('rocket-sim-scripts');
+    });
+});
