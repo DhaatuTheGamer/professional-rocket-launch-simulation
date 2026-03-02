@@ -1,7 +1,7 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VABEditor } from '../src/ui/VABEditor';
 import * as VehicleBlueprint from '../src/vab/VehicleBlueprint';
+import { JSDOM } from 'jsdom';
 
 // Mock the module
 vi.mock('../src/vab/VehicleBlueprint', async () => {
@@ -36,45 +36,31 @@ vi.mock('../src/vab/VehicleBlueprint', async () => {
     };
 });
 
-// Mock DOM
-const mockElement = {
-    innerHTML: '',
-    value: '',
-    style: { display: '' },
-    querySelector: () => mockElement,
-    querySelectorAll: () => [mockElement],
-    addEventListener: () => {},
-    dataset: {},
-    classList: {
-        add: () => {},
-        remove: () => {},
-        contains: () => false
-    }
-};
-
-global.document = {
-    getElementById: () => mockElement,
-    createElement: () => mockElement,
-    body: { appendChild: () => {} },
-} as any;
-
-global.alert = () => {};
-
 describe('Security Vulnerability Reproduction', () => {
+    beforeEach(() => {
+        const dom = new JSDOM('<!DOCTYPE html><div id="vab-container"></div>');
+        global.document = dom.window.document as any;
+        global.window = dom.window as any;
+        global.HTMLElement = dom.window.HTMLElement as any;
+    });
+
     it('should show that unescaped instanceId can lead to XSS', () => {
         // Instantiate VABEditor
         // This will call the mocked createFalconPreset()
         const editor = new VABEditor('vab-container', () => {});
 
-        // Check mocked innerHTML
-        const html = mockElement.innerHTML;
+        const container = document.getElementById('vab-container');
+        expect(container).not.toBeNull();
 
-        // Assert that the XSS payload is NOT present in its dangerous form
-        expect(html).not.toContain('data-instance=""><img src=x onerror=alert(1)>"');
+        // We look for the part preview element. Since we use createElement, the browser handles escaping.
+        // Even if we put XSS payload in data-instance, it's set via setAttribute, so it's inherently safe.
+        // We can check if the element exists and its dataset has the right value.
+        const partPreview = container!.querySelector('.vab-part-preview') as HTMLElement;
+        expect(partPreview).not.toBeNull();
+        expect(partPreview.dataset.instance).toBe('"><img src=x onerror=alert(1)>');
 
-        // Assert that the payload IS present in its escaped, safe form
-        // "><img... becomes &quot;&gt;&lt;img...
-        const expectedSafe = '&quot;&gt;&lt;img src=x onerror=alert(1)&gt;';
-        expect(html).toContain(`data-instance="${expectedSafe}"`);
+        // Ensure no actual img tag was created by innerHTML injection
+        const img = container!.querySelector('img');
+        expect(img).toBeNull();
     });
 });

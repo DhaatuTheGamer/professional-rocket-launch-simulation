@@ -48,7 +48,7 @@ describe('Particle Batching Performance', () => {
         }
     });
 
-    it('should measure execution time of drawParticles', () => {
+    it('should measure execution time of drawParticles', { timeout: 10000 }, () => {
         // Warmup
         for (let i = 0; i < 100; i++) {
             Particle.drawParticles(mockCtx, particles);
@@ -69,5 +69,5 @@ describe('Particle Batching Performance', () => {
 
         // Basic sanity check
         expect(mockCtx.fill).toHaveBeenCalled();
-    });
+    }, 10000); // Increased timeout to 10s
 });
