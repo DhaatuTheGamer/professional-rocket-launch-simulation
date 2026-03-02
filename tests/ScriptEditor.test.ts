@@ -104,29 +104,45 @@ describe('ScriptEditor Accessibility', () => {
         const modal = mockDocument.body.children[0];
         expect(modal).toBeDefined();
 
-        const html = modal!.innerHTML;
+        // Helper to find element by ID in mock DOM
+        const getById = (id: string): any => {
+            const find = (el: any): any => {
+                if (el.id === id) return el;
+                for (const child of el.children) {
+                    const found = find(child);
+                    if (found) return found;
+                }
+                return null;
+            };
+            return find(modal);
+        };
 
         // Assertions for Accessibility Attributes
 
         // 1. Close Button
-        expect(html).toContain('id="script-editor-close"');
-        expect(html).toContain('aria-label="Close script editor"');
-        expect(html).toContain('title="Close"');
+        const closeBtn = getById('script-editor-close');
+        expect(closeBtn).toBeDefined();
+        expect(closeBtn.getAttribute('aria-label')).toBe('Close script editor');
+        expect(closeBtn.getAttribute('title')).toBe('Close');
 
         // 2. Preset Select
-        expect(html).toContain('id="script-preset-select"');
-        expect(html).toContain('aria-label="Load preset script"');
+        const presetSelect = getById('script-preset-select');
+        expect(presetSelect).toBeDefined();
+        expect(presetSelect.getAttribute('aria-label')).toBe('Load preset script');
 
         // 3. Save Select
-        expect(html).toContain('id="script-save-select"');
-        expect(html).toContain('aria-label="Load saved script"');
+        const saveSelect = getById('script-save-select');
+        expect(saveSelect).toBeDefined();
+        expect(saveSelect.getAttribute('aria-label')).toBe('Load saved script');
 
         // 4. Textarea
-        expect(html).toContain('id="script-textarea"');
-        expect(html).toContain('aria-label="Script editor content"');
+        const textarea = getById('script-textarea');
+        expect(textarea).toBeDefined();
+        expect(textarea.getAttribute('aria-label')).toBe('Script editor content');
 
         // 5. Name Input
-        expect(html).toContain('id="script-name-input"');
-        expect(html).toContain('aria-label="Script name"');
+        const nameInput = getById('script-name-input');
+        expect(nameInput).toBeDefined();
+        expect(nameInput.getAttribute('aria-label')).toBe('Script name');
     });
 });
