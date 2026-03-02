@@ -39,7 +39,8 @@ const uiCache = {
     launchBtn: null as HTMLElement | null,
     bbStatus: null as HTMLElement | null,
     sasModeText: null as HTMLElement | null,
-    tooltipOverlay: null as HTMLElement | null
+    tooltipOverlay: null as HTMLElement | null,
+    fcBtn: null as HTMLElement | null
 };
 
 function initUI() {
@@ -48,6 +49,7 @@ function initUI() {
     uiCache.bbStatus = document.getElementById('bb-status');
     uiCache.sasModeText = document.getElementById('sas-mode-text');
     uiCache.tooltipOverlay = document.getElementById('tooltip-overlay');
+    uiCache.fcBtn = document.getElementById('fc-btn');
 }
 initUI();
 
@@ -255,7 +257,7 @@ document.getElementById('fis-panel')?.addEventListener('fis-toggle', ((e: Custom
 }) as EventListener);
 
 // --- Flight Computer Button ---
-document.getElementById('fc-btn')?.addEventListener('click', () => {
+uiCache.fcBtn?.addEventListener('click', () => {
     scriptEditor.open();
 });
 
@@ -335,7 +337,7 @@ window.addEventListener('keydown', (e) => {
         }
 
         // Update FC button state
-        const fcBtn = document.getElementById('fc-btn');
+        const fcBtn = uiCache.fcBtn;
         if (fcBtn) {
             // Optimistic update
             fcBtn.classList.toggle('enabled', statusStr === 'FC: OFF');
