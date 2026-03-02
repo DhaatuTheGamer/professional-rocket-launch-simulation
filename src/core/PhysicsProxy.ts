@@ -77,14 +77,21 @@ export class PhysicsProxy {
     }
 
     init(config: any) {
-        // Send buffer to worker
-        this.worker.postMessage({
-            type: 'INIT',
-            payload: {
-                ...config,
-                sharedBuffer: this.sharedBuffer
-            }
-        });
+        try {
+            // Send buffer to worker
+            this.worker.postMessage({
+                type: 'INIT',
+                payload: {
+                    ...config,
+                    sharedBuffer: this.sharedBuffer
+                }
+            });
+            return true;
+        } catch (e) {
+            console.error("Failed to initialize physics worker:", e);
+            // Provide fallback warning if SharedArrayBuffer isn't available
+            return false;
+        }
     }
 
     step(dt: number, inputs: any) {

@@ -74,7 +74,7 @@ describe('PhysicsProxy', () => {
             const proxy = new PhysicsProxy();
             const config = { someConfig: true };
 
-            proxy.init(config);
+            const result = proxy.init(config);
 
             const worker = (proxy as any).worker as MockWorker;
             expect(worker.postMessage).toHaveBeenCalledWith({
@@ -84,6 +84,29 @@ describe('PhysicsProxy', () => {
                     sharedBuffer: expect.any(global.SharedArrayBuffer)
                 }
             });
+            expect(result).toBe(true);
+        });
+
+        it('should return false and log error if worker initialization fails', () => {
+            const proxy = new PhysicsProxy();
+            const config = { someConfig: true };
+
+            const worker = (proxy as any).worker as MockWorker;
+
+            // Force postMessage to throw an error (e.g. DataCloneError for SharedArrayBuffer)
+            const error = new Error('DataCloneError');
+            worker.postMessage.mockImplementationOnce(() => {
+                throw error;
+            });
+
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            const result = proxy.init(config);
+
+            expect(result).toBe(false);
+            expect(consoleSpy).toHaveBeenCalledWith("Failed to initialize physics worker:", error);
+
+            consoleSpy.mockRestore();
         });
     });
 
@@ -152,6 +175,23 @@ describe('PhysicsProxy', () => {
             }
 
             expect(eventCallback).toHaveBeenCalledWith(eventPayload);
+        });
+
+        it('should handle worker error event and log to console', () => {
+            const proxy = new PhysicsProxy();
+            const worker = (proxy as any).worker as MockWorker;
+
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            const errorEvent = new Error('Simulated Worker Error');
+
+            if (worker.onerror) {
+                worker.onerror(errorEvent);
+            }
+
+            expect(consoleSpy).toHaveBeenCalledWith('Physics Worker Error:', errorEvent);
+
+            consoleSpy.mockRestore();
         });
     });
 
