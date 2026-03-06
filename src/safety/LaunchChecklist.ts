@@ -217,28 +217,40 @@ export class LaunchChecklist {
 
         this.containerEl.textContent = '';
 
-        const checklistItems = this.items.map(item => {
+        const checklistItems = this.items.map((item) => {
             const statusClass = item.status === 'go' ? 'go' : item.status === 'no-go' ? 'no-go' : 'pending';
 
             return createElement('div', { className: `checklist-row ${statusClass}` }, [
                 createElement('div', { className: 'checklist-station', textContent: item.station }),
                 createElement('div', { className: 'checklist-label', textContent: item.label }),
-                createElement('div', { className: 'checklist-buttons', role: 'group', 'aria-label': `${item.station} Status` }, [
-                    createElement('button', {
-                        className: `cl-btn cl-go ${item.status === 'go' ? 'active' : ''}`,
-                        'data-item': item.id,
-                        'data-action': 'go',
-                        'aria-label': `Set ${item.station} to GO`,
-                        'aria-pressed': item.status === 'go'
-                    }, ['GO']),
-                    createElement('button', {
-                        className: `cl-btn cl-nogo ${item.status === 'no-go' ? 'active' : ''}`,
-                        'data-item': item.id,
-                        'data-action': 'no-go',
-                        'aria-label': `Set ${item.station} to NO GO`,
-                        'aria-pressed': item.status === 'no-go'
-                    }, ['NO GO'])
-                ])
+                createElement(
+                    'div',
+                    { className: 'checklist-buttons', role: 'group', 'aria-label': `${item.station} Status` },
+                    [
+                        createElement(
+                            'button',
+                            {
+                                className: `cl-btn cl-go ${item.status === 'go' ? 'active' : ''}`,
+                                'data-item': item.id,
+                                'data-action': 'go',
+                                'aria-label': `Set ${item.station} to GO`,
+                                'aria-pressed': item.status === 'go'
+                            },
+                            ['GO']
+                        ),
+                        createElement(
+                            'button',
+                            {
+                                className: `cl-btn cl-nogo ${item.status === 'no-go' ? 'active' : ''}`,
+                                'data-item': item.id,
+                                'data-action': 'no-go',
+                                'aria-label': `Set ${item.station} to NO GO`,
+                                'aria-pressed': item.status === 'no-go'
+                            },
+                            ['NO GO']
+                        )
+                    ]
+                )
             ]);
         });
 
@@ -246,7 +258,12 @@ export class LaunchChecklist {
             createElement('div', { className: 'checklist-header' }, [
                 createElement('h3', { textContent: '📋 LAUNCH READINESS POLL' }),
                 createElement('span', { className: 'checklist-count', textContent: `${counts.go}/${counts.total} GO` }),
-                createElement('button', { className: 'checklist-close', id: 'checklist-close-btn', 'aria-label': 'Close Launch Checklist', textContent: '✕' })
+                createElement('button', {
+                    className: 'checklist-close',
+                    id: 'checklist-close-btn',
+                    'aria-label': 'Close Launch Checklist',
+                    textContent: '✕'
+                })
             ]),
             createElement('div', { className: 'checklist-items' }, checklistItems),
             createElement('div', { className: 'checklist-footer' }, [

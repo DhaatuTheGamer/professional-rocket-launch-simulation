@@ -263,13 +263,11 @@ export class FaultInjector {
 
         this.containerEl.textContent = '';
 
-        const activeFaultsMap = new Map<string, ActiveFault>(
-            this.activeFaults.map(f => [f.definition.id, f])
-        );
+        const activeFaultsMap = new Map<string, ActiveFault>(this.activeFaults.map((f) => [f.definition.id, f]));
 
-        const categoryEls = categories.map(cat => {
+        const categoryEls = categories.map((cat) => {
             const faults = FAULT_CATALOG.filter((f) => f.category === cat);
-            const faultEls = faults.map(fault => {
+            const faultEls = faults.map((fault) => {
                 const active = activeFaultsMap.get(fault.id);
                 const statusClass =
                     active?.status === 'injected' ? 'injected' : active?.status === 'armed' ? 'armed' : '';
@@ -281,14 +279,20 @@ export class FaultInjector {
                 ];
 
                 if (statusLabel) {
-                    buttonChildren.push(createElement('span', { className: 'fis-fault-status', textContent: statusLabel }));
+                    buttonChildren.push(
+                        createElement('span', { className: 'fis-fault-status', textContent: statusLabel })
+                    );
                 }
 
-                return createElement('button', {
-                    className: `fis-fault-btn ${statusClass}`,
-                    'data-fault': fault.id,
-                    title: fault.description
-                }, buttonChildren);
+                return createElement(
+                    'button',
+                    {
+                        className: `fis-fault-btn ${statusClass}`,
+                        'data-fault': fault.id,
+                        title: fault.description
+                    },
+                    buttonChildren
+                );
             });
 
             return createElement('div', { className: 'fis-category' }, [

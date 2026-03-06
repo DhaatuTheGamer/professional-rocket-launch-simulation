@@ -60,58 +60,108 @@ export class ScriptEditor {
         modal.id = 'script-editor-modal';
         modal.className = 'script-editor-modal';
 
-        const content = createElement('div', {
-            className: 'script-editor-content',
-            role: 'dialog',
-            'aria-modal': 'true',
-            'aria-labelledby': 'script-editor-title'
-        }, [
-            createElement('div', { className: 'script-editor-header' }, [
-                createElement('h2', { id: 'script-editor-title', textContent: 'Flight Computer - Script Editor' }),
-                createElement('button', {
-                    id: 'script-editor-close',
-                    className: 'script-close-btn',
-                    'aria-label': 'Close script editor',
-                    title: 'Close',
-                    textContent: '×'
-                })
-            ]),
-            createElement('div', { className: 'script-editor-body' }, [
-                createElement('div', { className: 'script-toolbar' }, [
-                    createElement('select', { id: 'script-preset-select', className: 'script-select', 'aria-label': 'Load preset script' }, [
-                        createElement('option', { value: '', textContent: '-- Load Preset --' })
+        const content = createElement(
+            'div',
+            {
+                className: 'script-editor-content',
+                role: 'dialog',
+                'aria-modal': 'true',
+                'aria-labelledby': 'script-editor-title'
+            },
+            [
+                createElement('div', { className: 'script-editor-header' }, [
+                    createElement('h2', { id: 'script-editor-title', textContent: 'Flight Computer - Script Editor' }),
+                    createElement('button', {
+                        id: 'script-editor-close',
+                        className: 'script-close-btn',
+                        'aria-label': 'Close script editor',
+                        title: 'Close',
+                        textContent: '×'
+                    })
+                ]),
+                createElement('div', { className: 'script-editor-body' }, [
+                    createElement('div', { className: 'script-toolbar' }, [
+                        createElement(
+                            'select',
+                            {
+                                id: 'script-preset-select',
+                                className: 'script-select',
+                                'aria-label': 'Load preset script'
+                            },
+                            [createElement('option', { value: '', textContent: '-- Load Preset --' })]
+                        ),
+                        createElement(
+                            'select',
+                            { id: 'script-save-select', className: 'script-select', 'aria-label': 'Load saved script' },
+                            [createElement('option', { value: '', textContent: '-- Saved Scripts --' })]
+                        ),
+                        createElement('button', {
+                            id: 'script-validate-btn',
+                            className: 'script-btn',
+                            textContent: 'Validate'
+                        }),
+                        createElement('button', {
+                            id: 'script-clear-btn',
+                            className: 'script-btn script-btn-danger',
+                            textContent: 'Clear'
+                        })
                     ]),
-                    createElement('select', { id: 'script-save-select', className: 'script-select', 'aria-label': 'Load saved script' }, [
-                        createElement('option', { value: '', textContent: '-- Saved Scripts --' })
+                    createElement('div', { className: 'script-syntax-help', id: 'script-syntax-help' }, [
+                        createElement('strong', { textContent: 'Syntax:' }),
+                        ' WHEN <condition> THEN <action>',
+                        createElement('br'),
+                        createElement('span', {
+                            className: 'script-help-vars',
+                            textContent:
+                                'Variables: ALTITUDE, VELOCITY, APOGEE, FUEL, TIME | Actions: PITCH <deg>, THROTTLE <0-100>, STAGE, SAS <mode>'
+                        })
                     ]),
-                    createElement('button', { id: 'script-validate-btn', className: 'script-btn', textContent: 'Validate' }),
-                    createElement('button', { id: 'script-clear-btn', className: 'script-btn script-btn-danger', textContent: 'Clear' })
+                    createElement('textarea', {
+                        id: 'script-textarea',
+                        className: 'script-textarea',
+                        'aria-label': 'Script editor content',
+                        'aria-describedby': 'script-syntax-help',
+                        placeholder:
+                            '# Mission Script\n# Example:\nWHEN ALTITUDE > 1000 THEN PITCH 80\nWHEN ALTITUDE > 10000 THEN PITCH 60\nWHEN APOGEE > 100000 THEN THROTTLE 0'
+                    }),
+                    createElement('div', {
+                        id: 'script-errors',
+                        className: 'script-errors',
+                        'aria-live': 'polite',
+                        'aria-atomic': 'true'
+                    })
                 ]),
-                createElement('div', { className: 'script-syntax-help', id: 'script-syntax-help' }, [
-                    createElement('strong', { textContent: 'Syntax:' }), ' WHEN <condition> THEN <action>',
-                    createElement('br'),
-                    createElement('span', { className: 'script-help-vars', textContent: 'Variables: ALTITUDE, VELOCITY, APOGEE, FUEL, TIME | Actions: PITCH <deg>, THROTTLE <0-100>, STAGE, SAS <mode>' })
-                ]),
-                createElement('textarea', {
-                    id: 'script-textarea',
-                    className: 'script-textarea',
-                    'aria-label': 'Script editor content',
-                    'aria-describedby': 'script-syntax-help',
-                    placeholder: '# Mission Script\n# Example:\nWHEN ALTITUDE > 1000 THEN PITCH 80\nWHEN ALTITUDE > 10000 THEN PITCH 60\nWHEN APOGEE > 100000 THEN THROTTLE 0'
-                }),
-                createElement('div', { id: 'script-errors', className: 'script-errors', 'aria-live': 'polite', 'aria-atomic': 'true' })
-            ]),
-            createElement('div', { className: 'script-editor-footer' }, [
-                createElement('div', { className: 'script-footer-left' }, [
-                    createElement('input', { type: 'text', id: 'script-name-input', className: 'script-name-input', 'aria-label': 'Script name', placeholder: 'Script name...', value: 'My Mission' }),
-                    createElement('button', { id: 'script-save-btn', className: 'script-btn script-btn-secondary', textContent: 'Save' }),
-                    createElement('button', { id: 'script-delete-btn', className: 'script-btn script-btn-danger', textContent: 'Delete' })
-                ]),
-                createElement('div', { className: 'script-footer-right' }, [
-                    createElement('button', { id: 'script-load-btn', className: 'script-btn script-btn-primary', textContent: 'Load to FC' })
+                createElement('div', { className: 'script-editor-footer' }, [
+                    createElement('div', { className: 'script-footer-left' }, [
+                        createElement('input', {
+                            type: 'text',
+                            id: 'script-name-input',
+                            className: 'script-name-input',
+                            'aria-label': 'Script name',
+                            placeholder: 'Script name...',
+                            value: 'My Mission'
+                        }),
+                        createElement('button', {
+                            id: 'script-save-btn',
+                            className: 'script-btn script-btn-secondary',
+                            textContent: 'Save'
+                        }),
+                        createElement('button', {
+                            id: 'script-delete-btn',
+                            className: 'script-btn script-btn-danger',
+                            textContent: 'Delete'
+                        })
+                    ]),
+                    createElement('div', { className: 'script-footer-right' }, [
+                        createElement('button', {
+                            id: 'script-load-btn',
+                            className: 'script-btn script-btn-primary',
+                            textContent: 'Load to FC'
+                        })
+                    ])
                 ])
-            ])
-        ]);
+            ]
+        );
 
         modal.appendChild(content);
 
