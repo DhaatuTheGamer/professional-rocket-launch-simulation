@@ -91,12 +91,16 @@ export class VABEditor {
         const partsPanel = createElement('div', { className: 'vab-parts-panel' }, [
             createElement('h3', {}, ['Parts Catalog']),
             createElement('div', { className: 'vab-category-tabs', role: 'tablist' }, this.renderCategoryTabs()),
-            createElement('div', {
-                className: 'vab-parts-list',
-                id: 'vab-parts-list',
-                role: 'tabpanel',
-                'aria-labelledby': `tab-${this.selectedCategory}`
-            }, this.renderPartsList())
+            createElement(
+                'div',
+                {
+                    className: 'vab-parts-list',
+                    id: 'vab-parts-list',
+                    role: 'tabpanel',
+                    'aria-labelledby': `tab-${this.selectedCategory}`
+                },
+                this.renderPartsList()
+            )
         ]);
 
         const previewPanel = createElement('div', { className: 'vab-preview-panel' }, [
@@ -110,11 +114,7 @@ export class VABEditor {
             createElement('button', { className: 'vab-add-stage-btn' }, ['+ Add Stage'])
         ]);
 
-        const mainPanel = createElement('div', { className: 'vab-main' }, [
-            partsPanel,
-            previewPanel,
-            stagesPanel
-        ]);
+        const mainPanel = createElement('div', { className: 'vab-main' }, [partsPanel, previewPanel, stagesPanel]);
 
         const statsBar = createElement('div', { className: 'vab-stats-bar' }, this.renderStats(stats));
 
@@ -130,17 +130,9 @@ export class VABEditor {
             createElement('button', { className: 'vab-launch-btn primary large' }, ['GO FOR LAUNCH'])
         ]);
 
-        const actionsDiv = createElement('div', { className: 'vab-actions' }, [
-            presetsDiv,
-            mainActionsDiv
-        ]);
+        const actionsDiv = createElement('div', { className: 'vab-actions' }, [presetsDiv, mainActionsDiv]);
 
-        const editorDiv = createElement('div', { className: 'vab-editor' }, [
-            header,
-            mainPanel,
-            statsBar,
-            actionsDiv
-        ]);
+        const editorDiv = createElement('div', { className: 'vab-editor' }, [header, mainPanel, statsBar, actionsDiv]);
 
         this.container.appendChild(editorDiv);
 
@@ -168,14 +160,18 @@ export class VABEditor {
 
         return categories.map((cat) => {
             const iconSpan = createElement('span', { className: 'tab-icon' }, [cat.icon]);
-            return createElement('button', {
-                className: `vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}`,
-                role: 'tab',
-                'aria-selected': this.selectedCategory === cat.id ? 'true' : 'false',
-                'aria-controls': 'vab-parts-list',
-                id: `tab-${cat.id}`,
-                'data-category': cat.id
-            }, [iconSpan, ` ${cat.label}`]);
+            return createElement(
+                'button',
+                {
+                    className: `vab-cat-tab ${this.selectedCategory === cat.id ? 'active' : ''}`,
+                    role: 'tab',
+                    'aria-selected': this.selectedCategory === cat.id ? 'true' : 'false',
+                    'aria-controls': 'vab-parts-list',
+                    id: `tab-${cat.id}`,
+                    'data-category': cat.id
+                },
+                [iconSpan, ` ${cat.label}`]
+            );
         });
     }
 
@@ -199,13 +195,17 @@ export class VABEditor {
             const infoDiv = createElement('div', { className: 'vab-part-info' }, [nameDiv, descDiv, statsDiv]);
             const costDiv = createElement('div', { className: 'vab-part-cost' }, [`$${part.cost}`]);
 
-            return createElement('div', {
-                className: `vab-part-item ${this.selectedPartId === part.id ? 'selected' : ''}`,
-                'data-part-id': part.id,
-                role: 'button',
-                tabindex: 0,
-                'aria-label': `Select ${part.name}`
-            }, [iconDiv, infoDiv, costDiv]);
+            return createElement(
+                'div',
+                {
+                    className: `vab-part-item ${this.selectedPartId === part.id ? 'selected' : ''}`,
+                    'data-part-id': part.id,
+                    role: 'button',
+                    tabindex: 0,
+                    'aria-label': `Select ${part.name}`
+                },
+                [iconDiv, infoDiv, costDiv]
+            );
         });
     }
 
@@ -255,7 +255,9 @@ export class VABEditor {
      */
     private renderVehiclePreview(): HTMLElement[] {
         if (this.blueprint.stages.length === 0) {
-            return [createElement('div', { className: 'vab-empty-vehicle' }, ['Add stages and parts to build your rocket'])];
+            return [
+                createElement('div', { className: 'vab-empty-vehicle' }, ['Add stages and parts to build your rocket'])
+            ];
         }
 
         const elements: HTMLElement[] = [];
@@ -271,20 +273,28 @@ export class VABEditor {
                 if (!inst) continue;
 
                 const labelSpan = createElement('span', { className: 'part-label' }, [inst.part.name]);
-                const removeBtn = createElement('button', {
-                    className: 'remove-part',
-                    'data-stage': i,
-                    'data-instance': inst.instanceId,
-                    title: `Remove ${inst.part.name}`,
-                    'aria-label': `Remove ${inst.part.name}`
-                }, ['×']);
+                const removeBtn = createElement(
+                    'button',
+                    {
+                        className: 'remove-part',
+                        'data-stage': i,
+                        'data-instance': inst.instanceId,
+                        title: `Remove ${inst.part.name}`,
+                        'aria-label': `Remove ${inst.part.name}`
+                    },
+                    ['×']
+                );
 
-                const partDiv = createElement('div', {
-                    className: 'vab-part-preview',
-                    'data-instance': inst.instanceId,
-                    'data-height': inst.part.height,
-                    'data-width': inst.part.width
-                }, [labelSpan, removeBtn]);
+                const partDiv = createElement(
+                    'div',
+                    {
+                        className: 'vab-part-preview',
+                        'data-instance': inst.instanceId,
+                        'data-height': inst.part.height,
+                        'data-width': inst.part.width
+                    },
+                    [labelSpan, removeBtn]
+                );
 
                 stageElements.push(partDiv);
             }
@@ -293,10 +303,14 @@ export class VABEditor {
                 stageElements.push(createElement('div', { className: 'vab-decoupler-marker' }, ['STAGE SEP']));
             }
 
-            const stageDiv = createElement('div', {
-                className: 'vab-stage-preview',
-                'data-stage': i
-            }, stageElements);
+            const stageDiv = createElement(
+                'div',
+                {
+                    className: 'vab-stage-preview',
+                    'data-stage': i
+                },
+                stageElements
+            );
 
             elements.push(stageDiv);
         }
@@ -309,13 +323,15 @@ export class VABEditor {
      */
     private renderStagesList(): HTMLElement[] {
         if (this.blueprint.stages.length === 0) {
-            return [createElement('div', { className: 'vab-no-stages' }, ['🚀 No stages yet. Click "Add Stage" to begin assembly.'])];
+            return [
+                createElement('div', { className: 'vab-no-stages' }, [
+                    '🚀 No stages yet. Click "Add Stage" to begin assembly.'
+                ])
+            ];
         }
 
         const selectedPart = this.selectedPartId ? PARTS_CATALOG.find((p) => p.id === this.selectedPartId) : null;
-        const btnTitle = selectedPart
-            ? `Add ${selectedPart.name}`
-            : 'Select a part from the catalog first';
+        const btnTitle = selectedPart ? `Add ${selectedPart.name}` : 'Select a part from the catalog first';
         const btnDisabled = !selectedPart;
         const btnText = selectedPart ? `+ Add ${selectedPart.name}` : '+ Add Selected Part';
 
@@ -328,12 +344,18 @@ export class VABEditor {
             ];
 
             if (i > 0) {
-                headerChildren.push(createElement('button', {
-                    className: 'remove-stage',
-                    'data-stage': i,
-                    title: `Remove Stage ${i + 1}`,
-                    'aria-label': `Remove Stage ${i + 1}`
-                }, ['REMOVE']));
+                headerChildren.push(
+                    createElement(
+                        'button',
+                        {
+                            className: 'remove-stage',
+                            'data-stage': i,
+                            title: `Remove Stage ${i + 1}`,
+                            'aria-label': `Remove Stage ${i + 1}`
+                        },
+                        ['REMOVE']
+                    )
+                );
             }
 
             const header = createElement('div', { className: 'vab-stage-header' }, headerChildren);
@@ -343,17 +365,25 @@ export class VABEditor {
                 createElement('span', {}, [`ΔV: ${stageStats.deltaV.toFixed(0)} m/s`])
             ]);
 
-            const addBtn = createElement('button', {
-                className: 'vab-add-to-stage',
-                'data-stage': i,
-                disabled: btnDisabled,
-                title: btnTitle
-            }, [btnText]);
+            const addBtn = createElement(
+                'button',
+                {
+                    className: 'vab-add-to-stage',
+                    'data-stage': i,
+                    disabled: btnDisabled,
+                    title: btnTitle
+                },
+                [btnText]
+            );
 
-            return createElement('div', {
-                className: `vab-stage-item ${i === 0 ? 'first-stage' : ''}`,
-                'data-stage': i
-            }, [header, statsDiv, addBtn]);
+            return createElement(
+                'div',
+                {
+                    className: `vab-stage-item ${i === 0 ? 'first-stage' : ''}`,
+                    'data-stage': i
+                },
+                [header, statsDiv, addBtn]
+            );
         });
     }
 
@@ -401,23 +431,38 @@ export class VABEditor {
             createElement('div', { className: 'vab-stat-unit' }, ['tons'])
         ]);
 
-        const dvStat = createElement('div', { className: 'vab-stat', title: 'Total change in velocity. Approx 9,400 m/s required for Low Earth Orbit.' }, [
-            createElement('div', { className: 'vab-stat-label' }, ['Total ΔV']),
-            createElement('div', { className: `vab-stat-value ${dvClass}` }, [stats.totalDeltaV.toFixed(0)]),
-            createElement('div', { className: 'vab-stat-unit' }, ['m/s'])
-        ]);
+        const dvStat = createElement(
+            'div',
+            {
+                className: 'vab-stat',
+                title: 'Total change in velocity. Approx 9,400 m/s required for Low Earth Orbit.'
+            },
+            [
+                createElement('div', { className: 'vab-stat-label' }, ['Total ΔV']),
+                createElement('div', { className: `vab-stat-value ${dvClass}` }, [stats.totalDeltaV.toFixed(0)]),
+                createElement('div', { className: 'vab-stat-unit' }, ['m/s'])
+            ]
+        );
 
-        const twrStat = createElement('div', { className: 'vab-stat', title: 'Thrust-to-Weight Ratio. Must be > 1.0 to liftoff. Ideal is 1.3-1.5.' }, [
-            createElement('div', { className: 'vab-stat-label' }, ['TWR (Stage 1)']),
-            createElement('div', { className: `vab-stat-value ${twrClass}` }, [twr.toFixed(2)]),
-            createElement('div', { className: 'vab-stat-unit' }, ['ratio'])
-        ]);
+        const twrStat = createElement(
+            'div',
+            { className: 'vab-stat', title: 'Thrust-to-Weight Ratio. Must be > 1.0 to liftoff. Ideal is 1.3-1.5.' },
+            [
+                createElement('div', { className: 'vab-stat-label' }, ['TWR (Stage 1)']),
+                createElement('div', { className: `vab-stat-value ${twrClass}` }, [twr.toFixed(2)]),
+                createElement('div', { className: 'vab-stat-unit' }, ['ratio'])
+            ]
+        );
 
-        const stagesStat = createElement('div', { className: 'vab-stat', title: 'Number of stages in the vehicle stack' }, [
-            createElement('div', { className: 'vab-stat-label' }, ['Stages']),
-            createElement('div', { className: 'vab-stat-value' }, [this.blueprint.stages.length.toString()]),
-            createElement('div', { className: 'vab-stat-unit' }, ['count'])
-        ]);
+        const stagesStat = createElement(
+            'div',
+            { className: 'vab-stat', title: 'Number of stages in the vehicle stack' },
+            [
+                createElement('div', { className: 'vab-stat-label' }, ['Stages']),
+                createElement('div', { className: 'vab-stat-value' }, [this.blueprint.stages.length.toString()]),
+                createElement('div', { className: 'vab-stat-unit' }, ['count'])
+            ]
+        );
 
         const costStat = createElement('div', { className: 'vab-stat', title: 'Total construction cost' }, [
             createElement('div', { className: 'vab-stat-label' }, ['Total Cost']),
@@ -426,14 +471,22 @@ export class VABEditor {
         ]);
 
         const indicatorsStat = createElement('div', { className: 'vab-stat' }, [
-            createElement('div', {
-                className: `vab-stat-indicator ${stats.hasAvionics ? 'ok' : 'warn'}`,
-                title: 'Flight computer guidance. Required for control.'
-            }, [`${stats.hasAvionics ? '[OK]' : '[MISSING]'} Avionics`]),
-            createElement('div', {
-                className: `vab-stat-indicator ${stats.hasFairing ? 'ok' : 'warn'}`,
-                title: 'Protects payload from aerodynamic stress during ascent.'
-            }, [`${stats.hasFairing ? '[OK]' : '[MISSING]'} Fairing`])
+            createElement(
+                'div',
+                {
+                    className: `vab-stat-indicator ${stats.hasAvionics ? 'ok' : 'warn'}`,
+                    title: 'Flight computer guidance. Required for control.'
+                },
+                [`${stats.hasAvionics ? '[OK]' : '[MISSING]'} Avionics`]
+            ),
+            createElement(
+                'div',
+                {
+                    className: `vab-stat-indicator ${stats.hasFairing ? 'ok' : 'warn'}`,
+                    title: 'Protects payload from aerodynamic stress during ascent.'
+                },
+                [`${stats.hasFairing ? '[OK]' : '[MISSING]'} Fairing`]
+            )
         ]);
 
         return [massStat, dvStat, twrStat, stagesStat, costStat, indicatorsStat];

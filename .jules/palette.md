@@ -5,3 +5,6 @@
 ## 2024-03-04 - [Dynamic Lists Need ARIA Live Regions]
 **Learning:** [a11y: Dynamic lists that append content (like a Mission Log) will not announce updates to screen readers unless they are marked as ARIA live regions.]
 **Action:** [Always add `aria-live="polite"` and `aria-relevant="additions"` to lists that receive real-time UI updates (like appending `<li>` tags) so visually impaired users don't miss important mission status updates.]
+## 2024-03-05 - [Dynamic Status Indicators Need ARIA Live Regions]
+**Learning:** [a11y: Dynamic status indicators that change text content (like Flight Computer mode or Black Box recording status) will not announce updates to screen readers unless they are marked as ARIA live regions with `aria-live="polite"` and `aria-atomic="true"`.]
+**Action:** [Always add `aria-live="polite"` and `aria-atomic="true"` to dynamic text indicators (like `div` or `span` tags representing status) that receive real-time UI updates, so visually impaired users are aware of crucial state changes without needing to navigate to the element.]
