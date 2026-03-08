@@ -289,7 +289,8 @@ export class FaultInjector {
                     {
                         className: `fis-fault-btn ${statusClass}`,
                         'data-fault': fault.id,
-                        title: fault.description
+                        title: fault.description,
+                        'aria-pressed': active ? 'true' : 'false'
                     },
                     buttonChildren
                 );
@@ -305,7 +306,12 @@ export class FaultInjector {
             createElement('div', { className: 'fis-header' }, [
                 createElement('h3', { textContent: '🎯 FAULT INJECTION SYSTEM' }),
                 createElement('span', { className: 'fis-badge', textContent: 'INSTRUCTOR ONLY' }),
-                createElement('button', { className: 'fis-close', id: 'fis-close-btn', textContent: '✕' })
+                createElement('button', {
+                    className: 'fis-close',
+                    id: 'fis-close-btn',
+                    textContent: '✕',
+                    'aria-label': 'Close Fault Injection System'
+                })
             ]),
             createElement('div', { className: 'fis-hint', textContent: 'Click once to ARM, click again to INJECT' }),
             ...categoryEls
